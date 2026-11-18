@@ -28,7 +28,7 @@
   </header>
 
   <main class="layout">
-    <section class="stage" id="stage-el" data-tree="behind" aria-label="Storm: cases fall as rain into the case series">
+    <section class="stage" id="stage-el" data-tree="off" aria-label="Storm: cases fall as rain into the case series">
       <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, on the same time axis as the case series"></svg>
       <canvas id="stage"></canvas>
       <div class="stage__text">
@@ -76,15 +76,6 @@
           <div class="ps-panel__head"><h2 class="ps-panel__title">Key</h2></div>
           <div class="key__row">
             <div class="key__control">
-              <span class="ps-label" aria-hidden="true">Tree</span>
-              <fieldset class="ps-seg">
-                <legend>Tree</legend>
-                <label><input type="radio" name="tree" data-tree="behind" checked /><span>Behind</span></label>
-                <label><input type="radio" name="tree" data-tree="front" /><span>Front</span></label>
-                <label><input type="radio" name="tree" data-tree="off" /><span>Off</span></label>
-              </fieldset>
-            </div>
-            <div class="key__control">
               <span class="ps-label" aria-hidden="true">Rain</span>
               <fieldset class="ps-seg">
                 <legend>Rain</legend>
@@ -102,7 +93,7 @@
             </div>
           </div>
           <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
-          <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. One shape per lineage: its point is when its common ancestor lived, its end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose inside an older one.</p>
+          <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Colours are lineages; the thin labelled lines mark what happened in the story.<span id="tree-note" hidden></span></p>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--chapters sim-only">

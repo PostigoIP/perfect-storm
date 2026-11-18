@@ -10,7 +10,7 @@ export function createSpace(ctx) {
   const limiter = ctx.createDynamicsCompressor();
   limiter.threshold.value = -4; limiter.ratio.value = 20; limiter.knee.value = 0;
   limiter.attack.value = 0.001; limiter.release.value = 0.1;
-  const trim = ctx.createGain(); trim.gain.value = 0.9;
+  const trim = ctx.createGain(); trim.gain.value = 1.27;   // +3 dB over the old 0.9: sparse chapters were too quiet
   const volume = ctx.createGain(); volume.gain.value = 0.8;
   master.connect(glue).connect(limiter).connect(trim).connect(volume).connect(ctx.destination);
 

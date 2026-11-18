@@ -100,7 +100,10 @@ const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t
 // tips that fit the figure without merging (~2.6 px per tip)
 const TIP_CAP = 2000;   // tips feeding the collapsed tree (counts on wedges); not drawn one by one
 
+// The tree is dropped for now (user, 2026-11-18): kept in code, not drawn.
+const TREE_ENABLED = false;
 function drawTree() {
+  if (!TREE_ENABLED) return;
   const t = source.t;
   const box = stage.treeBox();
   $('tree').style.top = `${box.top}px`;
