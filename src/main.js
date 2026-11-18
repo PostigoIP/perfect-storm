@@ -33,7 +33,7 @@ const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t,
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
-const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-field').replace(/[^\w-]/g, '');
+const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-drops').replace(/[^\w-]/g, '');
 const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json` });
 let ledger = createLedger({ binDays: 1 });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,7 +50,7 @@ const stage = createStage($('stage'), {
 
 const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
 // what each lineage sounds like: colour key (role) → recorded material, shared with the clip renderer
-const materialOf = (l) => MATERIAL[surfaceOf(l)] ?? 'leaf';
+const materialOf = (l) => MATERIAL[surfaceOf(l)] ?? 'puddle';
 const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
 
 // ── clock ────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ function drawLegend(order) {
   if (key === legendKey) return;
   legendKey = key;
   const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
-  const MAT = { leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
+  const MAT = { puddle: 'drops in a puddle', plink: 'dripping water', leaves: 'drips on leaves', leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
     const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
@@ -335,6 +335,7 @@ $('volume').addEventListener('input', (e) => {
 });
 // A/B: switch the sound source live, while the storm keeps playing
 const BANK_NOTES = {
+  'sounds-drops': 'Clean recorded drips for each case, over a bed of real rain that grows with the epidemic.',
   'sounds-field': 'Real CC0 rain on stone, glass, metal and leaves.',
   'sounds-textures': 'ElevenLabs-generated rain textures, cut at each drop.',
   sounds: 'ElevenLabs single-drop takes (the first attempt).',

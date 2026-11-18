@@ -10,16 +10,16 @@ import json, os, shutil, subprocess, sys, tempfile
 
 AGY = '/Users/ignaciopostigo/.local/bin/agy'
 
-ENGINE = """How the clips are made: a simulated epidemic; every new case triggers one short 'drop grain'
-(30–115 ms, starting ~3 ms before a detected impact, 1.5 ms attack then exponential decay, no hold) cut
-from a long real rain recording of that lineage's surface (leaves, glass, stone, metal). Per grain:
-playback rate 0.85–1.18, gain by severity (range ±3 dB), low-pass 7–18 kHz, stereo pan. At most ~28
-distinct drops start per second. A continuous 'bed' of the same real recordings (looping) fades in with
-the case rate (silent below 8 drops/s, full at 400/s), darker as it gets denser. A very faint constant
-room tone avoids digital silence. Source recordings high-passed at 80 Hz (2nd order). Short 0.4 s
-reverb (send ≤ 0.04). Gentle master compression (-10 dB, 1.5:1) and a limiter. Thunder = real thunder
-recordings plus saturated harmonics of the rumble (for small speakers). Sparse silence at low case
-counts is intentional: early in an outbreak only a few drops fall."""
+ENGINE = """How the clips are made: a simulated epidemic; every new case triggers one short drop grain
+(50–150 ms, starting ~3 ms before an impact, 3 ms attack, exponential decay) cut from CLEAN recordings of
+isolated drips (drops into a puddle, dripping water 'plinks', drips on leaves), one set per virus lineage.
+Per drop: distance d (most drops far): gain 0 to -24 dB, low-pass 18 kHz near → ~5 kHz far, reverb send
+grows with distance; high-pass 250 Hz; playback rate 0.95–1.2; pan. At most ~28 distinct drops start per
+second. A continuous bed of real rain recordings (looping) fades in with the case rate (silent below
+2 drops/s, full at 50/s), its texture following the lineage mix. A very faint constant room tone avoids
+digital silence. 0.4 s reverb; gentle master compression and a limiter; -3 dB shelf above 5 kHz.
+Thunder = real thunder recordings plus mild saturated harmonics. Sparse silence at low case counts is
+intentional: early in an outbreak only a few drops fall."""
 
 def listen(ref, clips, model):
     d = tempfile.mkdtemp(prefix='listen-')

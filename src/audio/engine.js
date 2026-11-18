@@ -5,7 +5,7 @@
 //     real impact, so overlapping cases rebuild the recording's own texture
 
 import { createSpace } from './space.js';
-import { caseToVoice } from './voice.js';
+import { caseToVoice, SET_ALIAS } from './voice.js';
 import { pickGrain, grainLength } from './grains.js';
 import { mulberry32 } from '../model/rng.js';
 
@@ -27,7 +27,8 @@ function createPlayer(ctx, bank, seed = 9) {
     const src = ctx.createBufferSource();
     let grain = null;
     if (bank.grains) {
-      const entries = bank.grains[v.set] ?? bank.grains.stone;
+      const pool = bank.drops ?? bank.grains;
+      const entries = pool[v.set] ?? pool[SET_ALIAS[v.set]] ?? Object.values(pool)[0];
       const g = entries && pickGrain(entries, v.index);
       if (!g) return;
       src.buffer = entries[g.entry].buffer;
@@ -40,20 +41,22 @@ function createPlayer(ctx, bank, seed = 9) {
     src.playbackRate.value = v.rate;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass'; lp.frequency.value = Math.min(18000, v.lowpassHz); lp.Q.value = 0.5;
+    const hp = ctx.createBiquadFilter();   // drops keep no surface thump; the bed keeps the low end
+    hp.type = 'highpass'; hp.frequency.value = grain ? 250 : 80; hp.Q.value = 0.6;
     const g = ctx.createGain();
     if (grain) {
       // one drop: near-instant attack, then a natural exponential decay (no hold)
       g.gain.setValueAtTime(0, at);
-      g.gain.linearRampToValueAtTime(v.gain, at + 0.0015);
+      g.gain.linearRampToValueAtTime(v.gain, at + 0.003);
       g.gain.exponentialRampToValueAtTime(0.0005, at + grain.len);
     } else g.gain.value = v.gain;
     const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, v.pan));
-    const send = ctx.createGain(); send.gain.value = grain ? Math.min(0.04, v.send * 0.25) : v.send;   // recordings carry their own space
-    src.connect(lp).connect(g).connect(pan);
+    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.5 : v.send;   // far drops wetter, near drops dry
+    src.connect(hp).connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
     if (grain) src.start(at, grain.offset + 0.014, grain.len + 0.01); else src.start(at);   // ~3 ms before the impact
-    src.onended = () => { src.disconnect(); lp.disconnect(); g.disconnect(); pan.disconnect(); send.disconnect(); };
+    src.onended = () => { src.disconnect(); hp.disconnect(); lp.disconnect(); g.disconnect(); pan.disconnect(); send.disconnect(); };
   }
 
   // The rain bed: one looping real recording per material, silent until the
@@ -64,7 +67,7 @@ function createPlayer(ctx, bank, seed = 9) {
     lp.connect(space.bedIn);
     for (const [mat, entries] of Object.entries(bank.grains)) {
       const src = ctx.createBufferSource();
-      src.buffer = entries[0].buffer; src.loop = true;
+      src.buffer = bank.beds?.[mat] ?? entries[0].buffer; src.loop = true;
       const g = ctx.createGain(); g.gain.value = 0;
       src.connect(g).connect(lp);
       src.start(ctx.currentTime, rand() * Math.max(0, src.buffer.duration - 1));
@@ -86,7 +89,7 @@ function createPlayer(ctx, bank, seed = 9) {
     // levels: { material: 0..1 }, darkness 0..1 (denser rain → darker, less sizzle)
     setBed(levels, darkness, at = ctx.currentTime) {
       for (const [mat, g] of Object.entries(bed)) if (mat !== '_lp') g.gain.setTargetAtTime(0.5 * (levels[mat] ?? 0), at, 1.5);
-      if (bed._lp) bed._lp.frequency.setTargetAtTime(7500 - 4000 * darkness, at, 1.5);
+      if (bed._lp) bed._lp.frequency.setTargetAtTime(11000 - 4000 * darkness, at, 1.5);
     },
     playCase(c, surface, at) {
       const evps = density(at);
@@ -130,6 +133,11 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
       bank.grains[set] = await Promise.all(entries.map(async (e) => ({ buffer: await load(e.file), onsets: e.onsets })));
     }));
     await Promise.all(Object.entries(manifest.oneshots ?? {}).map(async ([set, files]) => { bank[set] = await Promise.all(files.map(load)); }));
+    // optional separate recordings for the rain bed (drops come from clean drips)
+    if (manifest.beds) {
+      bank.beds = {};
+      await Promise.all(Object.entries(manifest.beds).map(async ([mat, file]) => { bank.beds[mat] = await load(file); }));
+    }
     return bank;
   }
   const bank = {};

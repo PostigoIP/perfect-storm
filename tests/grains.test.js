@@ -16,9 +16,9 @@ describe('pickGrain', () => {
 });
 
 describe('grainLength', () => {
-  it('a single drop: grows with severity and stays within 0.03–0.12 s', () => {
+  it('a single drop: grows with severity and stays within 0.05–0.15 s', () => {
     let prev = 0;
-    for (let s = 0; s <= 3; s++) { const L = grainLength(s, 0.5); expect(L).toBeGreaterThan(prev); expect(L).toBeGreaterThanOrEqual(0.03); expect(L).toBeLessThanOrEqual(0.12); prev = L; }
+    for (let s = 0; s <= 3; s++) { const L = grainLength(s, 0.5); expect(L).toBeGreaterThan(prev); expect(L).toBeGreaterThanOrEqual(0.05); expect(L).toBeLessThanOrEqual(0.15); prev = L; }
   });
 });
 
@@ -26,8 +26,9 @@ import { bedLevel } from '../src/audio/grains.js';
 describe('bedLevel', () => {
   it('is silent while drops are sparse, full in a downpour, monotone between', () => {
     expect(bedLevel(0)).toBe(0);
-    expect(bedLevel(6)).toBe(0);
-    expect(bedLevel(500)).toBe(1);
+    expect(bedLevel(1.5)).toBe(0);
+    expect(bedLevel(3)).toBeGreaterThan(0);
+    expect(bedLevel(60)).toBe(1);
     let prev = 0;
     for (let r = 0; r < 600; r += 5) { const v = bedLevel(r); expect(v).toBeGreaterThanOrEqual(prev); prev = v; }
   });

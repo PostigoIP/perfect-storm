@@ -52,7 +52,7 @@ export function createSpace(ctx) {
   for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(4 * x) / Math.tanh(4); }
   shaper.curve = curve; shaper.oversample = '2x';
   const harmonics = ctx.createBiquadFilter(); harmonics.type = 'bandpass'; harmonics.frequency.value = 500; harmonics.Q.value = 0.5;
-  const harmGain = ctx.createGain(); harmGain.gain.value = 0.4;
+  const harmGain = ctx.createGain(); harmGain.gain.value = 0.16;   // ~-8 dB: support, not buzz
   thunderBus.connect(lowOnly).connect(shaper).connect(harmonics).connect(harmGain).connect(master);
   const thunderSend = ctx.createGain(); thunderSend.gain.value = 0.35;
   thunderBus.connect(thunderSend).connect(reverb);

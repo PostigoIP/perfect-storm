@@ -11,10 +11,12 @@ const GAIN = [0.6, 0.67, 0.75, 0.85];   // severity spans ~3 dB: louder, never a
 const BRIGHT = [9000, 11000, 14000, 18000];   // drops stay bright; distance is level + wetness, not muffling
 const SEND = { near: 0.06, mid: 0.2, far: 0.42 };
 
-// colour key (role) → recorded material. Founder = leaves (most rain-like, most cases);
-// variant 1 = glass; variant 2 = stone (user's test: is stone the "puff"?); imports = metal.
-export const MATERIAL = { stone: 'leaf', glass: 'glass', metal: 'stone', leaf: 'metal' };
-export const materialFor = (lineage, lineages) => MATERIAL[surfaceFor(lineage, lineages)] ?? 'leaf';
+// colour key (role) → drop sound. Founder = drops into a puddle (most cases);
+// variant 1 and imports = clear dripping 'plinks'; variant 2 = drips on leaves.
+export const MATERIAL = { stone: 'puddle', glass: 'plink', metal: 'leaves', leaf: 'plink' };
+// older banks name their sets by surface; map the drop sets onto them
+export const SET_ALIAS = { puddle: 'leaf', plink: 'glass', leaves: 'stone' };
+export const materialFor = (lineage, lineages) => MATERIAL[surfaceFor(lineage, lineages)] ?? 'puddle';
 
 export function surfaceFor(lineage, lineages) {
   const L = lineages[lineage];
@@ -42,17 +44,21 @@ export function layerFor(eventsPerSec, detected, rand) {
 const hash01 = (n) => (((n * 2654435761) >>> 0) % 100000) / 100000;
 
 export function caseToVoice(c, surface, eventsPerSec, rand) {
-  const layer = layerFor(eventsPerSec, c.detected, rand);
-  const dark = c.detected ? 1 : 0.75;
+  // distance: most drops land far and soft, a few close and clear (heavy-tailed);
+  // unreported cases are always beyond the near field
+  let d = Math.pow(hash01(c.id * 13 + 5), 0.6);
+  if (!c.detected) d = 0.35 + 0.65 * d;
+  const layer = d < 0.35 ? 'near' : d < 0.7 ? 'mid' : 'far';
   return {
     set: surface,
     index: Math.floor(hash01(c.id + 7) * 1e6),
-    rate: 0.865 + 0.3 * hash01(c.id * 7 + 3) + 0.015 * Math.sin(c.muts * 1.7),   // 0.85–1.18: repeats stay unrecognisable
-    gain: GAIN[c.severity] * densityGain(eventsPerSec) * (c.detected ? 1 : 0.8),
-    lowpassHz: BRIGHT[c.severity] * dark,
+    rate: 0.962 + 0.225 * hash01(c.id * 7 + 3) + 0.01 * Math.sin(c.muts * 1.7),   // 0.95–1.2: no boxy downward shifts
+    gain: GAIN[c.severity] * Math.pow(10, (-24 * d) / 20) * densityGain(eventsPerSec),
+    lowpassHz: BRIGHT[c.severity] * (1 - 0.65 * d),
     pan: PAN_ZONES[c.lineage % PAN_ZONES.length] + (hash01(c.id) - 0.5) * 0.5,
+    distance: d,
     layer,
-    send: SEND[layer] + (c.detected ? 0 : 0.08),
+    send: 0.02 + 0.2 * d,
     extra: c.outcome === 'fatal' ? { set: 'heavy', rate: 0.5, gain: 0.35, lowpassHz: 900 } : null,
   };
 }
