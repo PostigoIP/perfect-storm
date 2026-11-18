@@ -88,10 +88,13 @@ Modules talk through one event stream (`case`, `thunder`, `tick`) and snapshots,
 - Pre-processed into `public/data/ebola.json` by a script in `scripts/`; provenance (source, citation, licence, transformations) shown in the UI. Clinical attributes are inferred and labelled as such.
 - Cases are released as drops spread uniformly within each epi-week, so the sound of the real epidemic is literally its weekly case count.
 
-### Sound design
+### Sound design (from scratch — user decision 2026-11-18)
 
-- **Source**: the real droplet recordings in `generador_lluvia/sources/` (5 Floraphonic drops + `water-droplet.wav`), trimmed and normalised offline, loaded as `AudioBuffer`s. Licence check before any public deploy.
-- **Per-case variation is meaningful**: lineage → sample choice + pitch centre (each lineage is tuned to a degree of a pentatonic set, so clades are audibly distinct and a new variant changes the key of the rain); mutations → small detune; severity → gain and low-pass openness; detected vs undetected → dry vs distant (more reverb, darker); pan from a stable per-lineage position plus jitter.
+The v1 sound is discarded entirely (synth noise bursts + tick-batched timing). Concept: **each lineage is a surface**. The founder lineage falls on stone, the first variant on glass, the next on a metal roof, imports on leaves. Listening to the rain is listening to the tree's composition: when a variant takes over, the rain audibly changes what it falls on.
+
+- **Source (user pick): an ElevenLabs Sound Effects palette**, generated once offline by `scripts/gen-sounds.mjs` (reads `ELEVENLABS_API_KEY` from `.env.local`, which the user creates; never committed). Prompts live in `scripts/sound-prompts.json` so the bank is reproducible. Bank: ~12 one-shot single drops per surface (×4), ~6 heavy drops, ~6 thunder rolls, 2 distant-rain textures for the far layer. Takes are trimmed, loudness-normalised and curated (keep the best), shipped as small `.mp3`/`.ogg` in `public/sounds/` with a `manifest.json`. Visitors never call ElevenLabs. Output used under the user's paid ElevenLabs plan terms.
+- The old droplet recordings in `generador_lluvia/sources/` are not used.
+- **Per-case variation is meaningful**: lineage → surface (sample set) + stable pan zone; mutation count → small detune within the surface's take; severity → gain and brightness (low-pass openness); detected vs undetected → close/dry vs far/dark (more reverb); deaths → rare low resonant hit.
 - **Layering like `generador_lluvia.py`**: at low incidence each case is a full, close drop. As incidence grows, cases are routed across three layers (close/heavy, mid, far/fine with high-pass) so the texture turns into rain naturally while case-to-event mapping is preserved; a density-driven bus compressor and gain law prevent clipping.
 - **Timing**: events are scheduled on `AudioContext.currentTime` with a 100 ms look-ahead and onsets jittered uniformly across their tick — no batching pulse.
 - **Thunder** for discontinuities (variant, import): layered low rumble (filtered noise with multiple delayed rolls) + crack, long stereo reverb, slight ducking of the rain.

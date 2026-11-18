@@ -6,3 +6,5 @@ dist/
 generador_lluvia/venv/
 generador_lluvia/rain_build.wav
 generador_lluvia/resultados_*/
+.env
+.env.*
