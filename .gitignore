@@ -8,3 +8,5 @@ generador_lluvia/rain_build.wav
 generador_lluvia/resultados_*/
 .env
 .env.*
+generador_sounds/
+review/
