@@ -44,6 +44,15 @@ describe('createObservedSource', () => {
     expect(tr.root.x).toBe(0);
     expect(tr.internal.map((n) => n.x).sort((a, b) => a - b)).toEqual([0, 10]);
   });
+  it('reports done once the data has ended, with no cases in the last day', () => {
+    const src = createObservedSource(data, { seed: 1 });
+    runTo(src, 20);
+    expect(src.done).toBe(false);
+    runTo(src, 40);
+    expect(src.done).toBe(true);
+    expect(src.snapshot().incidenceToday).toBe(0);
+  });
+
   it('reset rewinds to the start', () => {
     const src = createObservedSource(data, { seed: 1 });
     runTo(src, 20);

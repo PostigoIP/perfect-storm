@@ -25,10 +25,11 @@ describe('grainLength', () => {
 import { bedLevel } from '../src/audio/grains.js';
 describe('bedLevel', () => {
   it('is silent while drops are sparse, full in a downpour, monotone between', () => {
+    // the bed is only for rain too dense to count: none below ~15 drops/s
     expect(bedLevel(0)).toBe(0);
-    expect(bedLevel(1.5)).toBe(0);
-    expect(bedLevel(3)).toBeGreaterThan(0);
-    expect(bedLevel(60)).toBe(1);
+    expect(bedLevel(10)).toBe(0);
+    expect(bedLevel(20)).toBeGreaterThan(0);
+    expect(bedLevel(200)).toBe(1);
     let prev = 0;
     for (let r = 0; r < 600; r += 5) { const v = bedLevel(r); expect(v).toBeGreaterThanOrEqual(prev); prev = v; }
   });
@@ -36,8 +37,8 @@ describe('bedLevel', () => {
 
 describe('bedLevel with a mix profile', () => {
   it('can start earlier and fill sooner', () => {
-    expect(bedLevel(1, 0.5, 30)).toBeGreaterThan(0);
-    expect(bedLevel(30, 0.5, 30)).toBe(1);
-    expect(bedLevel(0.4, 0.5, 30)).toBe(0);
+    expect(bedLevel(12, 10, 150)).toBeGreaterThan(0);
+    expect(bedLevel(150, 10, 150)).toBe(1);
+    expect(bedLevel(9, 10, 150)).toBe(0);
   });
 });

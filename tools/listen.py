@@ -16,8 +16,7 @@ isolated drips (drops into a puddle, dripping water 'plinks', drips on leaves), 
 Per drop: distance d (most drops far): gain 0 to -24 dB, low-pass 18 kHz near → ~5 kHz far, reverb send
 grows with distance; high-pass 250 Hz; playback rate 0.95–1.2; pan. At most ~28 distinct drops start per
 second. A continuous bed of real rain recordings (looping) fades in with the case rate (silent below
-2 drops/s, full at 50/s), its texture following the lineage mix. A very faint constant room tone avoids
-digital silence. 0.4 s reverb; gentle master compression and a limiter; -3 dB shelf above 5 kHz.
+15 drops/s, full at 200/s), its texture following the lineage mix. With no cases there is silence. 0.4 s reverb; gentle master compression and a limiter; -3 dB shelf above 5 kHz.
 Thunder = real thunder recordings plus mild saturated harmonics. Sparse silence at low case counts is
 intentional: early in an outbreak only a few drops fall."""
 

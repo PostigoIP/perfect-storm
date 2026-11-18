@@ -20,9 +20,9 @@ export function grainLength(severity, u) {
 
 // How much of the continuous rain bed to fade in, from the rate of drops
 // actually falling (cases per real second). Silent while drops are countable
-// (< 2/s); full by 50/s; log-shaped in between, so the bed is the epidemic's
+// (< 15/s, the most an ear can follow); full by 200/s; log-shaped in between, so the bed is the epidemic's
 // own density, never a fixed ambience.
-export function bedLevel(dropsPerSec, from = 2, full = 50) {
+export function bedLevel(dropsPerSec, from = 15, full = 200) {
   if (dropsPerSec <= from) return 0;
   return Math.min(1, Math.log(dropsPerSec / from) / Math.log(full / from));
 }

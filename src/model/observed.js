@@ -53,6 +53,7 @@ export function createObservedSource(data, { seed = 7 } = {}) {
 
   const api = {
     get t() { return t; },
+    get done() { return t >= tEnd; },
     title: meta.title,
     lede: meta.lede,
     defaultSpeed: meta.defaultSpeed ?? 5,

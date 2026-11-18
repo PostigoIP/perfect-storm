@@ -77,14 +77,6 @@ function createPlayer(ctx, bank, seed = 9) {
       bed[mat] = g;
     }
     bed._lp = lp;
-    // room tone: the quietest stretch of a recording, very low and constant, so sparse drops
-    // fall into air rather than digital silence
-    const tone = ctx.createBufferSource();
-    tone.buffer = (bank.grains.stone ?? Object.values(bank.grains)[0])[0].buffer; tone.loop = true;
-    const tlp = ctx.createBiquadFilter(); tlp.type = 'lowpass'; tlp.frequency.value = 2500;
-    const tg = ctx.createGain(); tg.gain.value = 0.018;
-    tone.connect(tlp).connect(tg).connect(space.bedIn);
-    tone.start(ctx.currentTime, rand() * Math.max(0, tone.buffer.duration - 1));
   }
 
   return {

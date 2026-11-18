@@ -63,6 +63,7 @@ function frame(now) {
   if (state.running) {
     const tStart = source.t;
     const onsets = source.step(dtReal * state.speed);
+    if (source.done) play(false);   // the observed data has ended: stop, and let the rain fade
     for (const c of onsets) {
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
