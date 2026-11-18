@@ -3,7 +3,7 @@ import { createBus } from './bus.js';
 import { createSim } from './model/sim.js';
 import { buildTree, thinTips } from './model/tree.js';
 import { createAudio, LOOKAHEAD } from './audio/engine.js';
-import { surfaceFor, MATERIAL } from './audio/voice.js';
+import { surfaceFor, MATERIAL, VARIANT_PROFILES, setVariantProfile, soundName } from './audio/voice.js';
 import { bedLevel } from './audio/grains.js';
 import { createStage } from './view/stage.js';
 import { createLedger } from './view/ledger.js';
@@ -141,17 +141,16 @@ $('legend').addEventListener('click', (e) => {
 
 let legendKey = '';
 function drawLegend(order) {
-  const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}|${materialOf(l)}`);
+  const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}|${materialOf(l)}|${soundName(materialOf(l))}`);
   const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths;
   if (key === legendKey) return;
   legendKey = key;
   const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
-  const MAT = { puddle: 'base tone', 'puddle:bright': 'brighter', 'puddle:dark': 'darker', 'puddle:light': 'lighter' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
     const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
     const on = !mutedLineages.has(l);
-    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${on ? 'Mute' : 'Unmute'} this lineage's sound"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · ${on ? `sound: ${MAT[materialOf(l)] ?? materialOf(l)}` : 'muted'}</span></button></li>`;
+    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${on ? 'Mute' : 'Unmute'} this lineage's sound"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · ${on ? `sound: ${soundName(materialOf(l))}` : 'muted'}</span></button></li>`;
   }).join('') +
   `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${audio.deaths ? 'Mute' : 'Unmute'} the extra low sound played for each death"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">Deaths</span><span class="stage__legend-sub">${audio.deaths ? 'an extra low knock per death' : 'muted'}</span></button></li>` +
   `<li class="stage__legend-key"><span class="stage__legend-sw"></span>reported<span class="stage__legend-sw stage__legend-sw--faint"></span>never reported</li>` +
@@ -422,6 +421,26 @@ for (const r of document.querySelectorAll('input[data-bank]')) {
   });
 }
 $('bank-note').textContent = BANK_NOTES[BANK] ?? '';
+
+// Variant contrast: listening test, offered locally only (the published site keeps 'subtle').
+{
+  const host = $('variant-ab');
+  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const initial = new URLSearchParams(location.search).get('variants') || 'subtle';
+  setVariantProfile(initial);
+  if (local && host) {
+    host.hidden = false;
+    host.querySelector('fieldset').insertAdjacentHTML('beforeend', Object.entries(VARIANT_PROFILES).map(([k, p]) =>
+      `<label><input type="radio" name="variants" data-variants="${k}" ${k === initial ? 'checked' : ''} /><span>${p.label}</span></label>`).join(''));
+    host.addEventListener('change', (e) => {
+      const k = e.target.dataset.variants;
+      if (!k) return;
+      setVariantProfile(k);
+      legendKey = ''; drawLegend(lineageOrder());
+      const u = new URL(location.href); u.searchParams.set('variants', k); history.replaceState(null, '', u);
+    });
+  }
+}
 $('theme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -456,11 +475,11 @@ const TUTORIAL = [
   { title: 'Unreported cases', text: 'Cases nobody reports still fall, but farther away: fainter, darker, wetter.',
     play: () => demo([{ lineage: 0, detected: false }, { lineage: 0, detected: false }, { lineage: 0, detected: false }], 0.5) },
   { title: 'A new variant', text: 'When a new lineage takes hold, its drops fall a little brighter.',
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:bright' })), 0.45) },
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.glass })), 0.45) },
   { title: 'A second variant', text: 'A later lineage falls darker.',
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:dark' })), 0.45) },
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.metal })), 0.45) },
   { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.',
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:light' })), 0.45) },
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.leaf })), 0.45) },
   { title: 'Deaths', text: 'Each death adds a low knock. You can mute it from "Deaths" in the legend.',
     play: () => { const was = audio.deaths; audio.setDeaths(true); demo([{ lineage: 0, detected: true, severity: 3, outcome: 'fatal' }], 0); setTimeout(() => audio.setDeaths(was), 600); } },
   { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.',

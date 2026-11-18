@@ -15,9 +15,40 @@ const SEND = { near: 0.06, mid: 0.2, far: 0.42 };
 // variant 1 and imports = clear dripping 'plinks'; variant 2 = drips on leaves.
 // Every lineage uses the puddle drops (Argon: 'soft wet pats, like drops on wet soil', 9/10; the
 // 'plink' and 'leaves' recordings sounded like a faucet / dry clicks). Lineages differ by tone only.
-export const MATERIAL = { stone: 'puddle', glass: 'puddle:bright', metal: 'puddle:dark', leaf: 'puddle:light' };
+// How lineages are told apart. 'subtle' is the published default; the others are
+// listening tests (user, 2026-11-18: 'variants are very hard to distinguish').
+// tones: [rate ×, brightness ×, pan (null = by lineage)]; jitter: random pitch spread per drop.
+const ROLES = { stone: 'puddle', glass: 'puddle:bright', metal: 'puddle:dark', leaf: 'puddle:light' };
+export const VARIANT_PROFILES = {
+  subtle:   { label: 'Subtle', material: ROLES, jitter: 0.225,
+              tones: { '': [1, 1, null], bright: [1.12, 1.15, null], dark: [0.9, 0.7, null], light: [1.05, 1.05, null] },
+              names: { '': 'base tone', bright: 'brighter', dark: 'darker', light: 'lighter' } },
+  pitch:    { label: 'Pitch', material: ROLES, jitter: 0.06,
+              tones: { '': [1, 1, null], bright: [1.335, 1.2, null], dark: [0.75, 0.7, null], light: [1.19, 1.1, null] },
+              names: { '': 'base pitch', bright: 'higher', dark: 'lower', light: 'a little higher' } },
+  interval: { label: 'Intervals', material: ROLES, jitter: 0.03,
+              tones: { '': [1, 1, null], bright: [1.498, 1.2, null], dark: [0.749, 0.75, null], light: [2.0, 1.3, null] },
+              names: { '': 'base note', bright: 'a fifth up', dark: 'a fourth down', light: 'an octave up' } },
+  material: { label: 'Materials', material: { stone: 'leaf', glass: 'glass', metal: 'metal', leaf: 'stone' }, jitter: 0.225,
+              tones: { '': [1, 1, null] },
+              names: { leaf: 'leaves', glass: 'glass', metal: 'metal', stone: 'stone' } },
+  space:    { label: 'Space', material: ROLES, jitter: 0.15,
+              tones: { '': [1, 1, 0], bright: [1.06, 1.1, -0.8], dark: [0.94, 0.85, 0.8], light: [1.03, 1, 0.45] },
+              names: { '': 'centre', bright: 'left, brighter', dark: 'right, darker', light: 'right of centre' } },
+};
+let profile = VARIANT_PROFILES.subtle;
+export const MATERIAL = { ...profile.material };     // mutable: follows the active profile
+export function setVariantProfile(name) {
+  profile = VARIANT_PROFILES[name] ?? VARIANT_PROFILES.subtle;
+  Object.assign(MATERIAL, profile.material);
+  return profile;
+}
+// a human description of a material string under the active profile
+export function soundName(material) {
+  const [set, tone = ''] = material.split(':');
+  return profile.names[material] ?? profile.names[tone] ?? profile.names[set] ?? set;
+}
 // tone variants of one recording: playback-rate and brightness multipliers
-const TONES = { '': [1, 1], bright: [1.12, 1.15], dark: [0.9, 0.7], light: [1.05, 1.05] };
 // older banks name their sets by surface; map the drop sets onto them
 export const SET_ALIAS = { puddle: 'leaf', plink: 'glass', leaves: 'stone' };
 export const materialFor = (lineage, lineages) => MATERIAL[surfaceFor(lineage, lineages)] ?? 'puddle';
@@ -54,14 +85,14 @@ export function caseToVoice(c, surface, eventsPerSec, rand) {
   if (!c.detected) d = 0.35 + 0.65 * d;
   const layer = d < 0.35 ? 'near' : d < 0.7 ? 'mid' : 'far';
   const [set, tone = ''] = surface.split(':');
-  const [rateMul, brightMul] = TONES[tone] ?? TONES[''];
+  const [rateMul, brightMul, panAt] = profile.tones[tone] ?? profile.tones[''] ?? [1, 1, null];
   return {
     set,
     index: Math.floor(hash01(c.id + 7) * 1e6),
-    rate: (0.962 + 0.225 * hash01(c.id * 7 + 3) + 0.01 * Math.sin(c.muts * 1.7)) * rateMul,   // 0.95–1.2, shifted per lineage
+    rate: (1.075 + profile.jitter * (hash01(c.id * 7 + 3) - 0.5) + 0.01 * Math.sin(c.muts * 1.7)) * rateMul,   // centred 1.075, shifted per lineage
     gain: GAIN[c.severity] * Math.pow(10, (-24 * d) / 20) * densityGain(eventsPerSec),
     lowpassHz: BRIGHT[c.severity] * (1 - 0.65 * d) * brightMul,
-    pan: PAN_ZONES[c.lineage % PAN_ZONES.length] + (hash01(c.id) - 0.5) * 0.5,
+    pan: panAt != null ? panAt + (hash01(c.id) - 0.5) * 0.3 : PAN_ZONES[c.lineage % PAN_ZONES.length] + (hash01(c.id) - 0.5) * 0.5,
     distance: d,
     layer,
     send: 0.02 + 0.2 * d,

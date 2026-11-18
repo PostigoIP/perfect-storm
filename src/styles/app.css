@@ -222,3 +222,5 @@ body[data-mode="obs"] .sim-only { display: none; }
 .tutorial[hidden] { display: none; }
 .tutorial__title { font-size: var(--ps-fs-chapter); }
 .tutorial__skip { margin-left: auto; }
+
+.ps-seg--wrap { flex-wrap: wrap; }

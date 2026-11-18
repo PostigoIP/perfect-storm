@@ -76,4 +76,19 @@ describe('densityGain', () => {
     expect(avg('puddle:dark', 'rate')).toBeLessThan(avg('puddle', 'rate'));
     expect(avg('puddle:dark', 'lowpassHz')).toBeLessThan(avg('puddle', 'lowpassHz'));
   });
+
+  it('contrast profiles separate the variants clearly', async () => {
+    const { setVariantProfile, MATERIAL } = await import('../src/audio/voice.js');
+    const r3 = mulberry32(8);
+    const mean = (mat, k) => { let t = 0; for (let i = 0; i < 400; i++) t += caseToVoice({ ...base, id: i }, mat, 1, r3)[k]; return t / 400; };
+    setVariantProfile('interval');
+    expect(mean(MATERIAL.glass, 'rate') / mean(MATERIAL.stone, 'rate')).toBeCloseTo(1.498, 1);
+    setVariantProfile('space');
+    expect(mean(MATERIAL.glass, 'pan')).toBeLessThan(-0.5);
+    expect(mean(MATERIAL.metal, 'pan')).toBeGreaterThan(0.5);
+    setVariantProfile('material');
+    expect(new Set(Object.values(MATERIAL)).size).toBe(4);
+    setVariantProfile('subtle');
+    expect(MATERIAL.glass).toBe('puddle:bright');
+  });
 });
