@@ -1,0 +1,63 @@
+/* Interim tokens. Replaced wholesale by design-system/tokens.css when that branch lands.
+   Names are the contract shared with the design-system session. */
+:root {
+  --ps-paper: #efeee9;
+  --ps-ink: #0b0b0b;
+  --ps-ink-2: #55544f;
+  --ps-rule: #0b0b0b;
+  --ps-accent: #d4380d;
+  --ps-lineage-1: #0b0b0b;   /* founder — stone */
+  --ps-lineage-2: #1f5fbf;   /* variant 1 — glass */
+  --ps-lineage-3: #c2410c;   /* variant 2 — metal */
+  --ps-lineage-4: #6b7a2a;   /* imports — leaf */
+  --ps-lineage-5: #8a3ab9;
+  --ps-severity-1: #b9b7ae;
+  --ps-severity-2: #85837a;
+  --ps-severity-3: #4a4944;
+  --ps-severity-4: #0b0b0b;
+
+  --ps-font-display: "Archivo", "Arial Narrow", sans-serif;
+  --ps-font-text: "Archivo", system-ui, sans-serif;
+  --ps-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --ps-fs-display: clamp(2.6rem, 7vw, 6.5rem);
+  --ps-fs-h1: clamp(1.8rem, 3.6vw, 3rem);
+  --ps-fs-h2: 1.25rem;
+  --ps-fs-body: 1rem;
+  --ps-fs-small: 0.875rem;
+  --ps-fs-caption: 0.6875rem;
+  --ps-fs-data: clamp(1.6rem, 3.2vw, 2.75rem);
+  --ps-lh-tight: 0.92;
+  --ps-lh-body: 1.45;
+  --ps-tracking-caps: 0.08em;
+
+  --ps-space-1: 4px;  --ps-space-2: 8px;  --ps-space-3: 12px; --ps-space-4: 16px;
+  --ps-space-5: 24px; --ps-space-6: 32px; --ps-space-7: 48px; --ps-space-8: 72px;
+  --ps-gutter: 16px;
+  --ps-cols: 12;
+  --ps-rule-w: 1px;
+  --ps-rule-w-strong: 3px;
+
+  --ps-dur-fast: 120ms;
+  --ps-dur-slow: 900ms;
+  --ps-ease: cubic-bezier(.2, 0, 0, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ps-paper: #0c0c0b; --ps-ink: #ecebe6; --ps-ink-2: #a3a29b; --ps-rule: #ecebe6;
+    --ps-lineage-1: #ecebe6; --ps-lineage-2: #6fa8ff; --ps-lineage-3: #ff8a4c;
+    --ps-lineage-4: #b5c96a; --ps-lineage-5: #d29bff;
+    --ps-severity-1: #4a4944; --ps-severity-2: #7d7c75; --ps-severity-3: #b3b2ab; --ps-severity-4: #ecebe6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ps-paper: #0c0c0b; --ps-ink: #ecebe6; --ps-ink-2: #a3a29b; --ps-rule: #ecebe6;
+  --ps-lineage-1: #ecebe6; --ps-lineage-2: #6fa8ff; --ps-lineage-3: #ff8a4c;
+  --ps-lineage-4: #b5c96a; --ps-lineage-5: #d29bff;
+  --ps-severity-1: #4a4944; --ps-severity-2: #7d7c75; --ps-severity-3: #b3b2ab; --ps-severity-4: #ecebe6;
+  color-scheme: dark;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --ps-dur-fast: 0ms; --ps-dur-slow: 0ms; }
+}

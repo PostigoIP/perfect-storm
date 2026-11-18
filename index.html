@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Perfect Storm</title>
+  <meta name="description" content="Auditory epidemiology. Every case is one drop; rain is what an outbreak sounds like." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,600;62..125,800&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/src/styles/tokens.css" />
+  <link rel="stylesheet" href="/src/styles/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="./">Perfect&nbsp;Storm</a>
+    <span class="topbar__sub">Auditory epidemiology</span>
+    <div class="seg" role="group" aria-label="Data source">
+      <button type="button" id="mode-sim" aria-pressed="true">Simulate</button>
+      <button type="button" id="mode-obs" aria-pressed="false">Observed</button>
+    </div>
+    <button type="button" class="btn" id="theme" aria-label="Toggle light and dark">◐</button>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-label="Storm">
+      <canvas id="stage"></canvas>
+      <div class="stage__text">
+        <p class="label" id="chapter-num">00</p>
+        <h1 class="display" id="chapter-title">Every case is one drop.</h1>
+        <p class="lede" id="chapter-body">Rain is what an outbreak sounds like.</p>
+      </div>
+      <dl class="metrics" id="metrics">
+        <div><dt>Day</dt><dd id="m-day">0</dd></div>
+        <div><dt>Onsets / day</dt><dd id="m-inc">0</dd></div>
+        <div><dt>Cumulative</dt><dd id="m-cum">0</dd></div>
+        <div><dt>R<sub>t</sub></dt><dd id="m-rt">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="figures">
+      <figure class="fig">
+        <figcaption><span class="label">Fig. 1</span> Phylogeny <span class="fig__note" id="tree-note">time-resolved · sequenced cases</span></figcaption>
+        <svg id="tree" role="img" aria-label="Evolving phylogenetic tree"></svg>
+      </figure>
+      <figure class="fig">
+        <figcaption><span class="label">Fig. 2</span> Case series <span class="fig__note" id="epi-note">onsets by day · filled = reported</span></figcaption>
+        <svg id="epicurve" role="img" aria-label="Epidemic curve of cases by onset date"></svg>
+      </figure>
+      <ul class="legend" id="legend" aria-label="Lineages"></ul>
+    </section>
+
+    <aside class="rail" id="controls" aria-label="Controls">
+      <div class="panel">
+        <div class="panel__head">Transport</div>
+        <div class="row">
+          <button type="button" class="btn btn--primary" id="play">Play</button>
+          <button type="button" class="btn" id="reset">Reset</button>
+          <label class="switch"><input type="checkbox" id="sound" /> <span>Sound</span></label>
+        </div>
+        <label class="slider"><span>Volume</span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" /></label>
+      </div>
+      <div class="panel">
+        <div class="panel__head">Chapters</div>
+        <ol class="chapters" id="chapters"></ol>
+      </div>
+      <div class="panel" id="params"><div class="panel__head">Transmission</div></div>
+      <div class="panel">
+        <div class="panel__head">Discontinuities</div>
+        <div class="row">
+          <button type="button" class="btn" id="variant">New variant</button>
+          <button type="button" class="btn" id="import">Import pulse</button>
+        </div>
+      </div>
+      <div class="panel source" id="provenance"></div>
+    </aside>
+  </main>
+
+  <div class="start" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">
+    <div class="start__inner">
+      <p class="label">Perfect Storm</p>
+      <h2 class="display" id="start-title">Every case is one drop.</h2>
+      <p class="lede">Headphones recommended. Each infection in the model sounds once, on the surface of its lineage.</p>
+      <div class="row">
+        <button type="button" class="btn btn--primary" id="start-listen">Listen</button>
+        <button type="button" class="btn" id="start-silent">Watch in silence</button>
+      </div>
+      <p class="caption" id="bank-status"></p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
