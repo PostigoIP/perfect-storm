@@ -12,3 +12,7 @@ generador_sounds/
 review/
 .superpowers/
 .claude/worktrees/
+.backup/
+# third-party samples (not redistributable): kept locally, never committed
+generador_lluvia/sources/
+generador_lluvia/drop.wav
