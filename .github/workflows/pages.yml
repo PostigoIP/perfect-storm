@@ -1,18 +1,11 @@
-# GitHub Pages deploy — DISABLED until you choose to go live.
-#
-# This runs only when started by hand (Actions tab → "Deploy to GitHub Pages"
-# → Run workflow). It does nothing on push. Before the first run:
-#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions".
-#      (A private repo needs a paid plan for Pages, and the site is PUBLIC
-#      even though the repo is private.)
-#   2. This file must be on the default branch (main) for "Run workflow" to
-#      appear, and the "github-pages" environment only deploys from main by
-#      default. See docs/deploy.md.
-# Until Pages is enabled, a run fails at the deploy step and publishes nothing.
+# GitHub Pages deploy: builds, tests and publishes the site on every push to main
+# (and by hand from the Actions tab). Live at https://postigoip.github.io/perfect-storm/
 
 name: Deploy to GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
