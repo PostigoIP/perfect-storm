@@ -115,9 +115,21 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
 
 export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = (u) => fetch(u), AC = globalThis.AudioContext || globalThis.webkitAudioContext } = {}) {
   let ctx = null, bank = null, player = null, muted = false, volume = 0.8;
+  const cache = new Map();              // manifest url → decoded bank (switching back is instant)
 
   const api = {
     get ready() { return !!player; },
+    get bankUrl() { return manifestUrl; },
+    // Swap the sound bank live; sounds already scheduled finish on the old one.
+    async setBank(url) {
+      manifestUrl = url;
+      if (!cache.has(url)) cache.set(url, await decodeBank(() => ctx ?? new OfflineAudioContext(1, 1, 44100), url, fetchFn));
+      if (manifestUrl !== url) return cache.get(url);      // a newer switch won the race
+      bank = cache.get(url);
+      player = bank && ctx ? createPlayer(ctx, bank) : null;
+      if (player) api.setVolume(volume);
+      return bank;
+    },
     get ctx() { return ctx; },
     async unlock() {
       if (!ctx) ctx = new AC({ latencyHint: 'interactive' });
@@ -126,7 +138,8 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
       return ctx;
     },
     async loadBank() {
-      bank = await decodeBank(() => ctx ?? new OfflineAudioContext(1, 1, 44100), manifestUrl, fetchFn);
+      if (!cache.has(manifestUrl)) cache.set(manifestUrl, await decodeBank(() => ctx ?? new OfflineAudioContext(1, 1, 44100), manifestUrl, fetchFn));
+      bank = cache.get(manifestUrl);
       if (bank && ctx && !player) { player = createPlayer(ctx, bank); api.setVolume(volume); }
       return bank;
     },

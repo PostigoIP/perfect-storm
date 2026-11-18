@@ -12,4 +12,13 @@ describe('createAudio', () => {
     const a = createAudio({ fetchFn: async () => { throw new Error('offline'); } });
     expect(await a.loadBank()).toBeNull();
   });
+
+  it('setBank to a missing bank keeps running silently and reports null', async () => {
+    const asked = [];
+    const a = createAudio({ fetchFn: async (u) => { asked.push(u); return { ok: false, status: 404 }; } });
+    expect(await a.setBank('./sounds-x/manifest.json')).toBeNull();
+    expect(asked).toContain('./sounds-x/manifest.json');
+    expect(a.bankUrl).toBe('./sounds-x/manifest.json');
+    expect(a.ready).toBe(false);
+  });
 });

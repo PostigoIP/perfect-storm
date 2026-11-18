@@ -299,6 +299,23 @@ $('volume').addEventListener('input', (e) => {
   setFill(e.target);
   $('volume-out').textContent = `${Math.round(+e.target.value * 100)}%`;
 });
+// A/B: switch the sound source live, while the storm keeps playing
+const BANK_NOTES = {
+  'sounds-field': 'Real CC0 rain on stone, glass, metal and leaves.',
+  'sounds-textures': 'ElevenLabs-generated rain textures, cut at each drop.',
+  sounds: 'ElevenLabs single-drop takes (the first attempt).',
+};
+for (const r of document.querySelectorAll('input[data-bank]')) {
+  if (r.dataset.bank === BANK) r.checked = true;
+  r.addEventListener('change', async () => {
+    const name = r.dataset.bank;
+    $('bank-note').textContent = 'Loading…';
+    const bank = await audio.setBank(`./${name}/manifest.json`);
+    $('bank-note').textContent = bank ? BANK_NOTES[name] : 'This sound bank is not available.';
+    const u = new URL(location.href); u.searchParams.set('bank', name); history.replaceState(null, '', u);
+  });
+}
+$('bank-note').textContent = BANK_NOTES[BANK] ?? '';
 $('theme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
