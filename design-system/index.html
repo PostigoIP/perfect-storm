@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="./components.css">
 <style>
   /* Page layout only — everything reusable lives in components.css */
-  body { min-height: 100vh; overflow-x: hidden; }
+  body { min-height: 100vh; }
   .page { max-width: var(--ps-max); margin: 0 auto; padding: 0 var(--ps-gutter) var(--ps-space-8); }
   .hero { padding: var(--ps-space-8) var(--ps-gutter) var(--ps-space-6); border-bottom: var(--ps-rule-w) solid var(--ps-rule); }
   .hero__inner { max-width: var(--ps-max); margin: 0 auto; display: grid; gap: var(--ps-space-6); }
@@ -129,7 +129,7 @@
       <li><strong>One slit of light</strong><span class="muted">A single accent marks what is active now. If two things glow, neither does.</span></li>
       <li><strong>Symmetry along an axis</strong><span class="muted">Centre the wordmark and the main view on one vertical axis; let the rest settle around it.</span></li>
       <li><strong>Day and night</strong><span class="muted">Two themes, each tuned on its own surface: washed concrete by day, deep blue passage by night.</span></li>
-      <li><strong>Forms emerge and recede</strong><span class="muted">Motion is slow change of light, not travel. Nothing bounces; under reduced motion, nothing moves.</span></li>
+      <li><strong>Light arrives and leaves</strong><span class="muted">Motion is slow change of light, not travel. Nothing bounces; under reduced motion, nothing moves.</span></li>
       <li><strong>Raw and honest</strong><span class="muted">No radii, no shadows, no gradients on controls. A line, a fill, a word.</span></li>
     </ol>
   </section>
@@ -159,6 +159,9 @@
   <section id="type" class="ps-panel">
     <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">03</span>Type</h2><span class="ps-label">Archivo · Hanken Grotesk · IBM Plex Mono</span></div>
     <div>
+      <div class="spec"><code>--ps-font-display</code><div class="spec__sample" style="font-family:var(--ps-font-display);font-stretch:var(--ps-stretch-display);font-size:var(--ps-fs-h2)">Archivo · semi-expanded via <code>--ps-stretch-display</code> · titles, numerals</div></div>
+      <div class="spec"><code>--ps-font-text</code><div class="spec__sample" style="font-family:var(--ps-font-text)">Hanken Grotesk · 300–500 · reading text, labels, controls</div></div>
+      <div class="spec"><code>--ps-font-mono</code><div class="spec__sample" style="font-family:var(--ps-font-mono);font-size:var(--ps-fs-data)">IBM Plex Mono · 400/500 · data, indices, tooltips · 0123456789</div></div>
       <div class="spec"><code>--ps-fs-display</code><div class="spec__sample ps-display">Coming forth</div></div>
       <div class="spec"><code>--ps-fs-h1</code><div class="spec__sample ps-h1">Passage of a lineage</div></div>
       <div class="spec"><code>--ps-fs-h2</code><div class="spec__sample ps-h2">Transmission tree</div></div>
@@ -178,7 +181,7 @@
     <div class="cols cols--wide">
       <div class="stack" id="spaces"></div>
       <div class="stack">
-        <span class="ps-label">Columns — <code id="cols-val"></code> · gutter <code id="gutter-val"></code></span>
+        <span class="ps-label"><code>--ps-cols</code> <code id="cols-val"></code> · <code>--ps-gutter</code> <code id="gutter-val"></code></span>
         <div class="gridviz" id="gridviz"></div>
         <div class="rules">
           <div><code>--ps-rule-w</code><div style="border-top:var(--ps-rule-w) solid var(--ps-ink)"></div></div>
@@ -193,7 +196,7 @@
 
   <!-- 05 ─────────────────────────────────────────────────────────── -->
   <section id="motion" class="ps-panel">
-    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">05</span>Motion</h2><span class="ps-label">Forms emerge and recede</span></div>
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">05</span>Motion</h2><span class="ps-label">Light arrives and leaves</span></div>
     <div class="cols">
       <div class="stack">
         <p class="muted">Light changes; objects don't travel. Use <code>--ps-dur-slow</code> for things appearing and fading, <code>--ps-dur-fast</code> for direct feedback on controls. Both drop to 0 under <code>prefers-reduced-motion</code>.</p>
@@ -323,7 +326,7 @@
       <div class="ps-source">
         <ol>
           <li><span>Kermack, W. O. &amp; McKendrick, A. G. (1927). <cite>A contribution to the mathematical theory of epidemics.</cite> Proc. R. Soc. Lond. A 115, 700–721.</span></li>
-          <li><span>Visual language after the exhibition <cite>Manifestations in the Light</cite> by Rachel Garrard, St. Agnes, Berlin (2026). No images or text from it are reproduced here.</span></li>
+          <li><span>Visual language after the exhibition <cite>Manifestations in the Light</cite> by Rachel Garrard, St. Agnes, Berlin (2026). No images are reproduced; the concepts are paraphrased.</span></li>
         </ol>
       </div>
     </div>
@@ -418,7 +421,7 @@
     document.getElementById('gutter-val').textContent = getComputedStyle(document.querySelector('.page')).paddingLeft;
     document.getElementById('gridviz').innerHTML = Array.from({ length: cols }, (_, i) => `<div>${i + 1}</div>`).join('');
     document.getElementById('lh').textContent = `${css('--ps-lh-tight')} / ${css('--ps-lh-body')}`;
-    document.getElementById('motion-vals').textContent = `fast ${css('--ps-dur-fast')} · slow ${css('--ps-dur-slow')} · ease ${css('--ps-ease')}`;
+    document.getElementById('motion-vals').innerHTML = `--ps-dur-fast ${css('--ps-dur-fast')}<br>--ps-dur-slow ${css('--ps-dur-slow')}<br>--ps-ease ${css('--ps-ease')}`;
   }
   window.addEventListener('resize', refresh);
 

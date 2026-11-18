@@ -9,7 +9,7 @@
 > - **The installation:** a floor gridded in white quartz powder, with found objects set on it as glyphs.
 > - **The paintings and their intent:** hand-ground mineral pigment on linen, built around a vertical axis and a slit of light; a last work that is almost only light; a passage through transforming states.
 >
-> No branding, text or images from the gallery or the artist are used.
+> No branding, images or logos from the gallery or the artist are used. A few short concept words ("matter, image, light", "coming forth") paraphrase the exhibition's theme.
 
 Files:
 
@@ -17,17 +17,17 @@ Files:
 |---|---|
 | `tokens.css` | Every `--ps-*` custom property; day (light) on `:root`, night (dark) under `prefers-color-scheme` and `[data-theme="dark"]` |
 | `components.css` | Plain CSS classes, prefixed `ps-`, built only from tokens |
-| `index.html` | Reference page: every token (with live hex and contrast) and every component, Day/Night/Auto toggle |
+| `index.html` | Reference page: every token (with live hex and contrast) and every component, Day/Night/Auto toggle. It links `./tokens.css` and `./components.css`, so it always shows the real files; serve the folder (e.g. `python3 -m http.server -d design-system`) |
 
 ## Principles
 
 1. **The floor is the grid.** Structure is a fine light line laid on raw ground, like quartz powder on concrete. Data is placed *on* the grid, never boxed in. Use `.ps-floor` behind fields of marks; dividers are hairlines, and panels have no box.
 2. **Every case is a glyph.** One mark per event, placed precisely in relation to the others. Each lineage has a **shape** (`--ps-glyph-1…5`: block, triangle, cross, lozenge, bar) as well as a colour, so identity never rests on colour alone.
-3. **Colour is matter.** The five lineage colours are mineral pigments: iron, lapis, malachite, manganese, ochre. They step from dark to light so they separate by lightness, not hue alone. Everything else is concrete, graphite and quartz. Severity is a hue-free concrete ramp, so it can never be confused with a lineage.
+3. **Colour is matter.** The five lineage colours are mineral pigments: iron, lapis, malachite, manganese, ochre. They step from dark to light so they separate by lightness, not hue alone. Everything else is concrete, graphite and quartz. Severity is a hue-free concrete ramp. It spans the full range of lightness, so some steps come close to a lineage (light theme: severity-4 against iron is ΔE 7; severity-3 against malachite collapses under CVD). Never fill by lineage *and* severity in one view: encode the second through glyph, size or outline.
 4. **One slit of light.** There is a single accent, cinnabar by day and the glow of light by night. It marks what is active now: the current chapter, a focused control, the hover state of a primary action. It is never a data colour. If two things glow, neither does.
 5. **Symmetry along an axis.** The wordmark sits on a vertical slit (`.ps-wordmark__slit`), and the main view can be centred on one axis (`.ps-axis`); everything else settles around it.
 6. **Day and night are separate.** "Coming forth by day" versus the night passage. The dark theme is not an inversion. Each theme's colours were chosen and checked against its own surface (contrast ≥3:1 for every lineage; colour-blind ΔE ≥8 between every pair of lineages).
-7. **Forms emerge and recede.** Motion is a slow change of light, not travel. Use `--ps-dur-slow` (1.2 s) for things appearing or fading and `--ps-dur-fast` for direct feedback on controls. Nothing bounces. Under `prefers-reduced-motion` every duration is 0.
+7. **Light arrives and leaves.** Motion is a slow change of light, not travel. Use `--ps-dur-slow` (1.2 s) for things appearing or fading and `--ps-dur-fast` for direct feedback on controls. Nothing bounces. Under `prefers-reduced-motion` every duration is 0.
 8. **Raw and honest.** No radii, no shadows, no ornament on controls: a line, a fill, a word. Uppercase is always tracked (`--ps-tracking-caps`).
 
 ## Using the tokens
@@ -38,8 +38,10 @@ Files:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="design-system/tokens.css">
 <link rel="stylesheet" href="design-system/components.css">
-<html class="ps-root"> <!-- optional: base body type/colour and box-sizing -->
+<html class="ps-root"> <!-- recommended: body type, colour and background from tokens -->
 ```
+
+**Base styles.** `components.css` works without `.ps-root`: every `ps-` class brings its own box-sizing, square corners, focus ring and the `<var>` case exemption. `.ps-root` adds page-level body type, colour and background on top of that.
 
 **Theme.**
 - With no attribute, the page follows the OS.
@@ -123,4 +125,4 @@ The lineage palettes were tested in both themes against their own surface:
 - Simulated protan, deutan and tritan vision: ΔE (OKLab ×100) ≥8.4 between **every** pair.
 - Normal-vision ΔE ≥18.9 between every pair.
 
-The accent was chosen as the hue farthest from all five lineages (ΔE ≥16). The reference page recomputes contrast live from the CSS, so any edit shows its effect immediately.
+The accent was chosen as the hue farthest from all five lineages (ΔE ≥16). Severity was **not** designed to be separable from lineages; see principle 3 for the one-encoding-per-view rule. The reference page recomputes contrast live from the CSS, so any edit shows its effect immediately.

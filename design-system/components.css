@@ -22,7 +22,16 @@
 .ps-root *::before,
 .ps-root *::after { box-sizing: border-box; border-radius: 0; }
 
-.ps-root :focus-visible {
+/* Components carry their own box model and focus ring, so they work
+   without .ps-root on the page. */
+:is([class^="ps-"], [class*=" ps-"]),
+:is([class^="ps-"], [class*=" ps-"])::before,
+:is([class^="ps-"], [class*=" ps-"])::after,
+:is([class^="ps-"], [class*=" ps-"]) * { box-sizing: border-box; border-radius: 0; }
+
+.ps-root :focus-visible,
+:is([class^="ps-"], [class*=" ps-"]):focus-visible,
+:is([class^="ps-"], [class*=" ps-"]) :focus-visible {
   outline: var(--ps-rule-w-strong) solid var(--ps-focus);
   outline-offset: 2px;
 }
@@ -47,9 +56,11 @@
 /* Symbols keep their case inside uppercase text: β must not become Β ("B").
    Wrap parameters and units in <var> (or .ps-sym). */
 .ps-root var,
+:is([class^="ps-"], [class*=" ps-"]) var,
 .ps-sym { font-style: normal; text-transform: none; letter-spacing: 0; }
 .ps-root var sub,
-.ps-root var sup { text-transform: none; }
+:is([class^="ps-"], [class*=" ps-"]) var sub,
+:is([class^="ps-"], [class*=" ps-"]) var sup { text-transform: none; }
 
 /* ---- floor & axis: the two structural motifs ---------------------------- */
 /* .ps-floor — the quartz-powder grid. Put it behind content, never over it. */
@@ -574,7 +585,7 @@
 .ps-source a:hover { color: var(--ps-ink); }
 .ps-source cite { font-style: italic; }
 
-/* ---- emerge: forms appear and recede as the light changes --------------- */
+/* ---- emerge: a slow fade in and out, like daylight moving across a wall - */
 .ps-emerge {
   opacity: 0.12;
   transition: opacity var(--ps-dur-slow) var(--ps-ease);

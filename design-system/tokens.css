@@ -48,9 +48,11 @@
   --ps-glyph-5: polygon(0 30%, 100% 30%, 100% 70%, 0 70%);                        /* bar      */
 
   /* ---- colour: severity (ordinal, none → severe) ------------------------
-     A single neutral concrete ramp — deliberately hue-free so it never
-     collides with a lineage. Severity-1 sits close to paper: give it an
-     ink hairline when it must read as a mark.                             */
+     A single neutral concrete ramp, hue-free. It spans the full lightness
+     range, so some steps sit near a lineage (light: sev-4 ≈ iron,
+     sev-3 ≈ malachite under CVD). Rule: never fill by lineage AND severity
+     in the same view — encode the second one with glyph, size or outline.
+     Severity-1 sits close to paper: give it an ink-2 hairline.            */
   --ps-severity-1:   #c3bdb6;
   --ps-severity-2:   #938b82;
   --ps-severity-3:   #615951;
@@ -101,7 +103,7 @@
   --ps-rule-w-strong: 2px;
   --ps-radius:        0;   /* there are no radii in this system */
 
-  /* ---- motion: forms emerge and recede ---------------------------------- */
+  /* ---- motion: light arrives and leaves; nothing travels ---------------- */
   --ps-dur-fast: 160ms;
   --ps-dur-slow: 1200ms;
   --ps-ease:     cubic-bezier(0.33, 0, 0.15, 1);
