@@ -4,7 +4,7 @@
 const KEY = 'ps-dock-open';
 
 function readOpen() {
-  try { return window.localStorage.getItem(KEY) === '1'; } catch { return false; }
+  return false;   // always start folded (user, 2026-11-18); writeOpen kept for a future preference
 }
 function writeOpen(open) {
   try { window.localStorage.setItem(KEY, open ? '1' : '0'); } catch { /* private mode, blocked storage */ }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="ps-root">
+<html lang="en" class="ps-root" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -138,6 +138,16 @@
         <button type="button" class="ps-btn" id="start-silent">Watch in silence</button>
       </div>
       <p class="caption" id="bank-status"></p>
+    </div>
+    <div class="start__inner tutorial" id="tutorial" hidden>
+      <p class="ps-label"><span id="tut-step">1 / 8</span> · before the story: what you will hear</p>
+      <h2 class="ps-display tutorial__title" id="tut-title"></h2>
+      <p class="lede" id="tut-text"></p>
+      <div class="row">
+        <button type="button" class="ps-btn" id="tut-play">▶ Play again</button>
+        <button type="button" class="ps-btn ps-btn--primary" id="tut-next">Next</button>
+        <button type="button" class="ps-btn tutorial__skip" id="tut-skip">Skip, start the story</button>
+      </div>
     </div>
   </div>
 

@@ -217,3 +217,8 @@ body[data-mode="obs"] .sim-only { display: none; }
   all: unset; pointer-events: auto; cursor: pointer; margin-left: var(--ps-space-3);
   font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-accent); text-decoration: underline;
 }
+
+/* intro tutorial: same frame as the start screen */
+.tutorial[hidden] { display: none; }
+.tutorial__title { font-size: var(--ps-fs-chapter); }
+.tutorial__skip { margin-left: auto; }

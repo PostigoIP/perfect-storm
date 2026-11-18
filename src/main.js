@@ -444,7 +444,61 @@ async function start(withSound) {
       console.error('[audio]', err);
     }
   } else audio.setMuted(true);
+  if (withSound && audio.ready) await runTutorial();
   play(true);
+}
+
+// A short tour of every sound before the story: one drop, an unreported case,
+// each lineage's tone, deaths, thunder, and dense rain.
+const TUTORIAL = [
+  { title: 'One case, one drop', text: 'Each new case falls as a single drop. Early in an outbreak you can count them.',
+    play: () => demo([{ lineage: 0, detected: true }], 0.6) },
+  { title: 'Unreported cases', text: 'Cases nobody reports still fall, but farther away: fainter, darker, wetter.',
+    play: () => demo([{ lineage: 0, detected: false }, { lineage: 0, detected: false }, { lineage: 0, detected: false }], 0.5) },
+  { title: 'A new variant', text: 'When a new lineage takes hold, its drops fall a little brighter.',
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:bright' })), 0.45) },
+  { title: 'A second variant', text: 'A later lineage falls darker.',
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:dark' })), 0.45) },
+  { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.',
+    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:light' })), 0.45) },
+  { title: 'Deaths', text: 'Each death can add a low knock. It is off by default: switch it on from "Deaths" in the legend.',
+    play: () => { const was = audio.deaths; audio.setDeaths(true); demo([{ lineage: 0, detected: true, severity: 3, outcome: 'fatal' }], 0); setTimeout(() => audio.setDeaths(was), 600); } },
+  { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.',
+    play: () => audio.thunder(1) },
+  { title: 'Rain', text: 'And when cases multiply, the drops become rain. Every drop is still one case.',
+    play: () => demo(Array.from({ length: 140 }, () => ({ lineage: 0, detected: Math.random() < 0.4 })), 3.5 / 140, true) },
+];
+function demo(list, gap, jitter = false) {
+  list.forEach((d, i) => {
+    const c = { id: Math.floor(Math.random() * 1e6), severity: d.severity ?? 1, detected: d.detected, muts: 0, lineage: d.lineage, outcome: d.outcome ?? 'recovered' };
+    audio.playCase(c, d.material ?? materialOf(d.lineage), i * gap + (jitter ? Math.random() * gap : 0));
+  });
+}
+function runTutorial() {
+  return new Promise((resolve) => {
+    const intro = $('start').querySelector('.start__inner:not(.tutorial)');
+    const tut = $('tutorial');
+    let k = 0;
+    const show = () => {
+      const step = TUTORIAL[k];
+      $('tut-step').textContent = `${k + 1} / ${TUTORIAL.length}`;
+      $('tut-title').textContent = step.title;
+      $('tut-text').textContent = step.text;
+      $('tut-next').textContent = k === TUTORIAL.length - 1 ? 'Start the story' : 'Next';
+      step.play();
+    };
+    const finish = () => {
+      $('tut-play').onclick = $('tut-next').onclick = $('tut-skip').onclick = null;
+      tut.hidden = true; intro.hidden = false; $('start').hidden = true;
+      resolve();
+    };
+    $('tut-play').onclick = () => TUTORIAL[k].play();
+    $('tut-next').onclick = () => { if (k < TUTORIAL.length - 1) { k++; show(); } else finish(); };
+    $('tut-skip').onclick = finish;
+    intro.hidden = true; tut.hidden = false; $('start').hidden = false;
+    show();
+    $('tut-next').focus();
+  });
 }
 
 // A one-line audio status in the controls, to diagnose silent browsers.
