@@ -33,7 +33,7 @@ const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t,
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
-const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-drops').replace(/[^\w-]/g, '');
+const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-textures').replace(/[^\w-]/g, '');
 // Experiment (user, 2026-11-18): no rain bed at all — every sound is one case's drop.
 const BED_ENABLED = new URLSearchParams(location.search).get('bed') === '1';
 const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json`, bed: BED_ENABLED });
@@ -70,7 +70,7 @@ function frame(now) {
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
       const landAt = now + offset * 1000 + FALL_MS;
-      audio.playCase(c, materialOf(c.lineage), Math.max(0, offset + FALL_MS / 1000 - LOOKAHEAD));
+      if (!mutedLineages.has(c.lineage)) audio.playCase(c, materialOf(c.lineage), Math.max(0, offset + FALL_MS / 1000 - LOOKAHEAD));
       stage.spawn(c, surface, landAt - FALL_MS, landAt);
       state.pending.push({ at: landAt, c, surface, gen: state.gen });
     }
@@ -129,19 +129,33 @@ function lineageOrder() {
   return [...Array(n).keys()];
 }
 
+// Listening aids: mute any lineage's sound (or the death layer) from the legend.
+const mutedLineages = new Set();
+$('legend').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-lineage], button[data-layer]');
+  if (!b) return;
+  if (b.dataset.layer === 'deaths') audio.setDeaths(!audio.deaths);
+  else { const l = +b.dataset.lineage; mutedLineages.has(l) ? mutedLineages.delete(l) : mutedLineages.add(l); }
+  legendKey = ''; drawLegend(lineageOrder());
+});
+
 let legendKey = '';
 function drawLegend(order) {
   const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}|${materialOf(l)}`);
-  const key = items.join(',') + state.mode;
+  const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths;
   if (key === legendKey) return;
   legendKey = key;
   const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
-  const MAT = { puddle: 'drops on wet ground', 'puddle:bright': 'drops on wet ground, brighter', 'puddle:dark': 'drops on wet ground, darker', 'puddle:light': 'drops on wet ground, lighter', leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
+  const MAT = { puddle: 'base tone', 'puddle:bright': 'brighter', 'puddle:dark': 'darker', 'puddle:light': 'lighter' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
     const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
-    return `<li><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · sounds like ${MAT[materialOf(l)] ?? materialOf(l)}</span></li>`;
-  }).join('') + `<li class="stage__legend-key"><span class="stage__legend-sw"></span>reported<span class="stage__legend-sw stage__legend-sw--faint"></span>never reported</li>`;
+    const on = !mutedLineages.has(l);
+    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${on ? 'Mute' : 'Unmute'} this lineage's sound"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · ${on ? `sound: ${MAT[materialOf(l)] ?? materialOf(l)}` : 'muted'}</span></button></li>`;
+  }).join('') +
+  `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${audio.deaths ? 'Mute' : 'Unmute'} the extra low sound played for each death"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">Deaths</span><span class="stage__legend-sub">${audio.deaths ? 'an extra low knock per death' : 'muted'}</span></button></li>` +
+  `<li class="stage__legend-key"><span class="stage__legend-sw"></span>reported<span class="stage__legend-sw stage__legend-sw--faint"></span>never reported</li>` +
+  `<li class="stage__legend-hint">click a line to mute or unmute its sound</li>`;
 }
 
 // The rain bed follows the epidemic: its level from how many drops are falling per

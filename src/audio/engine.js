@@ -14,7 +14,8 @@ export const MAX_VOICES_WITH_BED = 14;   // distinct drops per 0.5 s when the be
 export const MAX_VOICES_NO_BED = 80;     // without a bed the storm is built from drops alone
 
 // Player bound to one context: schedules voices, tracks density, enforces the cap.
-function createPlayer(ctx, bank, { bed: useBed = true } = {}, seed = 9) {
+function createPlayer(ctx, bank, opts = {}, seed = 9) {
+  const useBed = opts.bed ?? true;
   const MAX_VOICES = useBed ? MAX_VOICES_WITH_BED : MAX_VOICES_NO_BED;
   const mix = bank.mix ?? {};   // optional per-bank mix profile (from the manifest)
   const space = createSpace(ctx);
@@ -105,7 +106,7 @@ function createPlayer(ctx, bank, { bed: useBed = true } = {}, seed = 9) {
       recent.push(at);
       const v = { ...caseToVoice(c, surface, evps, rand), severity: c.severity };
       voiceNode(v, at);
-      if (v.extra) voiceNode({ ...v, ...v.extra, index: v.index, layer: 'mid', send: 0.3, pan: v.pan * 0.5 }, at + 0.02);
+      if (v.extra && opts.deaths) voiceNode({ ...v, ...v.extra, index: v.index, layer: 'mid', send: 0.3, pan: v.pan * 0.5 }, at + 0.02);
       return true;
     },
     thunder(at, intensity = 1) {
@@ -155,7 +156,7 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
 }
 
 export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = (u) => fetch(u), AC = globalThis.AudioContext || globalThis.webkitAudioContext, bed = true } = {}) {
-  const playerOpts = { bed };
+  const playerOpts = { bed, deaths: false };   // off by default: it dominated A as a low "table knock"; setDeaths() flips it live
   let ctx = null, bank = null, player = null, muted = false, volume = 0.8;
   const cache = new Map();              // manifest url → decoded bank (switching back is instant)
 
@@ -198,6 +199,8 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
     },
     setBed(levels, darkness = 0) { player?.setBed(levels, darkness); },
     get mix() { return bank?.mix ?? {}; },
+    setDeaths(on) { playerOpts.deaths = !!on; },
+    get deaths() { return playerOpts.deaths; },
     thunder(intensity = 1) {
       if (!player || muted) return;
       player.thunder(ctx.currentTime + LOOKAHEAD, intensity);
