@@ -96,9 +96,9 @@ sub { font-size: .6em; }
 .fig { margin: 0; border-bottom: var(--ps-rule-w) solid var(--ps-rule); padding: var(--ps-space-3) var(--ps-gutter) var(--ps-space-2); }
 .fig figcaption { font-family: var(--ps-font-display); font-weight: 600; font-size: var(--ps-fs-h2); text-transform: uppercase; display: flex; gap: var(--ps-space-3); align-items: baseline; flex-wrap: wrap; }
 .fig__note { margin-left: auto; }
-#tree { width: 100%; height: 360px; display: block; }
+#tree { width: 100%; height: 480px; display: block; }
 #epicurve { width: 100%; height: 200px; display: block; }
-.legend { list-style: none; margin: 0; padding: var(--ps-space-3) var(--ps-gutter); display: flex; flex-wrap: wrap; gap: var(--ps-space-2) var(--ps-space-5); font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); text-transform: uppercase; letter-spacing: var(--ps-tracking-caps); }
+.legend { list-style: none; margin: 0; padding: var(--ps-space-3) var(--ps-gutter); display: flex; flex-wrap: wrap; gap: var(--ps-space-2) var(--ps-space-5); font-family: var(--ps-font-mono); font-size: var(--ps-fs-small); }
 .legend li { display: inline-flex; gap: var(--ps-space-2); align-items: center; }
 .swatch { width: 14px; height: 14px; display: inline-block; }
 
@@ -138,6 +138,23 @@ sub { font-size: .6em; }
   .metrics > div:nth-child(3) { border-left: 0; }
   .metrics > div:nth-child(n+3) { border-top: var(--ps-rule-w) solid var(--ps-rule); }
   .topbar__sub { display: none; }
+  .topbar { flex-wrap: wrap; gap: var(--ps-space-2); }
   .wordmark { margin-right: auto; }
+  .seg button { padding: var(--ps-space-2); }
   #tree { height: 300px; }
 }
+
+/* figure details */
+.fig-label { font-family: var(--ps-font-mono); font-size: 11px; fill: var(--ps-ink); }
+.fig-empty { font-family: var(--ps-font-mono); font-size: 11px; fill: var(--ps-ink-2); }
+.tip--new { animation: tip-in var(--ps-dur-slow) var(--ps-ease); }
+@keyframes tip-in { from { opacity: 0; } to { opacity: 1; } }
+.legend__sub { color: var(--ps-ink-2); }
+.legend__key { margin-left: auto; }
+.swatch--solid { background: var(--ps-ink); }
+.swatch--faint { background: var(--ps-ink); opacity: .28; }
+.source ul { margin: 0 0 var(--ps-space-3); padding-left: 1.1em; }
+.source p { margin: 0; }
+.seg button:disabled { opacity: .4; cursor: not-allowed; }
+
+body[data-mode="obs"] .sim-only { display: none; }
