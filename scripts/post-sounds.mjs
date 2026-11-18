@@ -33,7 +33,9 @@ for (const set of readdirSync(RAW)) {
     const src = join(RAW, set, f);
     const mid = join(tmp, `${set}-${i}.wav`);
     const maxLen = isDrop ? MAX_DROP_SECONDS - 0.05 : 12;
+    const pre = (isDrop ? -3 : -1) - maxVolume(src);     // normalise first so trimming is relative to the take
     const chain = [
+      `volume=${pre.toFixed(2)}dB`,
       'silenceremove=start_periods=1:start_threshold=-42dB:start_silence=0.003',
       'areverse', 'silenceremove=start_periods=1:start_threshold=-60dB:start_silence=0.02', 'areverse',
       `atrim=0:${maxLen}`,

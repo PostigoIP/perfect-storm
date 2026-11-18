@@ -1,6 +1,6 @@
 // Generate the raw sound bank with ElevenLabs Sound Effects (offline, once).
 // Usage: node scripts/gen-sounds.mjs [--dry-run] [--set glass]
-// Reads ELEVENLABS_API_KEY from .env.local (never printed). Skips takes that already exist.
+// Key: $ELEVENLABS_API_KEY, or a file named by $ELEVENLABS_API_KEY_FILE, or .env.local (never printed). Skips takes that already exist.
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,9 @@ const RAW = join(root, 'generador_sounds/raw');
 
 function readKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
+  // a key kept in its own file outside the repo: ELEVENLABS_API_KEY_FILE=/abs/path
+  const kf = process.env.ELEVENLABS_API_KEY_FILE;
+  if (kf && existsSync(kf)) return readFileSync(kf, 'utf8').trim();
   const f = join(root, '.env.local');
   if (!existsSync(f)) return null;
   const m = readFileSync(f, 'utf8').match(/^\s*ELEVENLABS_API_KEY\s*=\s*["']?([^"'\s]+)/m);
