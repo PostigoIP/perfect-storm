@@ -1,0 +1,57 @@
+# GitHub Pages deploy — DISABLED until you choose to go live.
+#
+# This runs only when started by hand (Actions tab → "Deploy to GitHub Pages"
+# → Run workflow). It does nothing on push. Before the first run:
+#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#      (A private repo needs a paid plan for Pages, and the site is PUBLIC
+#      even though the repo is private.)
+#   2. This file must be on the default branch (main) for "Run workflow" to
+#      appear, and the "github-pages" environment only deploys from main by
+#      default. See docs/deploy.md.
+# Until Pages is enabled, a run fails at the deploy step and publishes nothing.
+
+name: Deploy to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx vitest run
+      # base: './' in vite.config.js makes every asset URL relative,
+      # so the same build works at https://<user>.github.io/<repo>/.
+      - run: npx vite build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
