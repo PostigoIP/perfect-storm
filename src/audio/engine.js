@@ -14,6 +14,7 @@ export const MAX_VOICES = 14;        // distinct near drops per 0.5 s; beyond th
 
 // Player bound to one context: schedules voices, tracks density, enforces the cap.
 function createPlayer(ctx, bank, seed = 9) {
+  const mix = bank.mix ?? {};   // optional per-bank mix profile (from the manifest)
   const space = createSpace(ctx);
   const rand = mulberry32(seed);
   let recent = [];                   // onset times (ctx time)
@@ -28,7 +29,8 @@ function createPlayer(ctx, bank, seed = 9) {
     let grain = null;
     if (bank.grains) {
       const pool = bank.drops ?? bank.grains;
-      const entries = pool[v.set] ?? pool[SET_ALIAS[v.set]] ?? Object.values(pool)[0];
+      const set = mix.remap?.[v.set] ?? v.set;
+      const entries = pool[set] ?? pool[SET_ALIAS[set]] ?? Object.values(pool)[0];
       const g = entries && pickGrain(entries, v.index);
       if (!g) return;
       src.buffer = entries[g.entry].buffer;
@@ -46,12 +48,13 @@ function createPlayer(ctx, bank, seed = 9) {
     const g = ctx.createGain();
     if (grain) {
       // one drop: near-instant attack, then a natural exponential decay (no hold)
+      const peak = v.gain * Math.pow(10, (mix.dropDb ?? 0) / 20);
       g.gain.setValueAtTime(0, at);
-      g.gain.linearRampToValueAtTime(v.gain, at + 0.003);
-      g.gain.exponentialRampToValueAtTime(0.0005, at + grain.len);
+      g.gain.linearRampToValueAtTime(peak, at + (mix.attack ?? 0.003));
+      g.gain.exponentialRampToValueAtTime(Math.min(0.0005, peak * 0.01), at + grain.len);
     } else g.gain.value = v.gain;
     const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, v.pan));
-    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.5 : v.send;   // far drops wetter, near drops dry
+    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.5 * (mix.reverb ?? 1) : v.send;   // far drops wetter, near drops dry
     src.connect(hp).connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
@@ -88,7 +91,13 @@ function createPlayer(ctx, bank, seed = 9) {
     space,
     // levels: { material: 0..1 }, darkness 0..1 (denser rain → darker, less sizzle)
     setBed(levels, darkness, at = ctx.currentTime) {
-      for (const [mat, g] of Object.entries(bed)) if (mat !== '_lp') g.gain.setTargetAtTime(0.5 * (levels[mat] ?? 0), at, 1.5);
+      for (const [mat, g] of Object.entries(bed)) {
+        if (mat === '_lp') continue;
+        const target = 0.5 * (levels[mat] ?? 0) * (mix.bedGain ?? 1);
+        const up = target > (g._last ?? 0);   // swell quickly, recede slowly (asymmetric follower)
+        g.gain.setTargetAtTime(target, at, up ? (mix.bedAttack ?? 1.5) : (mix.bedRelease ?? 1.5));
+        g._last = target;
+      }
       if (bed._lp) bed._lp.frequency.setTargetAtTime(11000 - 4000 * darkness, at, 1.5);
     },
     playCase(c, surface, at) {
@@ -133,6 +142,7 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
       bank.grains[set] = await Promise.all(entries.map(async (e) => ({ buffer: await load(e.file), onsets: e.onsets })));
     }));
     await Promise.all(Object.entries(manifest.oneshots ?? {}).map(async ([set, files]) => { bank[set] = await Promise.all(files.map(load)); }));
+    bank.mix = manifest.mix ?? null;
     // optional separate recordings for the rain bed (drops come from clean drips)
     if (manifest.beds) {
       bank.beds = {};
@@ -192,6 +202,7 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
       return { state: ctx?.state ?? 'not started', rate: ctx?.sampleRate ?? 0, bank: !!bank, player: !!player, muted, played: api.stats.played };
     },
     setBed(levels, darkness = 0) { player?.setBed(levels, darkness); },
+    get mix() { return bank?.mix ?? {}; },
     thunder(intensity = 1) {
       if (!player || muted) return;
       player.thunder(ctx.currentTime + LOOKAHEAD, intensity);

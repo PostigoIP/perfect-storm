@@ -33,3 +33,11 @@ describe('bedLevel', () => {
     for (let r = 0; r < 600; r += 5) { const v = bedLevel(r); expect(v).toBeGreaterThanOrEqual(prev); prev = v; }
   });
 });
+
+describe('bedLevel with a mix profile', () => {
+  it('can start earlier and fill sooner', () => {
+    expect(bedLevel(1, 0.5, 30)).toBeGreaterThan(0);
+    expect(bedLevel(30, 0.5, 30)).toBe(1);
+    expect(bedLevel(0.4, 0.5, 30)).toBe(0);
+  });
+});

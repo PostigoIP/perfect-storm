@@ -44,8 +44,14 @@ export function createSpace(ctx) {
   // Psychoacoustic bass: saturate the rumble to create harmonics at 200 Hz–1.2 kHz
   // (audible on small speakers; the ear infers the fundamental), in parallel with the dry signal.
   const thunderBus = ctx.createGain();
+  // thunder bypasses the rain's compressor (so the rain doesn't pump) and has its own limiter
+  const thunderOut = ctx.createGain();
+  const thunderLim = ctx.createDynamicsCompressor();
+  thunderLim.threshold.value = -6; thunderLim.ratio.value = 20; thunderLim.knee.value = 0;
+  thunderLim.attack.value = 0.002; thunderLim.release.value = 0.3;
+  thunderOut.connect(thunderLim).connect(volume);
   const sub = ctx.createBiquadFilter(); sub.type = 'highpass'; sub.frequency.value = 40;
-  thunderBus.connect(sub).connect(master);
+  thunderBus.connect(sub).connect(thunderOut);
   const lowOnly = ctx.createBiquadFilter(); lowOnly.type = 'lowpass'; lowOnly.frequency.value = 300;
   const shaper = ctx.createWaveShaper();
   const curve = new Float32Array(1024);
@@ -53,7 +59,7 @@ export function createSpace(ctx) {
   shaper.curve = curve; shaper.oversample = '2x';
   const harmonics = ctx.createBiquadFilter(); harmonics.type = 'bandpass'; harmonics.frequency.value = 500; harmonics.Q.value = 0.5;
   const harmGain = ctx.createGain(); harmGain.gain.value = 0.16;   // ~-8 dB: support, not buzz
-  thunderBus.connect(lowOnly).connect(shaper).connect(harmonics).connect(harmGain).connect(master);
+  thunderBus.connect(lowOnly).connect(shaper).connect(harmonics).connect(harmGain).connect(thunderOut);
   const thunderSend = ctx.createGain(); thunderSend.gain.value = 0.35;
   thunderBus.connect(thunderSend).connect(reverb);
 

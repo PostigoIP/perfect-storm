@@ -146,7 +146,7 @@ function drawLegend(order) {
 function updateBed() {
   if (!state.running) { audio.setBed({}, 0); return; }
   const rate = source.snapshot().incidenceToday * state.speed;
-  const level = bedLevel(rate);
+  const level = bedLevel(rate, audio.mix.bedFrom, audio.mix.bedFull);
   const recent = ledger.bins().slice(-Math.ceil(7 / ledger.binDays));
   const byMat = {}; let tot = 0;
   for (const b of recent) b.byLineage.forEach((n, l) => { if (n) { const m = materialOf(l); byMat[m] = (byMat[m] ?? 0) + n; tot += n; } });
@@ -336,6 +336,7 @@ $('volume').addEventListener('input', (e) => {
 // A/B: switch the sound source live, while the storm keeps playing
 const BANK_NOTES = {
   'sounds-drops': 'Clean recorded drips for each case, over a bed of real rain that grows with the epidemic.',
+  'sounds-blend': 'Softer drips that melt into the rain bed; the bed starts earlier and lingers.',
   'sounds-field': 'Real CC0 rain on stone, glass, metal and leaves.',
   'sounds-textures': 'ElevenLabs-generated rain textures, cut at each drop.',
   sounds: 'ElevenLabs single-drop takes (the first attempt).',

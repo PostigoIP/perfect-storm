@@ -48,7 +48,7 @@ async function render(audio, sc, bankName) {
     for (let t = 0; t < SECONDS; t += 0.25) {
       const win = events.filter((e) => e.at > t - 1 && e.at <= t);
       const mix = events.filter((e) => e.at > t - 3 && e.at <= t);
-      const level = bedLevel(win.length);
+      const level = bedLevel(win.length, audio.mix.bedFrom, audio.mix.bedFull);
       const levels = {};
       for (const e of mix) { const m = materialFor(e.c.lineage, sim.lineages); levels[m] = (levels[m] ?? 0) + level / mix.length; }
       p.setBed(levels, level, t);

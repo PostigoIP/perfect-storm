@@ -22,7 +22,7 @@ export function grainLength(severity, u) {
 // actually falling (cases per real second). Silent while drops are countable
 // (< 2/s); full by 50/s; log-shaped in between, so the bed is the epidemic's
 // own density, never a fixed ambience.
-export function bedLevel(dropsPerSec) {
-  if (dropsPerSec <= 2) return 0;
-  return Math.min(1, Math.log(dropsPerSec / 2) / Math.log(50 / 2));
+export function bedLevel(dropsPerSec, from = 2, full = 50) {
+  if (dropsPerSec <= from) return 0;
+  return Math.min(1, Math.log(dropsPerSec / from) / Math.log(full / from));
 }
