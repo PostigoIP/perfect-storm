@@ -119,3 +119,12 @@ Story chapters, Simulate/Observed switch, silent (visual-only) mode, sound only 
 ## Left to the builder
 
 Exact distributions/parameter values, tip-thinning rule details, colour of the reservoir/import branches, number of story chapters for the Ebola arc (if any), mobile layout details.
+
+## Revision 2026-11-18 (user direction): one composition
+
+The figures stop being separate panels. **The cases rain into the case series**: every drop lands on top of its own day's (observed: week's) bar, and the bar grows by exactly one when it lands, so the epidemic curve is literally accumulated rain. The sound of a case plays at the moment of impact.
+
+- Landing position is data (the bin of the case's onset date); the start of the fall is free. Two variants are offered: **column** (drops fall straight down above their bin) and **wide** (drops start anywhere across the stage and travel straight to their bin). The user picks.
+- **The phylogenetic tree sits behind the rain**, faint, on the same time axis, so a sampled tip sits above its bar. A toggle brings it to the **front** (full opacity, hover) or turns it **off**.
+- Thunder inverts the whole stage (rain, tree and bars together).
+- Bars are drawn in the stage's own coordinate system; their y-scale eases when it rescales. Every case increments its bar even when its streak or voice is dropped by a cap.

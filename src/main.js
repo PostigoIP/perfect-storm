@@ -2,11 +2,11 @@
 import { createBus } from './bus.js';
 import { createSim } from './model/sim.js';
 import { buildTree, thinTips } from './model/tree.js';
-import { binCases } from './model/epicurve.js';
 import { createAudio, LOOKAHEAD } from './audio/engine.js';
 import { surfaceFor } from './audio/voice.js';
-import { createRain } from './view/rain.js';
-import { renderTree, renderEpicurve } from './view/figures.js';
+import { createStage } from './view/stage.js';
+import { createLedger } from './view/ledger.js';
+import { renderTree } from './view/figures.js';
 import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, makeTween } from './story.js';
 import { createObservedSource } from './model/observed.js';
@@ -31,7 +31,18 @@ let sim = createSim({ seed: 42 });
 let source = sim;                   // the active event source (sim or observed)
 let observed = null;
 const audio = createAudio();
-const rain = createRain($('stage'), { groundOffset: () => $('metrics').getBoundingClientRect().height });
+let ledger = createLedger({ binDays: 1 });
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FALL_MS = reducedMotion ? 0 : 1100;   // a drop's flight; its sound plays on impact
+const stage = createStage($('stage'), {
+  stageEl: $('stage-el'),
+  groundOffset: () => $('metrics').getBoundingClientRect().height,
+  domain: () => ({ ...domain(), now: source.t }),
+  ledger: () => ledger,
+  surfaceOf: (l) => surfaceOf(l),
+  order: () => lineageOrder(),
+  fmt: (t) => fmtDay(t),
+});
 const tween = makeTween({ setParam: (k, v) => sim.setParam(k, v) }, (k) => sim.snapshot().params[k]);
 
 const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));
@@ -50,22 +61,24 @@ function frame(now) {
     for (const c of onsets) {
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
-      audio.playCase(c, surface, offset);
-      state.pending.push({ at: now + (LOOKAHEAD + offset) * 1000, c, surface, gen: state.gen });
+      const landAt = now + offset * 1000 + FALL_MS;
+      audio.playCase(c, surface, Math.max(0, offset + FALL_MS / 1000 - LOOKAHEAD));
+      stage.spawn(c, surface, landAt - FALL_MS, landAt);
+      state.pending.push({ at: landAt, c, surface, gen: state.gen });
     }
     if (state.mode === 'sim') maybeAdvanceChapter();
   }
-  // release visual drops in sync with their sound
+  // landings: every case adds one to its bar, in time order (independent of visual caps)
   if (state.pending.length) {
     const keep = [];
     for (const p of state.pending) {
       if (p.gen !== state.gen) continue;
-      if (p.at <= now) rain.drop(p.c, p.surface); else keep.push(p);
+      if (p.at <= now) { ledger.land(p.c); stage.splash(p.c, p.surface); } else keep.push(p);
     }
     state.pending = keep;
   }
   if (now - lastMetrics > 250) { lastMetrics = now; drawMetrics(); }
-  if (now - lastEpi > 300) { lastEpi = now; drawEpicurve(); }
+  if (now - lastEpi > 500) { lastEpi = now; drawLegend(lineageOrder()); }
   if (now - lastTree > 1000) { lastTree = now; drawTree(); }
   requestAnimationFrame(frame);
 }
@@ -79,10 +92,13 @@ function domain() {
 const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t)}`);
 
 // tips that fit the figure without merging (~2.6 px per tip)
-const tipBudget = () => Math.max(60, Math.min(400, Math.floor(($('tree').getBoundingClientRect().height - 40) / 2.6)));
+const tipBudget = () => Math.max(60, Math.min(400, Math.floor(($('tree').getBoundingClientRect().height - 10) / 2.6)));
 
 function drawTree() {
   const t = source.t;
+  const box = stage.treeBox();
+  $('tree').style.top = `${box.top}px`;
+  $('tree').style.height = `${Math.max(60, box.bottom - box.top)}px`;
   let layout;
   if (state.mode === 'obs') layout = observed.tree(t, tipBudget());
   else {
@@ -91,18 +107,8 @@ function drawTree() {
     layout = buildTree((id) => ({ parent: sim.cases[id].parent, t: sim.cases[id].tInf, lineage: sim.cases[id].lineage }), thinTips(tips, tipBudget()));
   }
   const { t0, t1 } = domain();
-  renderTree($('tree'), layout, { t0, t1, now: t, surfaceOf, lineageLabel, fmt: fmtDay, flashSince: t - (state.mode === 'obs' ? 7 : 1.5) });
-  $('tree-note').textContent = `${layout.tips.length} sequenced · time-resolved`;
-}
-
-function drawEpicurve() {
-  const t = source.t;
-  const binDays = state.mode === 'obs' ? 7 : 1;
-  const bins = state.mode === 'obs' ? observed.bins(t) : binCases(sim.cases, { binDays, tMax: t, nLineages: sim.lineages.length });
-  const order = lineageOrder();
-  const { t0, t1 } = domain();
-  renderEpicurve($('epicurve'), bins, { t0, t1, now: t, binDays, surfaceOf, order, fmt: fmtDay, unitLabel: 'onsets' });
-  drawLegend(order);
+  renderTree($('tree'), layout, { t0, t1, now: t, surfaceOf, lineageLabel, fmt: fmtDay, flashSince: t - (state.mode === 'obs' ? 7 : 1.5), axis: false });
+  $('tree-note').textContent = `phylogeny of ${layout.tips.length} sequenced cases`;
 }
 
 function lineageOrder() {
@@ -200,14 +206,15 @@ function maybeAdvanceChapter() {
 
 function discontinuity({ kind }) {
   audio.thunder(kind === 'import' ? 0.7 : 1);
-  setTimeout(() => rain.lightning(), LOOKAHEAD * 1000);
+  setTimeout(() => stage.flash(), LOOKAHEAD * 1000);
   bus.emit('thunder', { kind });
 }
 
 function clearRun() {
   state.gen++;
   state.pending = [];
-  rain.clear();
+  ledger = createLedger({ binDays: state.mode === 'obs' ? 7 : 1 });
+  stage.clear();
   legendKey = '';
 }
 
@@ -220,8 +227,8 @@ function play(on = !state.running) {
 function setMode(mode) {
   if (mode === state.mode) return;
   if (mode === 'obs' && !observed) return;
-  clearRun();
   state.mode = mode;
+  clearRun();
   source = mode === 'obs' ? observed : sim;
   if (mode === 'obs') {
     observed.reset();
@@ -233,10 +240,9 @@ function setMode(mode) {
   $('mode-sim').setAttribute('aria-pressed', mode === 'sim');
   $('mode-obs').setAttribute('aria-pressed', mode === 'obs');
   document.body.dataset.mode = mode;
-  $('epi-note').textContent = mode === 'obs' ? 'reported cases by week · WHO' : 'onsets by day · solid = reported';
   $('m-inc-label').textContent = mode === 'obs' ? 'Cases / day' : 'Onsets / day';
   drawProvenance();
-  drawTree(); drawEpicurve(); drawMetrics();
+  drawTree(); drawLegend(lineageOrder()); drawMetrics();
 }
 
 function drawProvenance() {
@@ -250,7 +256,7 @@ $('reset').addEventListener('click', () => {
   clearRun();
   if (state.mode === 'obs') observed.reset();
   else { sim.reset(); state.chapter = -1; applyChapter(0); }
-  drawTree(); drawEpicurve(); drawMetrics();
+  drawTree(); drawLegend(lineageOrder()); drawMetrics();
 });
 $('variant').addEventListener('click', () => {
   if (state.mode !== 'sim') return;
@@ -264,6 +270,14 @@ $('import').addEventListener('click', () => {
   discontinuity({ kind: 'import' });
 });
 $('mode-sim').addEventListener('click', () => setMode('sim'));
+for (const b of document.querySelectorAll('[data-tree]')) if (b.tagName === 'BUTTON') b.addEventListener('click', () => {
+  $('stage-el').dataset.tree = b.dataset.tree;
+  for (const o of document.querySelectorAll('button[data-tree]')) o.setAttribute('aria-pressed', o === b);
+});
+for (const b of document.querySelectorAll('button[data-spread]')) b.addEventListener('click', () => {
+  stage.setSpread(b.dataset.spread);
+  for (const o of document.querySelectorAll('button[data-spread]')) o.setAttribute('aria-pressed', o === b);
+});
 $('mode-obs').addEventListener('click', () => setMode('obs'));
 $('sound').addEventListener('change', async (e) => {
   if (e.target.checked) { await audio.unlock(); if (!audio.ready) await audio.loadBank(); }
@@ -274,7 +288,7 @@ $('theme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   root.dataset.theme = dark ? 'light' : 'dark';
-  legendKey = ''; drawTree(); drawEpicurve();
+  legendKey = ''; drawTree();
 });
 
 async function start(withSound) {
@@ -304,13 +318,13 @@ fetch('./sounds/manifest.json', { method: 'HEAD' }).then((r) => {
 buildSliders();
 buildChapters();
 drawProvenance();
-rain.start();
+stage.start();
 requestAnimationFrame((t) => { last = t; frame(t); });
 window.__ps = {
   state, sim: () => sim, audio,
   // debug: advance the active source by `days` and redraw (used for checks when the page is throttled)
   advance(days) {
-    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) rain.drop(c, surfaceOf(c.lineage)); if (state.mode === 'sim') maybeAdvanceChapter(); }
-    drawTree(); drawEpicurve(); drawMetrics();
+    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); if (state.mode === 'sim') maybeAdvanceChapter(); }
+    drawTree(); drawLegend(lineageOrder()); drawMetrics();
   },
 };

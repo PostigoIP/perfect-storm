@@ -23,7 +23,8 @@
   </header>
 
   <main class="layout">
-    <section class="stage" aria-label="Storm">
+    <section class="stage" id="stage-el" data-tree="behind" aria-label="Storm: cases fall as rain into the case series">
+      <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, on the same time axis as the case series"></svg>
       <canvas id="stage"></canvas>
       <div class="stage__text">
         <p class="label" id="chapter-num">00</p>
@@ -38,16 +39,22 @@
       </dl>
     </section>
 
-    <section class="figures">
-      <figure class="fig">
-        <figcaption><span class="label">Fig. 1</span> Phylogeny <span class="fig__note" id="tree-note">time-resolved · sequenced cases</span></figcaption>
-        <svg id="tree" role="img" aria-label="Evolving phylogenetic tree"></svg>
-      </figure>
-      <figure class="fig">
-        <figcaption><span class="label">Fig. 2</span> Case series <span class="fig__note" id="epi-note">onsets by day · solid = reported</span></figcaption>
-        <svg id="epicurve" role="img" aria-label="Epidemic curve of cases by onset date"></svg>
-      </figure>
+    <section class="key" aria-label="How to read it">
+      <div class="key__row">
+        <div class="seg" role="group" aria-label="Tree">
+          <span class="seg__label">Tree</span>
+          <button type="button" data-tree="behind" aria-pressed="true">Behind</button>
+          <button type="button" data-tree="front" aria-pressed="false">Front</button>
+          <button type="button" data-tree="off" aria-pressed="false">Off</button>
+        </div>
+        <div class="seg" role="group" aria-label="Rain">
+          <span class="seg__label">Rain</span>
+          <button type="button" data-spread="wide" aria-pressed="true">Wide</button>
+          <button type="button" data-spread="column" aria-pressed="false">Column</button>
+        </div>
+      </div>
       <ul class="legend" id="legend" aria-label="Lineages"></ul>
+      <p class="key__note" id="key-note">Each drop is one case. It falls onto the day its symptoms began and stays there: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain, the <span id="tree-note">phylogeny of sequenced cases</span> grows on the same time axis.</p>
     </section>
 
     <aside class="rail" id="controls" aria-label="Controls">

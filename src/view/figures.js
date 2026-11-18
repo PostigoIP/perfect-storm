@@ -4,6 +4,7 @@
 import { SURFACE_VAR } from './tokens.js';
 
 const M = { l: 44, r: 14, t: 10, b: 24 };
+export const MARGIN = M;
 
 export function timeScale(svg, t0, t1) {
   const r = svg.getBoundingClientRect();
@@ -37,11 +38,13 @@ function nowLine(s, now) {
 const fill = (surface) => `var(${SURFACE_VAR[surface] ?? '--ps-ink'})`;
 
 // layout: from buildTree(); surfaceOf(lineage) → surface name; labels: lineage → short label
-export function renderTree(svg, layout, { t0, t1, now, surfaceOf, lineageLabel, fmt, flashSince }) {
+export function renderTree(svg, layout, { t0, t1, now, surfaceOf, lineageLabel, fmt, flashSince, axis = true }) {
   const s = timeScale(svg, t0, t1);
+  if (!axis) s.bottom = s.H - 4;
+  const ax = axis ? axisX(s, fmt) : '';
   svg.setAttribute('viewBox', `0 0 ${s.W} ${s.H}`);
   if (!layout.tips.length) {
-    svg.innerHTML = `${axisX(s, fmt)}<text x="${s.left}" y="${s.top + 14}" class="fig-empty">No sequenced cases yet.</text>`;
+    svg.innerHTML = `${ax}<text x="${s.left}" y="${s.top + 14}" class="fig-empty">No sequenced cases yet.</text>`;
     return;
   }
   const n = layout.tips.length;
@@ -51,7 +54,7 @@ export function renderTree(svg, layout, { t0, t1, now, surfaceOf, lineageLabel, 
   for (const e of layout.edges) add(surfaceOf(e.lineage), `M${s.x(e.x0).toFixed(1)} ${y(e.y).toFixed(1)}H${s.x(e.x1).toFixed(1)}`);
   for (const v of layout.verticals) add(v.lineage < 0 ? 'stone' : surfaceOf(v.lineage), `M${s.x(v.x).toFixed(1)} ${y(v.y0).toFixed(1)}V${y(v.y1).toFixed(1)}`);
   const sw = n > 250 ? 0.75 : 1;
-  let out = axisX(s, fmt);
+  let out = ax;
   for (const [surface, d] of paths) out += `<path d="${d}" fill="none" stroke="${fill(surface)}" stroke-width="${sw}" shape-rendering="crispEdges"/>`;
 
   // tips: 3px squares; newly sampled ones larger
@@ -73,7 +76,6 @@ export function renderTree(svg, layout, { t0, t1, now, surfaceOf, lineageLabel, 
     const x = s.x(e.x0), yy = y(e.y);
     out += `<path d="M${x - 5} ${yy - 4}L${x} ${yy - 12}L${x + 5} ${yy - 4}Z" fill="${fill(surfaceOf(l))}"/><text class="fig-label" x="${x + 8}" y="${yy - 5}">${lineageLabel(l)}</text>`;
   }
-  out += nowLine(s, now);
   svg.innerHTML = out;
 }
 
