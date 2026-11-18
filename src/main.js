@@ -461,7 +461,7 @@ const TUTORIAL = [
     play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:dark' })), 0.45) },
   { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.',
     play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: 'puddle:light' })), 0.45) },
-  { title: 'Deaths', text: 'Each death can add a low knock. It is off by default: switch it on from "Deaths" in the legend.',
+  { title: 'Deaths', text: 'Each death adds a low knock. You can mute it from "Deaths" in the legend.',
     play: () => { const was = audio.deaths; audio.setDeaths(true); demo([{ lineage: 0, detected: true, severity: 3, outcome: 'fatal' }], 0); setTimeout(() => audio.setDeaths(was), 600); } },
   { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.',
     play: () => audio.thunder(1) },

@@ -156,7 +156,7 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
 }
 
 export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = (u) => fetch(u), AC = globalThis.AudioContext || globalThis.webkitAudioContext, bed = true } = {}) {
-  const playerOpts = { bed, deaths: false };   // off by default: it dominated A as a low "table knock"; setDeaths() flips it live
+  const playerOpts = { bed, deaths: true };   // on by default (user, 2026-11-18); the legend mutes it; setDeaths() flips it live
   let ctx = null, bank = null, player = null, muted = false, volume = 0.8;
   const cache = new Map();              // manifest url → decoded bank (switching back is instant)
 
