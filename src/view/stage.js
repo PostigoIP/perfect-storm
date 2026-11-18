@@ -19,6 +19,7 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   let spread = 'wide';
   let scaleKind = 'linear';
   let events = [];          // [{ t, label }] story events marked on the time axis
+  let selectedEvent = -1;
   let unitLabel = 'cases per day';
   let yMaxShown = 10, lastTs = 0;
   const flights = [], splashes = [];
@@ -145,16 +146,14 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
     ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     ctx.fillStyle = tk.ink2;
     ctx.fillText(`${unitLabel}${scaleKind === 'log' ? ' · log scale' : ''}`, left(), yTop - 6 * dpr);
-    // story events: a hairline and a short label, alternating rows to avoid collisions
-    ctx.font = monoFont(9.5);
+    // story events: hairlines here; their labels are HTML buttons placed via eventLayout()
     events.forEach((e, k) => {
       const xx = Math.round(x(e.t));
       if (xx < left() || xx > right()) return;
-      ctx.globalAlpha = 0.45; ctx.fillStyle = tk.ink;
-      ctx.fillRect(xx, yTop, dpr, zh);
-      ctx.globalAlpha = 1; ctx.fillStyle = tk.ink2;
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText(e.label, xx + 4 * dpr, yTop + (k % 2 ? 14 : 2) * dpr);
+      const sel = k === selectedEvent;
+      ctx.globalAlpha = sel ? 1 : 0.45; ctx.fillStyle = sel ? tk.accent : tk.ink;
+      ctx.fillRect(xx, yTop, sel ? 2 * dpr : dpr, zh);
+      ctx.globalAlpha = 1;
     });
     // now
     ctx.fillStyle = tk.accent;
@@ -220,6 +219,15 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
     setSpread(s) { spread = s; },
     setScale(k) { scaleKind = k; },
     setEvents(list) { events = list; },
+    setSelectedEvent(k) { selectedEvent = k; },
+    // where each event label goes, in CSS px relative to the stage (alternating rows)
+    eventLayout() {
+      const yTop = (baseline() - zoneH()) / dpr;
+      return events.map((e, k) => {
+        const xx = x(e.t) / dpr;
+        return { k, label: e.label, left: xx + 4, top: yTop + (k % 2 ? 14 : 2), visible: xx >= left() / dpr && xx <= right() / dpr };
+      });
+    },
     setUnitLabel(l) { unitLabel = l; },
     setReducedMotion(b) { reduced = b; },
     clear() { flights.length = 0; splashes.length = 0; yMaxShown = 10; },

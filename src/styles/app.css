@@ -202,3 +202,17 @@ body[data-mode="obs"] .sim-only { display: none; }
 .stage__legend-hint { color: var(--ps-ink-2); font-size: 10px; }
 .stage__legend-list li { display: block; }
 .stage__legend-key { display: grid !important; }
+
+/* milestones on the case series: quiet labels that can be selected */
+.stage__events { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.stage__event {
+  all: unset; position: absolute; pointer-events: auto; cursor: pointer; white-space: nowrap;
+  font-family: var(--ps-font-mono); font-size: 9.5px; line-height: 1; padding: 2px 3px; color: var(--ps-ink-2);
+}
+.stage__event:hover, .stage__event:focus-visible { color: var(--ps-ink); text-decoration: underline; }
+.stage__event:focus-visible { outline: var(--ps-rule-w) solid var(--ps-accent); }
+.stage__event[aria-pressed="true"] { color: var(--ps-paper); background: var(--ps-accent); }
+.stage__back {
+  all: unset; pointer-events: auto; cursor: pointer; margin-left: var(--ps-space-3);
+  font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-accent); text-decoration: underline;
+}

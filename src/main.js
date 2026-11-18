@@ -29,7 +29,7 @@ const state = {
 
 let sim = createSim({ seed: 42 });
 // the story drives the simulation: chapters end when what they describe has happened
-const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t, CHAPTERS[i].mark ?? CHAPTERS[i].title); showChapter(i); }, setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
+const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t, CHAPTERS[i].mark ?? CHAPTERS[i].title, { chapter: i }); unselectEvent(); showChapter(i); }, setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
@@ -84,7 +84,7 @@ function frame(now) {
     }
     state.pending = keep;
   }
-  if (now - lastMetrics > 250) { lastMetrics = now; drawMetrics(); updateBed(); }
+  if (now - lastMetrics > 250) { lastMetrics = now; drawMetrics(); updateBed(); drawEventButtons(); }
   if (now - lastEpi > 500) { lastEpi = now; drawLegend(lineageOrder()); }
   if (now - lastTree > 1000) { lastTree = now; drawTree(); }
   requestAnimationFrame(frame);
@@ -262,12 +262,64 @@ function discontinuity({ kind }) {
 
 // story events and manual interventions, marked on the case series' time axis
 let events = [];
-function markEvent(t, label) { events.push({ t, label }); stage.setEvents(events); }
+function markEvent(t, label, info = {}) { events.push({ t, label, ...info }); stage.setEvents(events); drawEventButtons(true); }
+
+// Milestones are selectable once they appear: clicking one brings back what
+// happened then; "Back to now" (or the next chapter) returns to the live text.
+let selectedEvent = -1;
+function drawEventButtons(rebuild = false) {
+  const host = $('events');
+  const layout = stage.eventLayout();
+  if (rebuild || host.children.length !== layout.length) {
+    host.innerHTML = layout.map((e) => `<button type="button" class="stage__event" data-k="${e.k}" aria-pressed="false">${e.label}</button>`).join('');
+  }
+  layout.forEach((e) => {
+    const b = host.children[e.k];
+    b.style.left = `${e.left}px`; b.style.top = `${e.top}px`;
+    b.hidden = !e.visible;
+    b.setAttribute('aria-pressed', String(e.k === selectedEvent));
+  });
+}
+function selectEvent(k) {
+  const e = events[k];
+  if (!e) return;
+  selectedEvent = k;
+  stage.setSelectedEvent(k);
+  const fmt = (t) => fmtDay(t);
+  if (e.chapter != null) {
+    const ch = CHAPTERS[e.chapter];
+    $('chapter-num').textContent = `${String(e.chapter + 1).padStart(2, '0')} · ${fmt(e.t)}`;
+    $('chapter-title').textContent = ch.title;
+    $('chapter-body').textContent = ch.body;
+  } else {
+    $('chapter-num').textContent = fmt(e.t);
+    $('chapter-title').textContent = e.label;
+    $('chapter-body').textContent = e.label === 'Import pulse'
+      ? 'You brought in a cluster of cases from outside. Each falls as its own drop.'
+      : 'You introduced a new variant here. It arose in one infected person; its drops fall a little differently.';
+  }
+  $('back-to-now').hidden = false;
+  drawEventButtons();
+}
+function unselectEvent() {
+  if (selectedEvent < 0) return;
+  selectedEvent = -1;
+  stage.setSelectedEvent(-1);
+  $('back-to-now').hidden = true;
+  drawEventButtons();
+}
+$('events').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button[data-k]');
+  if (!b) return;
+  const k = +b.dataset.k;
+  if (k === selectedEvent) { unselectEvent(); showChapter(state.chapter); } else selectEvent(k);
+});
+$('back-to-now').addEventListener('click', () => { unselectEvent(); if (state.mode === 'sim' && state.chapter >= 0) showChapter(state.chapter); });
 
 function clearRun() {
   state.gen++;
   state.pending = [];
-  events = []; stage.setEvents(events);
+  events = []; stage.setEvents(events); selectedEvent = -1; stage.setSelectedEvent(-1); $('back-to-now').hidden = true; $('events').innerHTML = '';
   stage.setUnitLabel(state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
   ledger = createLedger({ binDays: state.mode === 'obs' ? 7 : 1 });
   stage.clear();
@@ -324,13 +376,13 @@ $('variant').addEventListener('click', () => {
   const n = sim.lineages.filter((l) => l.name.startsWith('Variant')).length;
   const name = `Variant ${'αβγδε'[n] ?? n + 1}`;
   const l = sim.introduceVariant(name, { tx: 1.5 + 0.15 * n, escape: n ? 0.2 : 0 });
-  markEvent(sim.t, name);
+  markEvent(sim.t, name, { manual: true });
   discontinuity({ lineage: l, kind: 'variant' });
 });
 $('import').addEventListener('click', () => {
   if (state.mode !== 'sim') return;
   sim.importCases(12);
-  markEvent(sim.t, 'Import pulse');
+  markEvent(sim.t, 'Import pulse', { manual: true });
   discontinuity({ kind: 'import' });
 });
 $('mode-sim').addEventListener('click', () => setMode('sim'));

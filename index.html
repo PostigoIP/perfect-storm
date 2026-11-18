@@ -31,8 +31,9 @@
     <section class="stage" id="stage-el" data-tree="off" aria-label="Storm: cases fall as rain into the case series">
       <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, on the same time axis as the case series"></svg>
       <canvas id="stage"></canvas>
+      <div class="stage__events" id="events" aria-label="Milestones: select one to read what happened then"></div>
       <div class="stage__text">
-        <p class="ps-label" id="chapter-num">00</p>
+        <p class="ps-label"><span id="chapter-num">00</span><button type="button" class="stage__back" id="back-to-now" hidden>← back to now</button></p>
         <h1 class="ps-display" id="chapter-title">Every case is one drop.</h1>
         <p class="lede" id="chapter-body">Rain is what an outbreak sounds like.</p>
       </div>
