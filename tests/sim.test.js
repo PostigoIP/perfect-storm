@@ -63,6 +63,53 @@ describe('createSim', () => {
     for (const c of sim.cases) if (!c.imported) expect(isFromZero(c.id)).toBe(true);
   });
 
+  it('lineage shares stay within [0, 1] when a variant arises in an already-counted case', () => {
+    const sim = createSim({ seed: 2, pop: 30000, params: { beta: 0.4 } });
+    run(sim, 30);
+    for (const [name, wait] of [['α', 25], ['β', 0], ['γ', 0]]) {
+      sim.introduceVariant(name, { tx: 1.6 });
+      for (let d = 0; d < 20 + wait; d++) {
+        run(sim, 1);
+        const sh = sim.snapshot().lineageShares;
+        for (const x of sh) { expect(x.share).toBeGreaterThanOrEqual(0); expect(x.share).toBeLessThanOrEqual(1); }
+        const tot = sh.reduce((a, x) => a + x.share, 0);
+        if (tot > 0) expect(tot).toBeCloseTo(1, 9);
+      }
+    }
+    // shares must equal a recount of onsets in the last 7 days, by lineage at onset
+    const t = sim.t, week = sim.cases.filter((c) => c.tOnset <= t && c.tOnset > t - 7);
+    const sh = sim.snapshot().lineageShares;
+    for (const x of sh) expect(x.share).toBeCloseTo(week.filter((c) => (c.onsetLineage ?? c.lineage) === x.id).length / week.length, 9);
+  });
+
+  it('analytic R counts the immune that an escape variant can reinfect', () => {
+    const sim = createSim({ seed: 3, pop: 20000, params: { beta: 0.2 } });
+    sim.setParam('immunity', 0.8);
+    run(sim, 60);
+    const before = sim.snapshot();
+    sim.introduceVariant('esc', { tx: 1, escape: 1, cluster: 30 });
+    run(sim, 12);
+    const s = sim.snapshot();
+    // with full escape, the variant sees S + R, so R_eff for its share is β·D·(S+R)/N
+    expect(s.reffAnalytic).toBeGreaterThan(before.reffAnalytic * 1.3);
+  });
+
+  it('vaccination doses everyone, but only doses reaching susceptibles move people', () => {
+    // an epidemic first immunises most people, then it burns out
+    const sim = createSim({ seed: 13, pop: 20000, params: { beta: 0.25 } });
+    run(sim, 250);
+    sim.setParam('beta', 0);
+    run(sim, 30);
+    const before = sim.snapshot().S;
+    expect(before).toBeLessThan(15000);
+    sim.setParam('immunity', 0.6);
+    run(sim, 80);
+    // 60% of people get a dose; only the susceptible ones move: ~40% of S remains
+    const after = sim.snapshot().S;
+    expect(after / before).toBeGreaterThan(0.3);
+    expect(after / before).toBeLessThan(0.5);
+  });
+
   it('imports attach to the reservoir', () => {
     const sim = createSim({ seed: 4, pop: 20000 });
     run(sim, 5);

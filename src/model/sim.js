@@ -23,6 +23,7 @@ const SEEDS = 8;
 export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
   const p = { ...DEFAULT_PARAMS, ...params };
   let r, t, S, R, E, I, cases, lineages, byLineage, vaccinated, onsetsLog, pos, inI;
+  let dayStart, weekStart, weekCounts;   // sliding windows over onsetsLog (sorted by onset)
   const api = { generation: 0 };
 
   function newLineage(name, extra) {
@@ -71,6 +72,7 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
     r = mulberry32(s);
     t = 0; R = 0; vaccinated = 0;
     E = []; I = []; cases = []; lineages = []; byLineage = []; onsetsLog = []; pos = []; inI = [];
+    dayStart = 0; weekStart = 0; weekCounts = [];
     newLineage('Founder');
     // One patient zero (a spillover, infected before day 0, symptoms on day 0)
     // who seeds the first cluster, so the whole genealogy has a single root.
@@ -94,11 +96,14 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
     const t1 = t + dt;
     const N = pop;
 
-    // vaccination: S → R toward target, at a bounded daily rate
-    const target = Math.floor(p.immunity * pop);
+    // vaccination: doses go to people regardless of past infection, up to
+    // `immunity` × population; a dose moves someone only if they were susceptible
+    const target = p.immunity * pop;
     if (vaccinated < target && S > 0) {
-      const move = Math.min(S, target - vaccinated, Math.ceil(p.vaccinationRate * pop * dt));
-      S -= move; R += move; vaccinated += move;
+      const doses = Math.min(target - vaccinated, p.vaccinationRate * pop * dt);
+      const unvaccinated = Math.max(1, pop - vaccinated);
+      const move = Math.min(S, binomial(r, Math.round(doses), S / unvaccinated));
+      S -= move; R += move; vaccinated += doses;
     }
 
     // transmission, lineage by lineage
@@ -140,7 +145,9 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
     });
     t = t1;
     onsets.sort((a, b) => a.tOnset - b.tOnset);
-    for (const c of onsets) onsetsLog.push(c);
+    for (const c of onsets) { c.onsetLineage = c.lineage; onsetsLog.push(c); weekCounts[c.lineage] = (weekCounts[c.lineage] ?? 0) + 1; }
+    while (dayStart < onsetsLog.length && onsetsLog[dayStart].tOnset <= t - 1) dayStart++;
+    while (weekStart < onsetsLog.length && onsetsLog[weekStart].tOnset <= t - 7) { weekCounts[onsetsLog[weekStart].onsetLineage]--; weekStart++; }
     return onsets;
   }
 
@@ -196,24 +203,26 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
   };
 
   api.snapshot = () => {
-    const day = onsetsLog.filter((c) => c.tOnset > t - 1);
-    const week = onsetsLog.filter((c) => c.tOnset > t - 7);
-    const counts = lineages.map(() => 0);
-    for (const c of week) counts[c.lineage]++;
+    const nDay = onsetsLog.length - dayStart, nWeek = onsetsLog.length - weekStart;
+    const counts = lineages.map((_, i) => weekCounts[i] ?? 0);
     const ended = [];
     for (let i = cases.length - 1; i >= 0 && ended.length < 2000; i--) {
       const c = cases[i];
       if (c.tEnd <= t && c.tEnd > t - 7) ended.push(c.offspring);
     }
-    let txMean = 0;
-    for (let l = 0; l < lineages.length; l++) txMean += lineages[l].tx * (I.length ? byLineage[l].length / I.length : l === 0 ? 1 : 0);
+    // R_eff = Σ_l w_l · β·tx_l·D·(S + escape_l·R)/N, weighted by each lineage's share of the infectious
+    let reff = 0;
+    for (let l = 0; l < lineages.length; l++) {
+      const w = I.length ? byLineage[l].length / I.length : l === 0 ? 1 : 0;
+      reff += w * p.beta * lineages[l].tx * p.infectiousMean * (S + lineages[l].escape * R) / pop;
+    }
     return {
       t, S, E: E.length, I: I.length, R, pop,
-      incidenceToday: day.length,
+      incidenceToday: nDay,
       cumulative: onsetsLog.length,
       rtGenealogy: ended.length >= 10 ? ended.reduce((a, b) => a + b, 0) / ended.length : null,
-      reffAnalytic: p.beta * txMean * p.infectiousMean * S / pop,
-      lineageShares: lineages.map((L, i) => ({ id: i, name: L.name, share: week.length ? counts[i] / week.length : 0 })),
+      reffAnalytic: reff,
+      lineageShares: lineages.map((L, i) => ({ id: i, name: L.name, share: nWeek ? counts[i] / nWeek : 0 })),
       params: { ...p },
     };
   };

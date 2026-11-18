@@ -9,7 +9,7 @@ import { createLedger } from './view/ledger.js';
 import { renderCollapsedTree } from './view/figures.js';
 import { collapseTree } from './model/collapse.js';
 import { SURFACE_VAR } from './view/tokens.js';
-import { CHAPTERS, makeTween } from './story.js';
+import { CHAPTERS, createStory } from './story.js';
 import { createObservedSource } from './model/observed.js';
 
 const $ = (id) => document.getElementById(id);
@@ -21,15 +21,14 @@ const state = {
   running: false,
   speed: 1.5,           // model days per real second
   chapter: -1,
-  autoAdvance: true,
-  chapterStart: 0,
   pending: [],          // visual drops waiting for their audio onset
   gen: 0,
 };
-const CHAPTER_DAYS = [18, 18, 22, 26, 26, 30, 30, 40, 40, Infinity];
 
 let sim = createSim({ seed: 42 });
-let source = sim;                   // the active event source (sim or observed)
+// the story drives the simulation: chapters end when what they describe has happened
+const story = createStory(sim, { onChapter: (i) => showChapter(i), setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
+let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
 const audio = createAudio();
 let ledger = createLedger({ binDays: 1 });
@@ -44,7 +43,6 @@ const stage = createStage($('stage'), {
   order: () => lineageOrder(),
   fmt: (t) => fmtDay(t),
 });
-const tween = makeTween({ setParam: (k, v) => sim.setParam(k, v) }, (k) => sim.snapshot().params[k]);
 
 const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));
 const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
@@ -67,7 +65,6 @@ function frame(now) {
       stage.spawn(c, surface, landAt - FALL_MS, landAt);
       state.pending.push({ at: landAt, c, surface, gen: state.gen });
     }
-    if (state.mode === 'sim') maybeAdvanceChapter();
   }
   // landings: every case adds one to its bar, in time order (independent of visual caps)
   if (state.pending.length) {
@@ -185,27 +182,25 @@ function buildChapters() {
   $('chapters').innerHTML = CHAPTERS.map((c, i) => `<li><button type="button" data-i="${i}">${c.title}</button></li>`).join('');
   $('chapters').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-i]');
-    if (b) { setMode('sim'); applyChapter(+b.dataset.i); play(true); }
+    if (b) { setMode('sim'); goChapter(+b.dataset.i); play(true); }
   });
 }
 
-function applyChapter(i) {
-  const ch = CHAPTERS[i];
-  if (!ch) return;
+function goChapter(i) {
+  if (!CHAPTERS[i]) return;
   if (i === 0) clearRun();
+  story.goto(i);
+}
+
+function showChapter(i) {
+  const ch = CHAPTERS[i];
   state.chapter = i;
-  state.chapterStart = sim.t;
-  ch.apply({ sim, setSpeed: (v) => (state.speed = v), tween, thunder: discontinuity });
+  if (state.mode !== 'sim') return;
   $('chapter-num').textContent = String(i + 1).padStart(2, '0');
   $('chapter-title').textContent = ch.title;
   $('chapter-body').textContent = ch.body;
   for (const b of $('chapters').querySelectorAll('button')) b.toggleAttribute('aria-current', false);
   $('chapters').querySelector(`button[data-i="${i}"]`)?.setAttribute('aria-current', 'step');
-}
-
-function maybeAdvanceChapter() {
-  if (!state.autoAdvance || state.chapter < 0) return;
-  if (sim.t - state.chapterStart >= CHAPTER_DAYS[state.chapter]) applyChapter(state.chapter + 1);
 }
 
 function discontinuity({ kind }) {
@@ -225,7 +220,7 @@ function clearRun() {
 function play(on = !state.running) {
   state.running = on;
   $('play').textContent = on ? 'Pause' : 'Play';
-  if (on && state.mode === 'sim' && state.chapter < 0) applyChapter(0);
+  if (on && state.mode === 'sim' && state.chapter < 0) goChapter(0);
 }
 
 function setMode(mode) {
@@ -233,14 +228,14 @@ function setMode(mode) {
   if (mode === 'obs' && !observed) return;
   state.mode = mode;
   clearRun();
-  source = mode === 'obs' ? observed : sim;
+  source = mode === 'obs' ? observed : story;
   if (mode === 'obs') {
     observed.reset();
     $('chapter-num').textContent = 'OBS';
     $('chapter-title').textContent = observed.title;
     $('chapter-body').textContent = observed.lede;
     state.speed = observed.defaultSpeed;
-  } else if (state.chapter >= 0) applyChapter(state.chapter);
+  } else if (state.chapter >= 0) showChapter(state.chapter);
   $('mode-sim').setAttribute('aria-pressed', mode === 'sim');
   $('mode-obs').setAttribute('aria-pressed', mode === 'obs');
   document.body.dataset.mode = mode;
@@ -259,7 +254,7 @@ $('play').addEventListener('click', () => play());
 $('reset').addEventListener('click', () => {
   clearRun();
   if (state.mode === 'obs') observed.reset();
-  else { sim.reset(); state.chapter = -1; applyChapter(0); }
+  else { state.chapter = -1; goChapter(0); }
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
 });
 $('variant').addEventListener('click', () => {
@@ -328,7 +323,7 @@ window.__ps = {
   state, sim: () => sim, audio, stage,
   // debug: advance the active source by `days` and redraw (used for checks when the page is throttled)
   advance(days) {
-    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); if (state.mode === 'sim') maybeAdvanceChapter(); }
+    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); }
     drawTree(); drawLegend(lineageOrder()); drawMetrics();
   },
 };

@@ -23,4 +23,4 @@ const saveClips = {
   },
 };
 
-export default defineConfig({ base: './', plugins: [saveClips], test: { environment: 'node' } });
+export default defineConfig({ base: './', plugins: [saveClips], test: { environment: 'node', exclude: ['**/node_modules/**', '.claude/**', '.superpowers/**'] } });
