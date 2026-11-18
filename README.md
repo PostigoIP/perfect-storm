@@ -2,15 +2,46 @@
 
 Every case is one drop. Rain is what an outbreak sounds like.
 
-A stochastic SEIR outbreak rendered as rain, sound, an evolving phylogeny and a case series.
+A stochastic outbreak, or the real 2013–2016 West African Ebola epidemic, replayed as rain: each case is one
+drop you see and hear, and it lands on its day in the case series, which is the rain that has already
+fallen. Chapters follow the epidemic (patient zero, lockdown, variants, vaccines, endemic rain); every
+milestone on the curve can be selected to rewind to that moment.
 
-- `legacy/claude-design-v1/` — the original Claude Design prototype (recovered from the artifact).
-- `generador_lluvia/` — offline Python rain renderer and droplet source samples.
-- `design-system/` — brutalist design system (tokens + reference page).
-- `src/` — the deployable web app (Vite, no framework).
+**Live:** https://postigoip.github.io/perfect-storm/ (Chrome or Firefox recommended; headphones).
 
 ```bash
 npm install
-npm run dev
-npm run build   # static output in dist/
+npm run dev        # http://localhost:5173
+npm test           # model, story, sound-mapping and view tests
+npm run build      # static site in dist/
 ```
+
+## Layout
+
+- `src/model/` — stochastic SEIR in which every infection records its infector (genealogy), story-independent
+  epidemic curve binning, phylogeny extraction and collapse, observed-data replay.
+- `src/story.js` — event-driven chapters: each ends when what it describes has happened (tested in `tests/story.test.js`).
+- `src/audio/` — sample-based rain: one short drop per case, distance cues, thunder; grain banks from long recordings.
+- `src/view/` — the stage (rain falling into the case series), legend, milestones.
+- `design-system/` — the brutalist design system (tokens, components, reference page).
+- `scripts/` — data prep (`prep-ebola.mjs`), sound-bank builders (`build-grains.py`, `gen-sounds.mjs`, `cut-thunder.py`).
+- `tools/` — offline clip rendering and the listening loop used to tune the sound (`listen.py`).
+- `docs/` — design spec, plan, deploy notes, gallery-installation concept.
+- `legacy/claude-design-v1/` — the original prototype.
+
+## Credits and licences
+
+**Data (observed mode)** — `public/data/ebola.json` is derived from:
+- Nextstrain `ebola` build (time-resolved phylogeny of Makona genomes), https://nextstrain.org/ebola;
+  Dudas G. et al., *Virus genomes reveal factors that spread and sustained the Ebola epidemic*, Nature 544, 309–315 (2017).
+- Weekly case counts by district from https://github.com/ebov/space-time (WHO patient database, compiled for Dudas et al. 2017),
+  licensed **CC BY-SA 4.0**. The derived `public/data/ebola.json` is shared under the same licence.
+
+**Sound**
+- Drops and rain: CC0 1.0 recordings from Freesound — see `public/sounds-field/SOURCES.md` and `public/sounds-drops/SOURCES.md`
+  (Vrymaa, bassimat, gyzhor, kyles, Squidems; thunder by billgrip and mrrap4food).
+- `public/sounds/` and `public/sounds-textures/`: generated with ElevenLabs Sound Effects under a paid plan (prompts in `scripts/`).
+
+**Fonts** — loaded from Google Fonts under their respective open licences (see `design-system/README.md`).
+
+**Code** — © the author. No open-source licence has been chosen yet.
