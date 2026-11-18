@@ -44,69 +44,83 @@
       </dl>
     </section>
 
-    <section class="key" aria-label="How to read it">
-      <div class="key__row">
-        <div class="key__control">
-          <span class="ps-label" aria-hidden="true">Tree</span>
-          <fieldset class="ps-seg">
-            <legend>Tree</legend>
-            <label><input type="radio" name="tree" data-tree="behind" checked /><span>Behind</span></label>
-            <label><input type="radio" name="tree" data-tree="front" /><span>Front</span></label>
-            <label><input type="radio" name="tree" data-tree="off" /><span>Off</span></label>
-          </fieldset>
-        </div>
-        <div class="key__control">
-          <span class="ps-label" aria-hidden="true">Rain</span>
-          <fieldset class="ps-seg">
-            <legend>Rain</legend>
-            <label><input type="radio" name="spread" data-spread="wide" checked /><span>Everywhere</span></label>
-            <label><input type="radio" name="spread" data-spread="column" /><span>Over today</span></label>
-          </fieldset>
-        </div>
+    <section class="dock" id="controls" aria-label="Controls and key">
+      <div class="dock__bar">
+        <button type="button" class="dock__toggle" id="dock-toggle" aria-expanded="false" aria-controls="dock-body">Controls</button>
       </div>
-      <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
-      <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. Each wedge is a clade: cases that share one ancestor. The point is when that ancestor lived, the end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose.</p>
-    </section>
+      <div class="dock__body" id="dock-body" hidden>
+        <section class="ps-panel dock__panel dock__panel--transport">
+          <div class="ps-panel__head"><h2 class="ps-panel__title">Transport</h2></div>
+          <div class="row">
+            <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
+            <button type="button" class="ps-btn" id="reset">Reset</button>
+            <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span>Sound</span></label>
+          </div>
+          <div class="bank-ab">
+            <span class="ps-label" aria-hidden="true">Sound source</span>
+            <fieldset class="ps-seg">
+              <legend>Sound source</legend>
+              <label><input type="radio" name="bank" data-bank="sounds-textures" /><span>A · AI textures</span></label>
+              <label><input type="radio" name="bank" data-bank="sounds-field" checked /><span>B · Field recordings</span></label>
+            </fieldset>
+            <p class="ps-caption" id="bank-note">Real CC0 rain on stone, glass, metal and leaves.</p>
+          </div>
+          <label class="ps-field" for="volume">
+            <span class="ps-label">Volume</span>
+            <output class="ps-field__value" for="volume" id="volume-out">80%</output>
+            <input class="ps-slider" type="range" id="volume" min="0" max="1" step="0.01" value="0.8" style="--ps-fill: 80%" />
+          </label>
+        </section>
 
-    <aside class="rail" id="controls" aria-label="Controls">
-      <section class="ps-panel">
-        <div class="ps-panel__head"><h2 class="ps-panel__title">Transport</h2></div>
-        <div class="row">
-          <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
-          <button type="button" class="ps-btn" id="reset">Reset</button>
-          <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span>Sound</span></label>
-        </div>
-        <div class="bank-ab">
-          <span class="ps-label" aria-hidden="true">Sound source</span>
-          <fieldset class="ps-seg">
-            <legend>Sound source</legend>
-            <label><input type="radio" name="bank" data-bank="sounds-textures" /><span>A · AI textures</span></label>
-            <label><input type="radio" name="bank" data-bank="sounds-field" checked /><span>B · Field recordings</span></label>
-          </fieldset>
-          <p class="ps-caption" id="bank-note">Real CC0 rain on stone, glass, metal and leaves.</p>
-        </div>
-        <label class="ps-field" for="volume">
-          <span class="ps-label">Volume</span>
-          <output class="ps-field__value" for="volume" id="volume-out">80%</output>
-          <input class="ps-slider" type="range" id="volume" min="0" max="1" step="0.01" value="0.8" style="--ps-fill: 80%" />
-        </label>
-      </section>
-      <section class="ps-panel sim-only">
-        <div class="ps-panel__head"><h2 class="ps-panel__title">Chapters</h2></div>
-        <ol class="ps-chapters ps-chapters--stacked" id="chapters"></ol>
-      </section>
-      <section class="ps-panel sim-only" id="params">
-        <div class="ps-panel__head"><h2 class="ps-panel__title">Transmission</h2></div>
-      </section>
-      <section class="ps-panel sim-only">
-        <div class="ps-panel__head"><h2 class="ps-panel__title">Discontinuities</h2></div>
-        <div class="row">
-          <button type="button" class="ps-btn" id="variant">New variant</button>
-          <button type="button" class="ps-btn" id="import">Import pulse</button>
-        </div>
-      </section>
-      <div class="ps-source provenance" id="provenance"></div>
-    </aside>
+        <section class="ps-panel dock__panel dock__panel--key key" aria-label="How to read it">
+          <div class="ps-panel__head"><h2 class="ps-panel__title">Key</h2></div>
+          <!-- key controls wrap in a row; add further .key__control items (e.g. Scale: Linear / Log) here -->
+          <div class="key__row">
+            <div class="key__control">
+              <span class="ps-label" aria-hidden="true">Tree</span>
+              <fieldset class="ps-seg">
+                <legend>Tree</legend>
+                <label><input type="radio" name="tree" data-tree="behind" checked /><span>Behind</span></label>
+                <label><input type="radio" name="tree" data-tree="front" /><span>Front</span></label>
+                <label><input type="radio" name="tree" data-tree="off" /><span>Off</span></label>
+              </fieldset>
+            </div>
+            <div class="key__control">
+              <span class="ps-label" aria-hidden="true">Rain</span>
+              <fieldset class="ps-seg">
+                <legend>Rain</legend>
+                <label><input type="radio" name="spread" data-spread="wide" checked /><span>Everywhere</span></label>
+                <label><input type="radio" name="spread" data-spread="column" /><span>Over today</span></label>
+              </fieldset>
+            </div>
+          </div>
+          <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
+          <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. Each wedge is a clade: cases that share one ancestor. The point is when that ancestor lived, the end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose.</p>
+        </section>
+
+        <section class="ps-panel dock__panel dock__panel--chapters sim-only">
+          <div class="ps-panel__head"><h2 class="ps-panel__title">Chapters</h2></div>
+          <ol class="ps-chapters" id="chapters"></ol>
+        </section>
+
+        <section class="ps-panel dock__panel dock__panel--params sim-only">
+          <div class="ps-panel__head"><h2 class="ps-panel__title">Transmission</h2></div>
+          <div class="dock__sliders" id="params"></div>
+        </section>
+
+        <section class="ps-panel dock__panel dock__panel--disc sim-only">
+          <div class="ps-panel__head"><h2 class="ps-panel__title">Discontinuities</h2></div>
+          <div class="row">
+            <button type="button" class="ps-btn" id="variant">New variant</button>
+            <button type="button" class="ps-btn" id="import">Import pulse</button>
+          </div>
+        </section>
+
+        <section class="ps-panel dock__panel dock__panel--source" aria-label="Source">
+          <div class="ps-source provenance" id="provenance"></div>
+        </section>
+      </div>
+    </section>
   </main>
 
   <div class="start" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">

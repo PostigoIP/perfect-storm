@@ -13,3 +13,13 @@
 :root:root {
   --ps-lineage-1: var(--ps-ink);
 }
+
+/* Chapter type on the stage, one step quieter than the system's display so
+   the storm leads: the headline is 0.82× the stage's former display clamp,
+   the body 0.9× --ps-fs-h2. All three clamp terms are scaled, so phones
+   (which sit on the floor of the clamp) shrink too. */
+:root {
+  --ps-fs-chapter:      clamp(1.85rem, 0.74rem + 4.43vw, 4.7rem);
+  --ps-fs-chapter-body: clamp(1rem, 0.9rem + 0.54vw, 1.35rem);
+  --ps-dock-bar:        2.75rem;   /* the folded control dock under the stage */
+}

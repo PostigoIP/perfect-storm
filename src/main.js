@@ -7,6 +7,7 @@ import { surfaceFor } from './audio/voice.js';
 import { createStage } from './view/stage.js';
 import { createLedger } from './view/ledger.js';
 import { renderCollapsedTree } from './view/figures.js';
+import './view/dock.js';
 import { collapseTree } from './model/collapse.js';
 import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, createStory } from './story.js';
