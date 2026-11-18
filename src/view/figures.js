@@ -141,3 +141,63 @@ function niceMax(v) {
   return 10 * p;
 }
 const fmtCount = (v) => (v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : String(Math.round(v)));
+
+// Collapsed phylogeny: backbone lines, one flat wedge per clade, lifted
+// lineages connected to where they arose, introductions as thin lines.
+// col: from collapseTree(); band y in [0, 1].
+export function renderCollapsedTree(svg, col, { t0, t1, surfaceOf, lineageLabel, fmt, now }) {
+  const s = timeScale(svg, t0, t1);
+  s.bottom = s.H - 4;
+  svg.setAttribute('viewBox', `0 0 ${s.W} ${s.H}`);
+  if (!col || !col.clades.length) {
+    svg.innerHTML = `<text x="${s.left}" y="${s.top + 14}" class="fig-empty">No sequenced cases yet.</text>`;
+    return;
+  }
+  const Y = (v) => s.top + v * (s.bottom - s.top);
+  const X = (t) => s.x(t);
+  const col_ = (l) => (l < 0 ? 'var(--ps-ink)' : fill(surfaceOf(l)));
+  let out = '';
+
+  // backbone
+  for (const v of col.verticals) out += `<path d="M${X(v.x).toFixed(1)} ${Y(v.y0).toFixed(1)}V${Y(v.y1).toFixed(1)}" stroke="var(--ps-ink)" stroke-width="1" fill="none" shape-rendering="crispEdges"/>`;
+  for (const e of col.edges) out += `<path d="M${X(e.x0).toFixed(1)} ${Y(e.y).toFixed(1)}H${X(e.x1).toFixed(1)}" stroke="var(--ps-ink)" stroke-width="1" fill="none" shape-rendering="crispEdges"/>`;
+  // root stem (and "outside" when the root is the world beyond the population)
+  const rx = X(col.rootX), ry = Y(col.rootY), stem = Math.max(10, (s.right - s.left) * 0.025);
+  out += `<path d="M${(rx - stem).toFixed(1)} ${ry.toFixed(1)}H${rx.toFixed(1)}" stroke="var(--ps-ink)" stroke-width="1" shape-rendering="crispEdges"/>`;
+  if (col.root.synthetic) out += `<text class="fig-label" x="${(rx - stem - 4).toFixed(1)}" y="${(ry + 4).toFixed(1)}" text-anchor="end">outside</text>`;
+
+  // connectors: where a lineage arose inside its host clade
+  for (const k of col.connectors) {
+    const x = X(k.x).toFixed(1);
+    out += `<path d="M${x} ${Y(k.y0).toFixed(1)}V${Y(k.y1).toFixed(1)}" stroke="${col_(k.lineage)}" stroke-width="1" stroke-dasharray="2 3" fill="none"/>`;
+    out += `<circle cx="${x}" cy="${Y(k.y0).toFixed(1)}" r="2.5" fill="${col_(k.lineage)}"/>`;
+  }
+
+  const multi = new Set(col.clades.filter((b) => b.kind !== 'intros').map((b) => b.lineage)).size > 1;
+  for (const b of col.clades) {
+    const x0 = X(b.x0), x1 = Math.max(X(b.x1), x0 + 2), y0 = Y(b.y0), y1 = Y(b.y1), yc = Y(b.yc);
+    const c = col_(b.lineage);
+    const title = b.kind === 'intros'
+      ? `${b.members.length} separate introductions from outside · ${b.n} sequenced cases`
+      : `${b.kind === 'lineage' ? lineageLabel(b.lineage) + ' · ' : ''}${b.n} sequenced case${b.n === 1 ? '' : 's'} · common ancestor ${fmt(b.x0)} · latest ${fmt(b.x1)}`;
+    if (b.kind === 'intros') {
+      const m = b.members, step = (y1 - y0) / Math.max(1, m.length);
+      m.forEach((mb, i) => {
+        const yy = y0 + step * (i + 0.5);
+        out += `<path d="M${X(mb.x0).toFixed(1)} ${yy.toFixed(1)}H${Math.max(X(mb.x1), X(mb.x0) + 2).toFixed(1)}" stroke="${col_(mb.lineage)}" stroke-width="1.5"/>`;
+      });
+      out += `<rect x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${(x1 - x0).toFixed(1)}" height="${(y1 - y0).toFixed(1)}" fill="transparent"><title>${title}</title></rect>`;
+      out += `<text class="fig-label" x="${(x1 + 6).toFixed(1)}" y="${(yc + 4).toFixed(1)}">outside · ${m.length}</text>`;
+      continue;
+    }
+    if (b.n === 1) {
+      out += `<path d="M${x0.toFixed(1)} ${yc.toFixed(1)}H${x1.toFixed(1)}" stroke="${c}" stroke-width="1"/><rect x="${(x1 - 2).toFixed(1)}" y="${(yc - 2).toFixed(1)}" width="4" height="4" fill="${c}"><title>${title}</title></rect>`;
+      continue;
+    }
+    const pad = Math.min(2, (y1 - y0) * 0.1);
+    out += `<path class="wedge" d="M${x0.toFixed(1)} ${yc.toFixed(1)}L${x1.toFixed(1)} ${(y0 + pad).toFixed(1)}L${x1.toFixed(1)} ${(y1 - pad).toFixed(1)}Z" fill="${c}"${b.purity < 0.95 ? ' fill-opacity="0.7"' : ''}><title>${title}</title></path>`;
+    const label = b.kind === 'lineage' || multi ? `${lineageLabel(b.lineage)} · ${b.n.toLocaleString('en')}` : b.n.toLocaleString('en');
+    out += `<text class="fig-label${b.kind === 'lineage' ? ' fig-label--strong' : ''}" x="${(x1 + 6).toFixed(1)}" y="${(yc + 4).toFixed(1)}">${label}</text>`;
+  }
+  svg.innerHTML = out;
+}

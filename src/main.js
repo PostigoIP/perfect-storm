@@ -6,7 +6,8 @@ import { createAudio, LOOKAHEAD } from './audio/engine.js';
 import { surfaceFor } from './audio/voice.js';
 import { createStage } from './view/stage.js';
 import { createLedger } from './view/ledger.js';
-import { renderTree } from './view/figures.js';
+import { renderCollapsedTree } from './view/figures.js';
+import { collapseTree } from './model/collapse.js';
 import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, makeTween } from './story.js';
 import { createObservedSource } from './model/observed.js';
@@ -87,12 +88,14 @@ function frame(now) {
 function domain() {
   const t = source.t;
   if (state.mode === 'obs') return observed.domain(t);
-  return { t0: -8, t1: Math.max(60, t + 4) };
+  const t0 = -8;
+  return { t0, t1: Math.max(60, t + 4 + 0.14 * (t - t0)) };   // room past 'now' for clade labels
 }
 const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t)}`);
 
 // tips that fit the figure without merging (~2.6 px per tip)
-const tipBudget = () => Math.max(60, Math.min(400, Math.floor(($('tree').getBoundingClientRect().height - 10) / 2.6)));
+const TIP_CAP = 2000;   // tips feeding the collapsed tree (counts on wedges); not drawn one by one
+const bandBudget = () => Math.max(5, Math.min(12, Math.floor($('tree').getBoundingClientRect().height / 30)));
 
 function drawTree() {
   const t = source.t;
@@ -100,15 +103,16 @@ function drawTree() {
   $('tree').style.top = `${box.top}px`;
   $('tree').style.height = `${Math.max(60, box.bottom - box.top)}px`;
   let layout;
-  if (state.mode === 'obs') layout = observed.tree(t, tipBudget());
+  if (state.mode === 'obs') layout = observed.tree(t, TIP_CAP);
   else {
     const tips = [];
     for (const c of sim.cases) if (c.sampled && c.tOnset + 2 <= t) tips.push({ id: c.id, t: c.tOnset + 2 });
-    layout = buildTree((id) => ({ parent: sim.cases[id].parent, t: sim.cases[id].tInf, lineage: sim.cases[id].lineage }), thinTips(tips, tipBudget()));
+    layout = buildTree((id) => ({ parent: sim.cases[id].parent, t: sim.cases[id].tInf, lineage: sim.cases[id].lineage }), thinTips(tips, TIP_CAP));
   }
   const { t0, t1 } = domain();
-  renderTree($('tree'), layout, { t0, t1, now: t, surfaceOf, lineageLabel, fmt: fmtDay, flashSince: t - (state.mode === 'obs' ? 7 : 1.5), axis: false });
-  $('tree-note').textContent = `phylogeny of ${layout.tips.length} sequenced cases`;
+  const col = layout.root ? collapseTree(layout.root, { maxClades: bandBudget() }) : null;
+  renderCollapsedTree($('tree'), col, { t0, t1, now: t, surfaceOf, lineageLabel, fmt: fmtDay });
+  $('tree-note').textContent = `phylogeny of ${layout.tips.length.toLocaleString('en')} sequenced cases, grouped into clades`;
 }
 
 function lineageOrder() {

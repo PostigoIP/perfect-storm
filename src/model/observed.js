@@ -79,7 +79,7 @@ export function createObservedSource(data, { seed = 7 } = {}) {
       return layout;
     },
     bins(now) { return binCases(cases.slice(0, cursor), { binDays: 7, tMax: now, nLineages: lineages.length }); },
-    domain() { return { t0: Math.min(rootDate, t0Start) - 7, t1: tEnd + 7, t0Start }; },
+    domain() { const t0 = Math.min(rootDate, t0Start) - 7; return { t0, t1: tEnd + 0.12 * (tEnd - t0), t0Start }; },
     fmt(d) {
       const dt = new Date(startMs + d * 86400000);
       return `${MONTHS[dt.getUTCMonth()]} ${String(dt.getUTCFullYear()).slice(2)}`;

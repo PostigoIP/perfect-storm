@@ -172,3 +172,5 @@ body[data-mode="obs"] .sim-only { display: none; }
 .seg__label { font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); text-transform: uppercase; letter-spacing: var(--ps-tracking-caps); color: var(--ps-ink-2); padding: var(--ps-space-2) var(--ps-space-3); border-right: var(--ps-rule-w) solid var(--ps-ink); align-self: center; }
 .key .legend { padding: var(--ps-space-4) 0 0; }
 .key__note { max-width: 62ch; color: var(--ps-ink-2); font-size: var(--ps-fs-small); margin: var(--ps-space-4) 0 0; }
+.fig-label--strong { font-weight: 500; }
+.stage[data-tree="behind"] .stage__tree { opacity: .28; }
