@@ -40,9 +40,23 @@ const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json`, bed: BED_ENA
 let ledger = createLedger({ binDays: 1 });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FALL_MS = reducedMotion ? 0 : 1100;   // a drop's flight; its sound plays on impact
+// The ground under the bars: the metrics strip, plus the legend where it docks on
+// top of it (narrow screens, see app.css), so the legend never covers the case series.
+const legendBox = document.querySelector('.stage__legend');
+const legendDocked = matchMedia('(max-width: 900px)');
+let groundH = 0;
+function measureGround() {
+  const m = $('metrics').getBoundingClientRect().height;
+  groundH = m + (legendDocked.matches ? legendBox.getBoundingClientRect().height : 0);
+  $('stage-el').style.setProperty('--ps-metrics-h', `${m}px`);
+}
+measureGround();
+const groundObserver = new ResizeObserver(measureGround);
+groundObserver.observe($('metrics')); groundObserver.observe(legendBox);
+legendDocked.addEventListener('change', measureGround);
 const stage = createStage($('stage'), {
   stageEl: $('stage-el'),
-  groundOffset: () => $('metrics').getBoundingClientRect().height,
+  groundOffset: () => groundH,
   domain: () => ({ ...domain(), now: source.t }),
   ledger: () => ledger,
   surfaceOf: (l) => surfaceOf(l),

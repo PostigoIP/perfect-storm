@@ -188,9 +188,7 @@ body[data-mode="obs"] .sim-only { display: none; }
 .stage__legend-name { font-weight: 500; }
 .stage__legend-sub { grid-column: 2; color: var(--ps-ink-2); }
 .stage__legend-key { grid-template-columns: 12px auto 12px auto !important; justify-content: start; column-gap: var(--ps-space-2); margin-top: var(--ps-space-1); padding-top: var(--ps-space-2); border-top: var(--ps-rule-w) solid var(--ps-rule); color: var(--ps-ink-2); }
-@media (max-width: 900px) {
-  .stage__legend { top: auto; bottom: calc(var(--ps-space-8) * 1.6); right: var(--ps-space-3); max-width: 60vw; }
-}
+/* narrow screens: see the end of this file (the legend docks on the metrics) */
 .audio-status { font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); margin: 0; }
 
 .stage__legend-item { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 12px 1fr; column-gap: var(--ps-space-2); align-items: baseline; width: 100%; cursor: pointer; padding: 2px 0; }
@@ -222,3 +220,30 @@ body[data-mode="obs"] .sim-only { display: none; }
 .tutorial[hidden] { display: none; }
 .tutorial__title { font-size: var(--ps-fs-chapter); }
 .tutorial__skip { margin-left: auto; }
+
+/* Narrow screens: the legend leaves the stage's top right and docks as one line
+   on top of the metrics. main.js counts it in the ground, so the bars stand above
+   it and it never covers them. One line only (a phone's stage is often at its
+   520 px floor): when the lineages do not fit, the line slides sideways and its
+   right edge fades. Swatch and name only; each chip still mutes its sound. */
+@media (max-width: 900px) {
+  /* the line adds its own height to the stage's floor instead of taking it from the chart */
+  .stage { --ps-legend-line: 2.25rem; min-height: calc(520px + var(--ps-legend-line)); }
+  .stage__legend {
+    top: auto; left: 0; right: 0; bottom: var(--ps-metrics-h, 0px);
+    max-width: none; padding: 0;
+    background: var(--ps-paper); border: 0;
+  }
+  .stage__legend-title, .stage__legend-sub, .stage__legend-hint, .stage__legend-key { display: none !important; }
+  .stage__legend-list {
+    display: flex; flex-wrap: nowrap; gap: var(--ps-space-4);
+    padding-left: var(--ps-gutter);
+    overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--ps-gutter) * 2), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - var(--ps-gutter) * 2), transparent);
+  }
+  .stage__legend-list::-webkit-scrollbar { display: none; }
+  .stage__legend-list::after { content: ""; flex: 0 0 var(--ps-gutter); }   /* the last chip can scroll clear of the fade */
+  .stage__legend-list li { flex: 0 0 auto; }
+  .stage__legend-item { display: inline-flex; align-items: center; gap: var(--ps-space-2); width: auto; min-height: var(--ps-legend-line); padding: 0; white-space: nowrap; }
+}
