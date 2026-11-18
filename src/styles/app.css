@@ -114,7 +114,7 @@ body[data-mode="obs"] .sim-only { display: none; }
 .stage__tree { position: absolute; left: 0; width: 100%; z-index: 1; opacity: .2; pointer-events: none; transition: opacity var(--ps-dur-slow) var(--ps-ease); }
 .stage__text { z-index: 3; transition: opacity var(--ps-dur-slow) var(--ps-ease); }
 .metrics { z-index: 4; }
-.stage[data-tree="behind"] .stage__tree { opacity: .28; }
+.stage[data-tree="behind"] .stage__tree { opacity: .2; }
 .stage[data-tree="front"] .stage__tree { z-index: 3; opacity: 1; pointer-events: auto; }
 .stage[data-tree="front"] .stage__text { opacity: .12; }
 .stage[data-tree="off"] .stage__tree { display: none; }

@@ -16,8 +16,8 @@ describe('pickGrain', () => {
 });
 
 describe('grainLength', () => {
-  it('grows with severity and stays within 0.15–0.5 s', () => {
+  it('grows with severity and stays within 0.25–0.65 s', () => {
     let prev = 0;
-    for (let s = 0; s <= 3; s++) { const L = grainLength(s, 0.5); expect(L).toBeGreaterThan(prev); expect(L).toBeGreaterThanOrEqual(0.15); expect(L).toBeLessThanOrEqual(0.5); prev = L; }
+    for (let s = 0; s <= 3; s++) { const L = grainLength(s, 0.5); expect(L).toBeGreaterThan(prev); expect(L).toBeGreaterThanOrEqual(0.25); expect(L).toBeLessThanOrEqual(0.65); prev = L; }
   });
 });

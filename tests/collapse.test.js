@@ -65,6 +65,26 @@ describe('collapseTree', () => {
     expect(col.clades.reduce((s, c) => s + c.n, 0)).toBe(4);
   });
 
+  it('lineage view: one founder wedge, each lineage its own band, nested lineages lifted from their host', () => {
+    const lv = collapseTree(tr.root, { founderBands: 1, maxLifted: 4 });
+    const founder = lv.clades.filter((c) => c.kind === 'clade');
+    expect(founder).toHaveLength(1);
+    expect(lv.clades.filter((c) => c.kind === 'lineage').map((c) => c.lineage)).toContain(1);
+    expect(lv.clades.reduce((s, c) => s + c.n, 0)).toBe(tips.length);
+  });
+
+  it('nested lineages are lifted out of lifted lineages without double counting', () => {
+    const t = (id, x, l) => ({ id: `tip:${id}`, caseId: id, x, lineage: l, tip: true, children: [] });
+    // founder 0 → lineage 1 clade (4 tips) which contains a lineage 2 clade (3 tips)
+    const l2 = { id: 'l2', x: 6, lineage: 2, children: [t(1, 9, 2), { id: 'l2b', x: 7, lineage: 2, children: [t(2, 9, 2), t(3, 10, 2)] }] };
+    const l1 = { id: 'l1', x: 3, lineage: 1, children: [{ id: 'l1b', x: 4, lineage: 1, children: [t(4, 8, 1), t(5, 9, 1)] }, { id: 'l1c', x: 5, lineage: 1, children: [l2, { id: 'l1d', x: 5.5, lineage: 1, children: [t(6, 8, 1), t(7, 9, 1)] }] }] };
+    const root = { id: 'r', x: 0, lineage: 0, children: [{ id: 'f', x: 1, lineage: 0, children: [t(8, 6, 0), t(9, 7, 0), t(10, 8, 0)] }, l1] };
+    const lv = collapseTree(root, { founderBands: 1, maxLifted: 4 });
+    const byL = Object.fromEntries(lv.clades.map((c) => [c.lineage, c.n]));
+    expect(byL).toEqual({ 0: 3, 1: 4, 2: 3 });
+    expect(lv.connectors).toHaveLength(2);
+  });
+
   it('handles a tree that is a single tip', () => {
     const one = collapseTree({ id: 'tip:1', caseId: 1, x: 3, lineage: 0, tip: true, children: [] }, { maxClades: 10 });
     expect(one.clades).toHaveLength(1);

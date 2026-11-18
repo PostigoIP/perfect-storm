@@ -6,6 +6,7 @@
 
 import { tokens } from './tokens.js';
 import { MARGIN } from './figures.js';
+import { yScale } from './scale.js';
 
 const AXIS_H = 20;          // css px under the bars for time labels
 const BARS_SHARE = 0.36;    // share of stage height (above ground) for the bars
@@ -16,6 +17,9 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   let W = 0, H = 0, dpr = 1, raf = 0, running = false;
   let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let spread = 'wide';
+  let scaleKind = 'log';
+  let events = [];          // [{ t, label }] story events marked on the time axis
+  let unitLabel = 'cases per day';
   let yMaxShown = 10, lastTs = 0;
   const flights = [], splashes = [];
 
@@ -35,7 +39,8 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   const left = () => MARGIN.l * dpr, right = () => W - MARGIN.r * dpr;
   function x(t) { const { t0, t1 } = domain(); return left() + ((t - t0) / Math.max(1e-6, t1 - t0)) * (right() - left()); }
   const binW = () => Math.max(1, x(ledger().binDays) - x(0));
-  const barTop = (t) => baseline() - (ledger().heightOf(t) / yMaxShown) * zoneH();
+  const ys = () => yScale(scaleKind, yMaxShown);
+  const barTop = (t) => baseline() - ys().f(ledger().heightOf(t)) * zoneH();
   const binCentre = (t) => { const b = ledger().binDays; return x(Math.floor(t / b) * b + b / 2); };
   function tAt(px) { const { t0, t1 } = domain(); return t0 + ((px - left()) / Math.max(1, right() - left())) * (t1 - t0); }
   // the surface under a point: the top of the bar there, or the baseline
@@ -77,14 +82,17 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   function drawBars(tk) {
     const bins = ledger().bins();
     const bw = binW(), gap = bw >= 4 * dpr ? dpr : 0, zh = zoneH(), base = baseline();
-    const units = yMaxShown <= 30.5 && bw >= 5 * dpr;
+    const sc = ys();
+    const units = scaleKind === 'linear' && yMaxShown <= 30.5 && bw >= 5 * dpr;
     const unit = zh / yMaxShown;
     for (const b of bins) {
       const bx = x(b.t0) + gap / 2, w = bw - gap;
-      let acc = 0;
       const layers = [];
       for (const l of order()) if (b.detectedByLineage[l]) layers.push([l, b.detectedByLineage[l], true]);
       for (const l of order()) { const u = b.byLineage[l] - b.detectedByLineage[l]; if (u) layers.push([l, u, false]); }
+      // the bar's height encodes its total on the current scale; layers share it in proportion
+      const H = sc.f(b.total) * zh;
+      let acc = 0;
       for (const [l, n, rep] of layers) {
         const col = tk[surfaceOf(l)] ?? tk.ink;
         if (units) {
@@ -94,24 +102,29 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
             if (rep) { ctx.fillStyle = col; ctx.fillRect(bx, yy, sq, sq); }
             else { ctx.strokeStyle = col; ctx.lineWidth = dpr; ctx.strokeRect(bx + dpr / 2, yy + dpr / 2, sq - dpr, sq - dpr); }
           }
+          acc += n;
         } else {
+          const h0 = (acc / b.total) * H, h1 = ((acc + n) / b.total) * H;
           ctx.globalAlpha = rep ? 1 : 0.28;
           ctx.fillStyle = col;
-          ctx.fillRect(bx, base - (acc + n) * unit, w, n * unit);
+          ctx.fillRect(bx, base - h1, w, h1 - h0);
           ctx.globalAlpha = 1;
+          acc += n;
         }
-        acc += n;
       }
     }
   }
 
+  const monoFont = (px) => `${px * dpr}px ${getComputedStyle(document.documentElement).getPropertyValue('--ps-font-mono')}`;
+
   function drawAxis(tk, now) {
-    const { t0, t1 } = domain(), base = baseline();
+    const { t0, t1 } = domain(), base = baseline(), zh = zoneH(), yTop = base - zh;
+    // time axis
     ctx.fillStyle = tk.ink;
     ctx.fillRect(left(), base, right() - left(), dpr);
     const span = t1 - t0, raw = span / 6, p = Math.pow(10, Math.floor(Math.log10(raw)));
-    const step = [1, 2, 5, 10].map((m) => m * p).find((s) => raw <= s) ?? 10 * p;
-    ctx.font = `${10 * dpr}px ${getComputedStyle(document.documentElement).getPropertyValue('--ps-font-mono')}`;
+    const step = [1, 2, 5, 10].map((m) => m * p).find((q) => raw <= q) ?? 10 * p;
+    ctx.font = monoFont(10);
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillStyle = tk.ink2;
     for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) {
@@ -119,14 +132,33 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
       ctx.fillRect(xx, base, dpr, 4 * dpr);
       ctx.fillText(fmt(t), xx, base + 6 * dpr);
     }
-    // y reference: the current scale maximum, top-left of the bar zone
+    // value scale: faint reference lines with quiet labels, and what the bars count
+    const sc = ys();
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    const yTop = base - zoneH();
-    ctx.fillRect(left() - 4 * dpr, Math.round(yTop), 4 * dpr, dpr);
-    ctx.fillText(Math.round(yMaxShown).toLocaleString('en'), left() - 7 * dpr, yTop);
+    for (const tick of sc.ticks) {
+      const yy = Math.round(base - tick.f * zh);
+      ctx.globalAlpha = 0.12; ctx.fillStyle = tk.ink;
+      ctx.fillRect(left(), yy, right() - left(), dpr);
+      ctx.globalAlpha = 1; ctx.fillStyle = tk.ink2;
+      ctx.fillText(tick.v >= 1000 ? `${tick.v / 1000}k` : String(tick.v), left() - 6 * dpr, yy);
+    }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = tk.ink2;
+    ctx.fillText(`${unitLabel}${scaleKind === 'log' ? ' · log scale' : ''}`, left(), yTop - 6 * dpr);
+    // story events: a hairline and a short label, alternating rows to avoid collisions
+    ctx.font = monoFont(9.5);
+    events.forEach((e, k) => {
+      const xx = Math.round(x(e.t));
+      if (xx < left() || xx > right()) return;
+      ctx.globalAlpha = 0.45; ctx.fillStyle = tk.ink;
+      ctx.fillRect(xx, yTop, dpr, zh);
+      ctx.globalAlpha = 1; ctx.fillStyle = tk.ink2;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(e.label, xx + 4 * dpr, yTop + (k % 2 ? 14 : 2) * dpr);
+    });
     // now
     ctx.fillStyle = tk.accent;
-    ctx.fillRect(Math.round(x(now)), base - zoneH(), dpr, zoneH());
+    ctx.fillRect(Math.round(x(now)), yTop, dpr, zh);
   }
 
   function frame(ts) {
@@ -186,6 +218,9 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   return {
     spawn, splash, flash,
     setSpread(s) { spread = s; },
+    setScale(k) { scaleKind = k; },
+    setEvents(list) { events = list; },
+    setUnitLabel(l) { unitLabel = l; },
     setReducedMotion(b) { reduced = b; },
     clear() { flights.length = 0; splashes.length = 0; yMaxShown = 10; },
     // where the tree should sit (css px, relative to the stage)

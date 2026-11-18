@@ -18,31 +18,31 @@ export const CHAPTERS = [
     until: (s) => s.incidenceToday >= 6, minDays: 8, maxDays: 40,
   },
   {
-    id: 'silent', title: 'Silent spread',
+    id: 'silent', mark: 'Silent spread', title: 'Silent spread',
     body: 'Each infection seeds two or three more. Without testing, the reported curve trails the real one. What sounds like drizzle is already an outbreak.',
     enter: ({ sim }) => sim.setParam('detection', 0.12),
     until: (s) => s.incidenceToday >= 40, minDays: 8, maxDays: 50,
   },
   {
-    id: 'wall', title: 'The exponential wall',
+    id: 'wall', mark: 'Exponential', title: 'The exponential wall',
     body: 'Doublings stack. A handful becomes hundreds a day within weeks. Single drops merge into rain.',
     enter: ({ sim, setSpeed }) => { sim.setParam('detection', 0.38); setSpeed(2); },
     until: (s) => s.incidenceToday >= 400 || s.S / s.pop < 0.88, minDays: 5, maxDays: 40,
   },
   {
-    id: 'lockdown', title: 'Lockdown',
+    id: 'lockdown', mark: 'Lockdown', title: 'Lockdown',
     body: 'Distancing and closures cut transmission per contact. R falls below one. The rain thins, but it does not stop.',
     enter: ({ sim, rampR }) => { rampR(0.65, 3); sim.setParam('detection', 0.55); },
     until: (s, m) => s.reffAnalytic < 1 && s.incidenceToday < 0.35 * m.peak, minDays: 14, maxDays: 70,
   },
   {
-    id: 'plateau', title: 'A long plateau',
+    id: 'plateau', mark: 'Plateau', title: 'A long plateau',
     body: 'Cases settle into a low murmur. Mobility returns, transmission creeps back toward one, and travellers seed new clusters: listen for the leaves.',
     enter: ({ sim, rampR }) => { rampR(0.9, 6); sim.setParam('importRate', 1.2); },
     until: () => false, minDays: 24, maxDays: 24,
   },
   {
-    id: 'alpha', title: 'A new variant',
+    id: 'alpha', mark: 'Variant α', title: 'A new variant',
     body: 'A more transmissible lineage arises in one infected person. Thunder marks the moment; from then on its drops fall on glass.',
     enter: ({ sim, thunder, setR }) => {
       setR(0.95);   // founder transmission now fixed: the variant's advantage is all that changes
@@ -52,19 +52,19 @@ export const CHAPTERS = [
     until: (s) => share(s, 'Variant α') >= 0.5, minDays: 8, maxDays: 100,
   },
   {
-    id: 'second-wave', title: 'Second wave',
+    id: 'second-wave', mark: 'Second wave', title: 'Second wave',
     body: 'With the variant dominant, R climbs above one again even as testing improves. The glass gets louder. Left alone, this wave would outgrow the first.',
     enter: ({ sim }) => sim.setParam('detection', 0.62),
     until: (s, m) => s.incidenceToday >= Math.max(200, 0.6 * m.mem.firstPeak), minDays: 6, maxDays: 60,
   },
   {
-    id: 'vaccine', title: 'Vaccines arrive',
+    id: 'vaccine', mark: 'Vaccines', title: 'Vaccines arrive',
     body: 'Each vaccinated person moves from susceptible to immune without ever being infected. The fuel is removed, person by person, and the wave turns.',
     enter: ({ sim }) => { sim.setParam('vaccinationRate', 0.015); sim.setParam('immunity', 0.6); },
     until: (s, m) => s.reffAnalytic < 1 && s.incidenceToday < 0.12 * m.peak, minDays: 20, maxDays: 110,
   },
   {
-    id: 'escape', title: 'A partial-escape variant',
+    id: 'escape', mark: 'Variant β', title: 'A partial-escape variant',
     body: 'A second variant evades some immunity and falls on metal. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
     enter: ({ sim, thunder }) => {
       const l = sim.introduceVariant('Variant β', { tx: 2.0, escape: 0.6, cluster: 60 });
@@ -74,7 +74,7 @@ export const CHAPTERS = [
     until: (s, m) => share(s, 'Variant β') >= 0.7 && s.incidenceToday >= 1.8 * Math.max(5, m.entry), minDays: 20, maxDays: 100,
   },
   {
-    id: 'endemic', title: 'Endemic rain',
+    id: 'endemic', mark: 'Endemic', title: 'Endemic rain',
     body: 'The virus settles into a low, persistent rain. The storm has not ended; it has changed surface. This is what living with a pathogen sounds like.',
     enter: ({ sim, rampR, setSpeed }) => { rampR(1.0, 10); sim.setParam('importRate', 1); sim.setParam('detection', 0.5); setSpeed(1.5); },
     until: () => false, minDays: Infinity, maxDays: Infinity,

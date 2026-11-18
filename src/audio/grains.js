@@ -15,5 +15,5 @@ export function pickGrain(entries, index) {
 
 // seconds of recording a case plays: longer for more severe cases
 export function grainLength(severity, u) {
-  return 0.16 + severity * 0.07 + u * 0.08;
+  return 0.26 + severity * 0.08 + u * 0.1;   // long enough for a drop to ring out
 }

@@ -1,104 +1,100 @@
 // Collapse a phylogeny into a few readable bands.
 //
-//  1. Lineage clades (a variant arising inside the tree) are lifted out whole
-//     and become their own band, connected to the place they arose.
+//  1. Lineage clades (a variant, or a country in observed data, arising inside
+//     the tree) are lifted out and become their own band, connected to the
+//     band they arose in. Lifting is recursive: a lineage arising inside a
+//     lifted lineage is lifted out of it, and counted only once.
 //  2. Independent introductions from outside (children of a synthetic root,
 //     other than the main tree) are gathered into one "introductions" band.
-//  3. What remains (the founder tree) is opened from the root, largest clade
-//     first, until the band budget is used. Opened nodes are the backbone;
-//     unopened ones are wedges: point = common ancestor, tail = latest
-//     sampled case, height ∝ √(sequenced cases); counts are printed.
+//  3. What remains of the founder tree is opened from the root, largest clade
+//     first, into `founderBands` wedges (default: whatever `maxClades` leaves).
+//     Opened nodes are the backbone; wedges: point = common ancestor,
+//     tail = latest sampled case, height ∝ √(sequenced cases).
 
-function tipStats(root) {
-  const stats = new Map();
+export function collapseTree(root, { maxClades = 10, founderBands, maxLifted, gap = 0.025 } = {}) {
+  // raw stats (whole subtree)
+  const raw = new Map();
   (function walk(n) {
-    if (n.tip) { stats.set(n, { n: 1, xMax: n.x, xMin: n.x, counts: new Map([[n.lineage, 1]]) }); return; }
-    const s = { n: 0, xMax: -Infinity, xMin: Infinity, counts: new Map() };
-    for (const c of n.children) {
-      walk(c);
-      const cs = stats.get(c);
-      s.n += cs.n; s.xMax = Math.max(s.xMax, cs.xMax); s.xMin = Math.min(s.xMin, cs.xMin);
-      for (const [l, k] of cs.counts) s.counts.set(l, (s.counts.get(l) ?? 0) + k);
-    }
-    stats.set(n, s);
+    if (n.tip) { raw.set(n, new Map([[n.lineage, 1]])); return; }
+    const m = new Map();
+    for (const c of n.children) { walk(c); for (const [l, k] of raw.get(c)) m.set(l, (m.get(l) ?? 0) + k); }
+    raw.set(n, m);
   })(root);
-  return stats;
-}
+  const total = (n) => [...raw.get(n).values()].reduce((a, b) => a + b, 0);
+  const major = (n) => [...raw.get(n)].sort((a, b) => b[1] - a[1])[0][0];
+  const purity = (n) => Math.max(...raw.get(n).values()) / total(n);
 
-export function collapseTree(root, { maxClades = 10, gap = 0.025 } = {}) {
-  const stats = tipStats(root);
-  const major = (n) => [...stats.get(n).counts].sort((a, b) => b[1] - a[1])[0][0];
-  const purity = (n) => { const s = stats.get(n); return Math.max(...s.counts.values()) / s.n; };
-
-  // 2. introductions: if the root is synthetic, its largest child is the main tree
+  // 2. introductions
   let main = root;
   const intros = [];
   if (root.synthetic && root.children.length > 1) {
-    const sorted = [...root.children].sort((a, b) => stats.get(b).n - stats.get(a).n);
+    const sorted = [...root.children].sort((a, b) => total(b) - total(a));
     main = sorted[0];
     intros.push(...sorted.slice(1));
   }
+  const founderLineage = main.lineage;   // the lineage at the root, not the most numerous one
 
-  // 1. lineage clades: topmost nodes whose lineage differs from their parent's
-  const lifted = [];                     // { node, host: parent node, at: parent x }
-  const removed = new Set();
+  // 1. lineage clades, recursively
+  let lifted = [];                      // { node, host }
   (function scan(n) {
     if (n.tip) return;
     for (const c of n.children) {
-      if (major(c) !== n.lineage && purity(c) >= 0.8 && major(c) !== major(main)) { lifted.push({ node: c, host: n, at: n.x }); removed.add(c); }
-      else scan(c);
+      const lc = major(c);
+      // a new lineage: few of the host's own cases inside it (nested newer lineages don't count against it)
+      const hostShare = (raw.get(c).get(n.lineage) ?? 0) / total(c);
+      if (lc !== n.lineage && lc !== founderLineage && hostShare <= 0.3 && total(c) >= 3) lifted.push({ node: c, host: n });
+      scan(c);
     }
   })(main);
-
-  // keep only the largest few lifted clades (≥3 tips); the rest stay in place
-  lifted.sort((a, b) => stats.get(b.node).n - stats.get(a.node).n);
-  for (const L of lifted.splice(Math.max(1, Math.floor(maxClades / 3)))) removed.delete(L.node);
-  for (let i = lifted.length - 1; i >= 0; i--) if (stats.get(lifted[i].node).n < 3) { removed.delete(lifted[i].node); lifted.splice(i, 1); }
-
+  // keep the outermost lift per lineage path: a lift whose node sits inside another lift of the same lineage is dropped
+  const cap = maxLifted ?? Math.max(1, Math.floor(maxClades / 3));
+  lifted.sort((a, b) => total(b.node) - total(a.node));
+  const kept = [];
+  const inside = (anc, node) => { let found = false; (function f(n) { if (found) return; if (n === node) found = true; else if (!n.tip) n.children.forEach(f); })(anc); return found; };
+  for (const L of lifted) {
+    if (kept.length >= cap) break;
+    if (kept.some((K) => major(K.node) === major(L.node) && inside(K.node, L.node))) continue;
+    kept.push(L);
+  }
+  lifted = kept;
+  const removed = new Set(lifted.map((L) => L.node));
   const kids = (n) => n.children.filter((c) => !removed.has(c));
-  const nMain = (n) => {   // tips left in a subtree once lifted clades are removed
-    if (n.tip) return 1;
-    return kids(n).reduce((s, c) => s + nMain(c), 0);
+  const nExcl = (n) => (n.tip ? 1 : kids(n).reduce((s, c) => s + nExcl(c), 0));
+  const xMaxExcl = (n) => (n.tip ? n.x : Math.max(...kids(n).map(xMaxExcl)));
+  const majorExcl = (n) => {
+    const m = new Map();
+    (function f(x) { if (x.tip) m.set(x.lineage, (m.get(x.lineage) ?? 0) + 1); else kids(x).forEach(f); })(n);
+    return m.size ? [...m].sort((a, b) => b[1] - a[1])[0][0] : major(n);
   };
-  const mainCount = new Map();
-  (function walk(n) { mainCount.set(n, nMain(n)); if (!n.tip) kids(n).forEach(walk); })(main);
-  const xMaxMain = (n) => (n.tip ? n.x : Math.max(...kids(n).map(xMaxMain)));
 
-  // 3. open the founder tree, largest first
-  const budget = Math.max(1, maxClades - lifted.length - (intros.length ? 1 : 0));
-  let clades = [main];
-  const opened = new Set();
+  // 3. founder wedges
+  const budget = founderBands ?? Math.max(1, maxClades - lifted.length - (intros.length ? 1 : 0));
+  let founder = [main];
   for (;;) {
-    const cand = clades.map((n, i) => ({ n, i }))
-      .filter(({ n }) => !n.tip && kids(n).length && clades.length - 1 + kids(n).length <= budget)
-      .sort((a, b) => mainCount.get(b.n) - mainCount.get(a.n));
+    const cand = founder.map((n, i) => ({ n, i }))
+      .filter(({ n }) => !n.tip && kids(n).length && founder.length - 1 + kids(n).length <= budget)
+      .sort((a, b) => nExcl(b.n) - nExcl(a.n));
     if (!cand.length) break;
     const { n, i } = cand[0];
-    opened.add(n);
-    clades = [...clades.slice(0, i), ...kids(n), ...clades.slice(i + 1)];
+    founder = [...founder.slice(0, i), ...kids(n), ...founder.slice(i + 1)];
   }
 
-  // band order: founder clades in DFS order, each lifted clade right after the clade hosting it
-  const hostOf = (node) => { // which visible founder clade contains this host node
-    for (const c of clades) { let found = false; (function f(n) { if (n === node) found = true; else if (!n.tip) kids(n).forEach(f); })(c); if (found) return c; }
-    return null;
-  };
+  // bands, each lifted lineage right after the band it arose in
+  const containsExcl = (top, node) => { let found = false; (function f(n) { if (found) return; if (n === node) found = true; else if (!n.tip) kids(n).forEach(f); })(top); return found; };
   const bands = [];
-  for (const c of clades) {
-    bands.push({ kind: 'clade', node: c, n: mainCount.get(c), x0: c.x, x1: xMaxMain(c), lineage: c.tip ? c.lineage : major(c), purity: 1 });
-    for (const L of lifted) {
-      const h = hostOf(L.host) ?? (opened.has(L.host) ? null : null);
-      if (h === c || (!h && c === clades.at(-1))) bands.push({ kind: 'lineage', node: L.node, n: stats.get(L.node).n, x0: L.at, x1: stats.get(L.node).xMax, lineage: major(L.node), purity: purity(L.node), host: L.host, hostClade: h });
-    }
+  const liftedBand = (L) => ({ kind: 'lineage', node: L.node, n: nExcl(L.node), x0: L.host.x, x1: xMaxExcl(L.node), lineage: majorExcl(L.node), purity: purity(L.node), host: L.host });
+  const placed = new Set();
+  function emit(band) {
+    bands.push(band);
+    for (const L of lifted) if (!placed.has(L) && containsExcl(band.node, L.host)) { placed.add(L); const b = liftedBand(L); b.hostBand = band; emit(b); }
   }
-  // lifted clades whose host is on the opened backbone: put them after the nearest clade
-  for (const L of lifted) if (!bands.some((b) => b.node === L.node)) bands.push({ kind: 'lineage', node: L.node, n: stats.get(L.node).n, x0: L.at, x1: stats.get(L.node).xMax, lineage: major(L.node), purity: purity(L.node), host: L.host, hostClade: null });
+  for (const c of founder) emit({ kind: 'clade', node: c, n: nExcl(c), x0: c.x, x1: xMaxExcl(c), lineage: c.tip ? c.lineage : majorExcl(c), purity: 1 });
+  for (const L of lifted) if (!placed.has(L)) { placed.add(L); emit(liftedBand(L)); }   // host on the backbone
   if (intros.length) {
-    const n = intros.reduce((s, c) => s + stats.get(c).n, 0);
     bands.push({
-      kind: 'intros', node: { id: 'intros' }, n, lineage: major(intros[0]), purity: 1,
-      x0: Math.min(...intros.map((c) => c.x)), x1: Math.max(...intros.map((c) => stats.get(c).xMax)),
-      members: intros.map((c) => ({ x0: c.x, x1: stats.get(c).xMax, n: stats.get(c).n, lineage: major(c) })),
+      kind: 'intros', node: { id: 'intros' }, n: intros.reduce((s, c) => s + total(c), 0), lineage: major(intros[0]), purity: 1,
+      x0: Math.min(...intros.map((c) => c.x)), x1: Math.max(...intros.map((c) => xMaxExcl(c))),
+      members: intros.map((c) => ({ x0: c.x, x1: xMaxExcl(c), n: total(c), lineage: major(c) })),
     });
   }
 
@@ -113,17 +109,17 @@ export function collapseTree(root, { maxClades = 10, gap = 0.025 } = {}) {
     y += h + gap;
   }
 
-  // backbone over the founder tree (and the synthetic root, if any)
+  // backbone over the founder tree
   const yc = new Map(bands.filter((b) => b.kind === 'clade').map((b) => [b.node, b.yc]));
   const edges = [], verticals = [];
   (function place(n) {
     if (yc.has(n)) return yc.get(n);
     const ch = kids(n);
-    const ys = ch.map(place);
-    const lo = Math.min(...ys), hi = Math.max(...ys);
+    const ysv = ch.map(place);
+    const lo = Math.min(...ysv), hi = Math.max(...ysv);
     yc.set(n, (lo + hi) / 2);
     if (ch.length > 1) verticals.push({ x: n.x, y0: lo, y1: hi, lineage: n.lineage });
-    ch.forEach((c, k) => edges.push({ from: n.id, to: c.id, x0: n.x, x1: c.x, y: ys[k], lineage: c.tip ? c.lineage : major(c) }));
+    ch.forEach((c, k) => edges.push({ from: n.id, to: c.id, x0: n.x, x1: c.x, y: ysv[k], lineage: c.tip ? c.lineage : majorExcl(c) }));
     return yc.get(n);
   })(main);
   const introBand = bands.find((b) => b.kind === 'intros');
@@ -131,14 +127,13 @@ export function collapseTree(root, { maxClades = 10, gap = 0.025 } = {}) {
   if (root.synthetic && introBand) {
     rootY = (yc.get(main) + introBand.yc) / 2;
     verticals.push({ x: root.x, y0: Math.min(yc.get(main), introBand.yc), y1: Math.max(yc.get(main), introBand.yc), lineage: -1, synthetic: true });
-    edges.push({ from: root.id, to: main.id, x0: root.x, x1: main.x, y: yc.get(main), lineage: major(main) });
+    edges.push({ from: root.id, to: main.id, x0: root.x, x1: main.x, y: yc.get(main), lineage: founderLineage });
     edges.push({ from: root.id, to: 'intros', x0: root.x, x1: introBand.x0, y: introBand.yc, lineage: introBand.lineage });
   }
-  // connectors: where each lifted lineage arose, inside its host
-  const connectors = bands.filter((b) => b.kind === 'lineage').map((b) => {
-    const from = b.hostClade ? bands.find((x) => x.node === b.hostClade).yc : (yc.get(b.host) ?? rootY);
-    return { x: b.x0, y0: from, y1: b.yc, lineage: b.lineage };
-  });
+  // connectors: where each lifted lineage arose, inside its host band
+  const connectors = bands.filter((b) => b.kind === 'lineage').map((b) => ({
+    x: b.x0, y0: b.hostBand ? b.hostBand.yc : (yc.get(b.host) ?? rootY), y1: b.yc, lineage: b.lineage,
+  }));
 
   return { root, rootX: root.x, rootY, clades: bands, edges, verticals, connectors };
 }

@@ -63,9 +63,17 @@
             <label><input type="radio" name="spread" data-spread="column" /><span>Over today</span></label>
           </fieldset>
         </div>
+        <div class="key__control">
+          <span class="ps-label" aria-hidden="true">Scale</span>
+          <fieldset class="ps-seg">
+            <legend>Scale</legend>
+            <label><input type="radio" name="scale" data-scale="log" checked /><span>Log</span></label>
+            <label><input type="radio" name="scale" data-scale="linear" /><span>Linear</span></label>
+          </fieldset>
+        </div>
       </div>
       <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
-      <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. Each wedge is a clade: cases that share one ancestor. The point is when that ancestor lived, the end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose.</p>
+      <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. One shape per lineage: its point is when its common ancestor lived, its end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose inside an older one.</p>
     </section>
 
     <aside class="rail" id="controls" aria-label="Controls">

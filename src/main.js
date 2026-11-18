@@ -27,7 +27,7 @@ const state = {
 
 let sim = createSim({ seed: 42 });
 // the story drives the simulation: chapters end when what they describe has happened
-const story = createStory(sim, { onChapter: (i) => showChapter(i), setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
+const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t, CHAPTERS[i].mark ?? CHAPTERS[i].title); showChapter(i); }, setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
@@ -46,7 +46,11 @@ const stage = createStage($('stage'), {
   fmt: (t) => fmtDay(t),
 });
 
-const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));
+const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
+// What each lineage sounds like. Test (user, 2026-11-18): stone moved to the last lineage
+// to check whether the stone recording is what sounds like "puff/ffff".
+const MATERIAL_SWAP = { stone: 'glass', glass: 'metal', metal: 'stone', leaf: 'leaf' };
+const materialOf = (l) => MATERIAL_SWAP[surfaceOf(l)] ?? 'glass';
 const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
 
 // ── clock ────────────────────────────────────────────────────────────────
@@ -63,7 +67,7 @@ function frame(now) {
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
       const landAt = now + offset * 1000 + FALL_MS;
-      audio.playCase(c, surface, Math.max(0, offset + FALL_MS / 1000 - LOOKAHEAD));
+      audio.playCase(c, materialOf(c.lineage), Math.max(0, offset + FALL_MS / 1000 - LOOKAHEAD));
       stage.spawn(c, surface, landAt - FALL_MS, landAt);
       state.pending.push({ at: landAt, c, surface, gen: state.gen });
     }
@@ -94,7 +98,6 @@ const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t
 
 // tips that fit the figure without merging (~2.6 px per tip)
 const TIP_CAP = 2000;   // tips feeding the collapsed tree (counts on wedges); not drawn one by one
-const bandBudget = () => Math.max(5, Math.min(12, Math.floor($('tree').getBoundingClientRect().height / 30)));
 
 function drawTree() {
   const t = source.t;
@@ -109,9 +112,10 @@ function drawTree() {
     layout = buildTree((id) => ({ parent: sim.cases[id].parent, t: sim.cases[id].tInf, lineage: sim.cases[id].lineage }), thinTips(tips, TIP_CAP));
   }
   const { t0, t1 } = domain();
-  const col = layout.root ? collapseTree(layout.root, { maxClades: bandBudget() }) : null;
+  // lineage view: one shape per lineage, each growing out of the one it arose in
+  const col = layout.root ? collapseTree(layout.root, { founderBands: 1, maxLifted: 4 }) : null;
   renderCollapsedTree($('tree'), col, { t0, t1, now: t, surfaceOf, lineageLabel, fmt: fmtDay });
-  $('tree-note').textContent = `phylogeny of ${layout.tips.length.toLocaleString('en')} sequenced cases, grouped into clades`;
+  $('tree-note').textContent = `phylogeny of ${layout.tips.length.toLocaleString('en')} sequenced cases, one shape per lineage`;
 }
 
 function lineageOrder() {
@@ -121,13 +125,13 @@ function lineageOrder() {
 
 let legendKey = '';
 function drawLegend(order) {
-  const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}`);
+  const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}|${materialOf(l)}`);
   const key = items.join(',') + state.mode;
   if (key === legendKey) return;
   legendKey = key;
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
-    return `<li><span class="ps-swatch" style="--ps-swatch:var(${SURFACE_VAR[s]})"></span>${lineageLabel(l)}<span class="legend__sub">${state.mode === 'obs' ? '' : `— ${s}`}</span></li>`;
+    return `<li><span class="ps-swatch" style="--ps-swatch:var(${SURFACE_VAR[s]})"></span>${lineageLabel(l)}<span class="legend__sub">${`— ${materialOf(l)}`}</span></li>`;
   }).join('') + '<li class="legend__key"><span class="ps-swatch"></span>reported <span class="ps-swatch swatch--faint"></span>not reported</li>';
 }
 
@@ -218,9 +222,15 @@ function discontinuity({ kind }) {
   bus.emit('thunder', { kind });
 }
 
+// story events and manual interventions, marked on the case series' time axis
+let events = [];
+function markEvent(t, label) { events.push({ t, label }); stage.setEvents(events); }
+
 function clearRun() {
   state.gen++;
   state.pending = [];
+  events = []; stage.setEvents(events);
+  stage.setUnitLabel(state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
   ledger = createLedger({ binDays: state.mode === 'obs' ? 7 : 1 });
   stage.clear();
   legendKey = '';
@@ -274,18 +284,22 @@ $('reset').addEventListener('click', () => {
 $('variant').addEventListener('click', () => {
   if (state.mode !== 'sim') return;
   const n = sim.lineages.filter((l) => l.name.startsWith('Variant')).length;
-  const l = sim.introduceVariant(`Variant ${'αβγδε'[n] ?? n + 1}`, { tx: 1.5 + 0.15 * n, escape: n ? 0.2 : 0 });
+  const name = `Variant ${'αβγδε'[n] ?? n + 1}`;
+  const l = sim.introduceVariant(name, { tx: 1.5 + 0.15 * n, escape: n ? 0.2 : 0 });
+  markEvent(sim.t, name);
   discontinuity({ lineage: l, kind: 'variant' });
 });
 $('import').addEventListener('click', () => {
   if (state.mode !== 'sim') return;
   sim.importCases(12);
+  markEvent(sim.t, 'Import pulse');
   discontinuity({ kind: 'import' });
 });
 $('mode-sim').addEventListener('click', () => setMode('sim'));
 for (const r of document.querySelectorAll('input[data-tree]')) r.addEventListener('change', () => {
   if (r.checked) $('stage-el').dataset.tree = r.dataset.tree;
 });
+for (const r of document.querySelectorAll('input[data-scale]')) r.addEventListener('change', () => stage.setScale(r.dataset.scale));
 for (const r of document.querySelectorAll('input[data-spread]')) r.addEventListener('change', () => {
   if (r.checked) stage.setSpread(r.dataset.spread);
 });
