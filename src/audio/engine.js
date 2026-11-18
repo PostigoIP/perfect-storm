@@ -167,7 +167,13 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
     // offsetSec: seconds after "now + LOOKAHEAD" at which this case sounds
     playCase(c, surface, offsetSec = 0) {
       if (!player || muted) return false;
-      return player.playCase(c, surface, ctx.currentTime + LOOKAHEAD + Math.max(0, offsetSec));
+      const ok = player.playCase(c, surface, ctx.currentTime + LOOKAHEAD + Math.max(0, offsetSec));
+      if (ok) api.stats.played++;
+      return ok;
+    },
+    stats: { played: 0 },
+    status() {
+      return { state: ctx?.state ?? 'not started', rate: ctx?.sampleRate ?? 0, bank: !!bank, player: !!player, muted, played: api.stats.played };
     },
     setBed(levels, darkness = 0) { player?.setBed(levels, darkness); },
     thunder(intensity = 1) {

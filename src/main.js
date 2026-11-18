@@ -360,13 +360,26 @@ $('theme').addEventListener('click', () => {
 async function start(withSound) {
   $('start').hidden = true;
   if (withSound) {
-    await audio.unlock();
-    const bank = await audio.loadBank();
-    $('sound').checked = !!bank;
-    audio.setMuted(!bank);
+    try {
+      await audio.unlock();
+      const bank = await audio.loadBank();
+      $('sound').checked = !!bank;
+      audio.setMuted(!bank);
+      if (!bank) $('bank-note').textContent = 'Sound bank could not be loaded.';
+    } catch (err) {
+      // show the failure instead of running silently (Safari diagnostics)
+      $('bank-note').textContent = `Sound failed: ${err?.name ?? ''} ${err?.message ?? err}`;
+      console.error('[audio]', err);
+    }
   } else audio.setMuted(true);
   play(true);
 }
+
+// A one-line audio status in the controls, to diagnose silent browsers.
+setInterval(() => {
+  const s = audio.status(), el = $('audio-status');
+  if (el) el.textContent = `audio: ${s.state} · ${s.rate ? `${(s.rate / 1000).toFixed(1)} kHz` : '—'} · bank ${s.bank ? 'loaded' : 'not loaded'}${s.muted ? ' · muted' : ''} · ${s.played} drops played`;
+}, 1000);
 $('start-listen').addEventListener('click', () => start(true));
 $('start-silent').addEventListener('click', () => start(false));
 

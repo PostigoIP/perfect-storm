@@ -180,3 +180,4 @@ body[data-mode="obs"] .sim-only { display: none; }
 @media (max-width: 900px) {
   .stage__legend { top: auto; bottom: calc(var(--ps-space-8) * 1.6); right: var(--ps-space-3); max-width: 60vw; }
 }
+.audio-status { font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); margin: 0; }
