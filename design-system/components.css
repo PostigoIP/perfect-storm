@@ -1,0 +1,583 @@
+/* ==========================================================================
+   Perfect Storm — components
+   Plain CSS, prefixed ps-. Requires tokens.css. No radii, no shadows:
+   structure is drawn with lines, as on the quartz floor.
+   ========================================================================== */
+
+/* ---- base ---------------------------------------------------------------- */
+.ps-root,
+.ps-root body {
+  margin: 0;
+  background: var(--ps-paper);
+  color: var(--ps-ink);
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-body);
+  font-weight: var(--ps-weight-light);
+  line-height: var(--ps-lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+.ps-root *,
+.ps-root *::before,
+.ps-root *::after { box-sizing: border-box; border-radius: 0; }
+
+.ps-root :focus-visible {
+  outline: var(--ps-rule-w-strong) solid var(--ps-focus);
+  outline-offset: 2px;
+}
+
+/* Display type — wide, uppercase, quiet weight */
+.ps-display,
+.ps-h1,
+.ps-h2 {
+  font-family: var(--ps-font-display);
+  font-stretch: var(--ps-stretch-display);
+  font-weight: var(--ps-weight-light);
+  letter-spacing: var(--ps-tracking-display);
+  line-height: var(--ps-lh-tight);
+  text-transform: uppercase;
+  margin: 0;
+}
+.ps-display { font-size: var(--ps-fs-display); font-weight: 200; }
+.ps-h1      { font-size: var(--ps-fs-h1); }
+.ps-h2      { font-size: var(--ps-fs-h2); font-weight: var(--ps-weight-regular); letter-spacing: 0.04em; }
+.ps-data    { font-family: var(--ps-font-mono); font-size: var(--ps-fs-data); font-variant-numeric: tabular-nums; }
+
+/* Symbols keep their case inside uppercase text: β must not become Β ("B").
+   Wrap parameters and units in <var> (or .ps-sym). */
+.ps-root var,
+.ps-sym { font-style: normal; text-transform: none; letter-spacing: 0; }
+.ps-root var sub,
+.ps-root var sup { text-transform: none; }
+
+/* ---- floor & axis: the two structural motifs ---------------------------- */
+/* .ps-floor — the quartz-powder grid. Put it behind content, never over it. */
+.ps-floor {
+  background-color: var(--ps-paper);
+  background-image:
+    linear-gradient(to right, var(--ps-quartz) var(--ps-rule-w), transparent var(--ps-rule-w)),
+    linear-gradient(to bottom, var(--ps-quartz) var(--ps-rule-w), transparent var(--ps-rule-w));
+  background-size: var(--ps-floor-cell) var(--ps-floor-cell);
+  background-position: -1px -1px;
+}
+/* .ps-axis — a single vertical slit of light down the centre of an element */
+.ps-axis { position: relative; }
+.ps-axis::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: var(--ps-rule-w-strong);
+  transform: translateX(-50%);
+  background: var(--ps-accent);
+  pointer-events: none;
+}
+
+/* ---- topbar -------------------------------------------------------------- */
+.ps-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--ps-space-4);
+  min-height: 3.5rem;
+  padding-inline: var(--ps-gutter);
+  background: var(--ps-paper);
+  border-bottom: var(--ps-rule-w) solid var(--ps-rule);
+}
+.ps-topbar > :first-child { justify-self: start; }
+.ps-topbar > :last-child  { justify-self: end; }
+.ps-topbar__meta {
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-caption);
+  color: var(--ps-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ps-topbar .ps-seg { flex-wrap: nowrap; }
+.ps-topbar .ps-seg span { padding-inline: var(--ps-space-3); }
+@media (max-width: 40rem) {
+  .ps-topbar { grid-template-columns: auto 1fr; gap: var(--ps-space-3); }
+  .ps-topbar > .ps-wordmark { order: -1; justify-self: start; letter-spacing: 0.1em; }
+  .ps-topbar > :first-child:not(.ps-wordmark) { display: none; }
+  .ps-topbar .ps-seg span { padding-inline: var(--ps-space-2); letter-spacing: 0.04em; }
+}
+
+/* ---- wordmark: two words on either side of the slit of light ------------ */
+.ps-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  margin: 0;
+  font-family: var(--ps-font-display);
+  font-stretch: var(--ps-stretch-display);
+  font-weight: var(--ps-weight-regular);
+  font-size: var(--ps-fs-small);
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--ps-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* <span class="ps-wordmark__slit"></span> sits between the two words */
+.ps-wordmark__slit {
+  display: inline-block;
+  width: var(--ps-rule-w-strong);
+  height: 1.4em;
+  background: var(--ps-accent);
+}
+.ps-wordmark--large { font-size: var(--ps-fs-h2); }
+
+/* ---- chapters: numbered stations of a passage --------------------------- */
+.ps-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: ps-chapter;
+}
+.ps-chapters > li { display: contents; }
+.ps-chapters a,
+.ps-chapters button {
+  counter-increment: ps-chapter;
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ps-space-2);
+  padding: var(--ps-space-3) var(--ps-space-4) var(--ps-space-3) 0;
+  margin-right: var(--ps-space-4);
+  border: 0;
+  border-top: var(--ps-rule-w-strong) solid transparent;
+  background: none;
+  color: var(--ps-ink-2);
+  font: inherit;
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-small);
+  font-weight: var(--ps-weight-regular);
+  letter-spacing: var(--ps-tracking-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--ps-dur-slow) var(--ps-ease), border-color var(--ps-dur-slow) var(--ps-ease);
+}
+.ps-chapters a::before,
+.ps-chapters button::before {
+  content: counter(ps-chapter, decimal-leading-zero);
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-caption);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ps-chapters a:hover,
+.ps-chapters button:hover { color: var(--ps-ink); transition-duration: var(--ps-dur-fast); }
+.ps-chapters .is-active,
+.ps-chapters [aria-current] {
+  color: var(--ps-ink);
+  border-top-color: var(--ps-accent);   /* light from above */
+}
+.ps-chapters--stacked { flex-direction: column; }
+.ps-chapters--stacked a,
+.ps-chapters--stacked button {
+  margin-right: 0;
+  border-top: 0;
+  border-left: var(--ps-rule-w-strong) solid transparent;
+  padding: var(--ps-space-2) 0 var(--ps-space-2) var(--ps-space-3);
+}
+.ps-chapters--stacked .is-active,
+.ps-chapters--stacked [aria-current] { border-left-color: var(--ps-accent); }
+
+/* ---- metric: one big numeral, one quiet label --------------------------- */
+.ps-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ps-space-2);
+  margin: 0;
+  padding-top: var(--ps-space-3);
+  border-top: var(--ps-rule-w) solid var(--ps-ink);
+  min-width: 0;
+}
+.ps-metric__value {
+  order: 2;
+  font-family: var(--ps-font-display);
+  font-weight: 200;
+  font-size: var(--ps-fs-metric);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ps-ink);
+  white-space: nowrap;
+}
+.ps-metric__unit {
+  font-size: 0.35em;
+  font-weight: var(--ps-weight-regular);
+  letter-spacing: var(--ps-tracking-caps);
+  margin-left: 0.2em;
+  color: var(--ps-ink-2);
+}
+.ps-metric__label {
+  order: 1;
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ps-ink-2);
+}
+.ps-metric__note {
+  order: 3;
+  font-size: var(--ps-fs-caption);
+  color: var(--ps-ink-2);
+}
+
+/* ---- label --------------------------------------------------------------- */
+.ps-label {
+  display: inline-block;
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-caption);
+  font-weight: var(--ps-weight-medium);
+  letter-spacing: var(--ps-tracking-caps);
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--ps-ink-2);
+}
+
+/* ---- slider: a quartz line with a square stone on it -------------------- */
+/* Set --ps-fill (0%–100%) from JS to draw progress in WebKit/Blink. */
+.ps-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  --ps-fill: 50%;
+}
+.ps-slider::-webkit-slider-runnable-track {
+  height: var(--ps-rule-w-strong);
+  border-radius: 0;
+  background: linear-gradient(to right, var(--ps-ink) var(--ps-fill), var(--ps-ink-2) var(--ps-fill));
+}
+.ps-slider::-moz-range-track {
+  height: var(--ps-rule-w-strong);
+  border-radius: 0;
+  background: var(--ps-ink-2);
+}
+.ps-slider::-moz-range-progress {
+  height: var(--ps-rule-w-strong);
+  border-radius: 0;
+  background: var(--ps-ink);
+}
+.ps-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: calc((var(--ps-rule-w-strong) - 0.875rem) / 2);
+  border: 0;
+  border-radius: 0;
+  background: var(--ps-ink);
+  transition: background-color var(--ps-dur-fast) var(--ps-ease), transform var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-slider::-moz-range-thumb {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--ps-ink);
+}
+.ps-slider:hover::-webkit-slider-thumb,
+.ps-slider:focus-visible::-webkit-slider-thumb { background: var(--ps-accent); }
+.ps-slider:hover::-moz-range-thumb,
+.ps-slider:focus-visible::-moz-range-thumb { background: var(--ps-accent); }
+.ps-slider:focus-visible { outline: none; }
+.ps-slider:focus-visible::-webkit-slider-thumb { outline: var(--ps-rule-w-strong) solid var(--ps-focus); outline-offset: 2px; }
+.ps-slider:focus-visible::-moz-range-thumb { outline: var(--ps-rule-w-strong) solid var(--ps-focus); outline-offset: 2px; }
+.ps-slider:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* A labelled slider row: label + value on one line, slider below */
+.ps-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--ps-space-1) var(--ps-space-3);
+}
+.ps-field > .ps-slider { grid-column: 1 / -1; }
+.ps-field__value {
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-data);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- switch -------------------------------------------------------------- */
+/* <label class="ps-switch"><input type="checkbox" role="switch"><span>Sound</span></label> */
+.ps-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ps-space-3);
+  cursor: pointer;
+  font-size: var(--ps-fs-small);
+  font-weight: var(--ps-weight-regular);
+  letter-spacing: var(--ps-tracking-caps);
+  text-transform: uppercase;
+  user-select: none;
+}
+.ps-switch input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.25rem;
+  margin: 0;
+  border: var(--ps-rule-w) solid var(--ps-ink);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-switch input::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 6px);
+  height: calc(1.25rem - 6px);
+  background: var(--ps-ink);
+  transition: transform var(--ps-dur-fast) var(--ps-ease), background-color var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-switch input:checked { background: var(--ps-ink); }
+.ps-switch input:checked::before {
+  transform: translateX(1.25rem);
+  background: var(--ps-accent);
+}
+.ps-switch input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---- buttons ------------------------------------------------------------- */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ps-space-2);
+  min-height: 2.5rem;
+  padding: var(--ps-space-2) var(--ps-space-5);
+  border: var(--ps-rule-w) solid var(--ps-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ps-ink);
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-small);
+  font-weight: var(--ps-weight-regular);
+  letter-spacing: var(--ps-tracking-caps);
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--ps-dur-fast) var(--ps-ease), color var(--ps-dur-fast) var(--ps-ease), border-color var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-btn:hover { background: var(--ps-ink); color: var(--ps-paper); }
+.ps-btn:active { transform: translateY(1px); }
+.ps-btn--primary { background: var(--ps-ink); color: var(--ps-paper); }
+.ps-btn--primary:hover { background: var(--ps-accent); border-color: var(--ps-accent); color: var(--ps-accent-ink); }
+.ps-btn--quiet { border-color: transparent; padding-inline: 0; }
+.ps-btn--quiet:hover { background: transparent; color: var(--ps-ink); text-decoration: underline; text-underline-offset: 0.3em; }
+.ps-btn:disabled,
+.ps-btn[aria-disabled="true"] {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ps-ink-2);
+  border-color: var(--ps-ink-2);
+  cursor: not-allowed;
+}
+
+/* ---- segmented control --------------------------------------------------- */
+/* <fieldset class="ps-seg"><legend>…</legend>
+     <label><input type="radio" name="x" checked><span>Tree</span></label> … </fieldset> */
+.ps-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: var(--ps-rule-w) solid var(--ps-ink);
+  min-inline-size: 0;
+}
+.ps-seg > legend {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ps-seg label { position: relative; display: flex; flex: 1 1 auto; }
+.ps-seg label + label { border-left: var(--ps-rule-w) solid var(--ps-ink); }
+.ps-seg input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.ps-seg span {
+  display: block;
+  width: 100%;
+  padding: var(--ps-space-2) var(--ps-space-4);
+  text-align: center;
+  font-size: var(--ps-fs-caption);
+  font-weight: var(--ps-weight-medium);
+  letter-spacing: var(--ps-tracking-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ps-ink-2);
+  transition: background-color var(--ps-dur-fast) var(--ps-ease), color var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-seg input:hover + span { color: var(--ps-ink); background: var(--ps-paper-2); }
+.ps-seg input:checked + span { background: var(--ps-ink); color: var(--ps-paper); }
+.ps-seg input:focus-visible + span { outline: var(--ps-rule-w-strong) solid var(--ps-focus); outline-offset: -4px; }
+
+/* ---- panel: a bay of the nave, opened by a strong line ------------------ */
+.ps-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ps-space-4);
+  min-width: 0;
+  padding-top: var(--ps-space-3);
+  border-top: var(--ps-rule-w-strong) solid var(--ps-ink);
+}
+.ps-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ps-space-2) var(--ps-space-4);
+}
+.ps-panel__title {
+  margin: 0;
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-small);
+  font-weight: var(--ps-weight-medium);
+  letter-spacing: var(--ps-tracking-caps);
+  text-transform: uppercase;
+}
+.ps-panel__index {
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-caption);
+  color: var(--ps-ink-2);
+  margin-right: var(--ps-space-2);
+}
+.ps-panel__body { min-width: 0; }
+.ps-panel--well { padding: var(--ps-space-4); background: var(--ps-paper-2); }
+
+/* ---- legend & swatch ----------------------------------------------------- */
+.ps-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ps-space-2) var(--ps-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--ps-fs-small);
+  color: var(--ps-ink);               /* text never wears the series colour */
+}
+.ps-legend > li,
+.ps-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ps-space-2);
+}
+.ps-legend--column { flex-direction: column; }
+.ps-swatch {
+  --ps-swatch: var(--ps-ink);
+  flex: none;
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--ps-swatch);
+}
+.ps-swatch--lg { width: 1.25rem; height: 1.25rem; }
+.ps-swatch--line { height: var(--ps-rule-w-strong); width: 1.25rem; }
+.ps-swatch--outline { box-shadow: inset 0 0 0 var(--ps-rule-w) var(--ps-ink); }
+.ps-swatch--l1 { --ps-swatch: var(--ps-lineage-1); clip-path: var(--ps-glyph-1); }
+.ps-swatch--l2 { --ps-swatch: var(--ps-lineage-2); clip-path: var(--ps-glyph-2); }
+.ps-swatch--l3 { --ps-swatch: var(--ps-lineage-3); clip-path: var(--ps-glyph-3); }
+.ps-swatch--l4 { --ps-swatch: var(--ps-lineage-4); clip-path: var(--ps-glyph-4); }
+.ps-swatch--l5 { --ps-swatch: var(--ps-lineage-5); clip-path: var(--ps-glyph-5); }
+.ps-swatch--s1 { --ps-swatch: var(--ps-severity-1); box-shadow: inset 0 0 0 var(--ps-rule-w) var(--ps-ink-2); }
+.ps-swatch--s2 { --ps-swatch: var(--ps-severity-2); }
+.ps-swatch--s3 { --ps-swatch: var(--ps-severity-3); }
+.ps-swatch--s4 { --ps-swatch: var(--ps-severity-4); }
+
+/* ---- tooltip: an inverted block, mono data ------------------------------ */
+.ps-tooltip {
+  position: absolute;
+  z-index: 20;
+  max-width: min(18rem, calc(100vw - 2 * var(--ps-gutter)));
+  padding: var(--ps-space-2) var(--ps-space-3);
+  background: var(--ps-ink);
+  color: var(--ps-paper);
+  font-family: var(--ps-font-mono);
+  font-size: var(--ps-fs-data);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ps-dur-fast) var(--ps-ease);
+}
+.ps-tooltip.is-visible,
+.ps-tooltip--static { opacity: 1; }
+.ps-tooltip--static { position: relative; display: inline-block; }
+.ps-tooltip__title {
+  display: block;
+  margin-bottom: var(--ps-space-1);
+  font-family: var(--ps-font-text);
+  font-size: var(--ps-fs-caption);
+  font-weight: var(--ps-weight-medium);
+  letter-spacing: var(--ps-tracking-caps);
+  text-transform: uppercase;
+}
+.ps-tooltip dl { display: grid; grid-template-columns: auto auto; gap: 0 var(--ps-space-4); margin: 0; }
+.ps-tooltip dt { opacity: 0.7; }
+.ps-tooltip dd { margin: 0; text-align: right; }
+
+/* ---- source: citation & footnotes, set like a caption under a work ------ */
+.ps-source {
+  max-width: var(--ps-measure);
+  margin: 0;
+  padding-top: var(--ps-space-3);
+  font-size: var(--ps-fs-caption);
+  line-height: 1.5;
+  color: var(--ps-ink-2);
+  position: relative;
+}
+.ps-source::before {          /* the short rule under a caption */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ps-space-7);
+  border-top: var(--ps-rule-w-strong) solid var(--ps-ink);
+}
+.ps-source ol,
+.ps-source ul { margin: 0; padding-left: 0; list-style: none; counter-reset: ps-note; }
+.ps-source li { counter-increment: ps-note; display: grid; grid-template-columns: 2.25em 1fr; }
+.ps-source li::before {
+  content: "[" counter(ps-note) "]";
+  font-family: var(--ps-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ps-source a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: var(--ps-rule-w); }
+.ps-source a:hover { color: var(--ps-ink); }
+.ps-source cite { font-style: italic; }
+
+/* ---- emerge: forms appear and recede as the light changes --------------- */
+.ps-emerge {
+  opacity: 0.12;
+  transition: opacity var(--ps-dur-slow) var(--ps-ease);
+}
+.ps-emerge.is-lit,
+.ps-emerge:hover { opacity: 1; }

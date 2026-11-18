@@ -1,0 +1,166 @@
+/* ==========================================================================
+   Perfect Storm — design tokens
+   Matter → image → light.
+
+   Drawn from an exhibition, not from a website: a Brutalist nave of raw
+   concrete lit from above, a floor gridded in white quartz powder with found
+   objects set on it as glyphs, paintings in hand-ground mineral pigment
+   (iron, lapis, malachite, manganese, ochre) organised on a vertical axis
+   around a thin slit of light, and a last work that is almost only light.
+
+   Light theme  = DAY    — washed concrete, quartz lines, pigment.
+   Dark theme   = NIGHT  — the deep atmospheric blue of the night passage;
+                           the accent becomes the light coming through.
+
+   Fonts (Google Fonts, SIL OFL 1.1) — load once in the page <head>:
+   https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- colour: surfaces & ink ------------------------------------------ */
+  --ps-paper:        #e8e6e2;  /* concrete in daylight                       */
+  --ps-paper-2:      #dcd9d3;  /* formwork recess — wells, hover fields      */
+  --ps-ink:          #13110e;  /* graphite, 15:1 on paper                    */
+  --ps-ink-2:        #5b5852;  /* muted text, 5.7:1 on paper                 */
+  --ps-rule:         #a8a49c;  /* hairline divider (decorative, 2:1)         */
+  --ps-quartz:       #fbfaf8;  /* quartz-powder line — the floor grid        */
+  --ps-accent:       #b62600;  /* cinnabar: the slit of light, 5.6:1         */
+  --ps-accent-ink:   #fbfaf8;  /* text on accent                             */
+  --ps-focus:        var(--ps-accent);
+
+  /* ---- colour: lineages (categorical, fixed order, never cycled) --------
+     Mineral pigments, stepped dark → light so they separate by lightness
+     as well as hue. All ≥3:1 on paper; CVD ΔE ≥8 on all pairs.            */
+  --ps-lineage-1:    #49160d;  /* iron oxide        L .28                    */
+  --ps-lineage-2:    #153a83;  /* lapis lazuli      L .37                    */
+  --ps-lineage-3:    #056641;  /* malachite         L .45                    */
+  --ps-lineage-4:    #9b488b;  /* manganese violet  L .53                    */
+  --ps-lineage-5:    #ac7809;  /* ochre             L .61                    */
+
+  /* Glyphs — the found-object shapes. Pair each lineage with its glyph so
+     identity is never carried by colour alone. Use as clip-path values.   */
+  --ps-glyph-1: polygon(0 0, 100% 0, 100% 100%, 0 100%);                         /* block    */
+  --ps-glyph-2: polygon(50% 0, 100% 100%, 0 100%);                                /* triangle */
+  --ps-glyph-3: polygon(35% 0, 65% 0, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0 65%, 0 35%, 35% 35%); /* cross */
+  --ps-glyph-4: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);                        /* lozenge  */
+  --ps-glyph-5: polygon(0 30%, 100% 30%, 100% 70%, 0 70%);                        /* bar      */
+
+  /* ---- colour: severity (ordinal, none → severe) ------------------------
+     A single neutral concrete ramp — deliberately hue-free so it never
+     collides with a lineage. Severity-1 sits close to paper: give it an
+     ink hairline when it must read as a mark.                             */
+  --ps-severity-1:   #c3bdb6;
+  --ps-severity-2:   #938b82;
+  --ps-severity-3:   #615951;
+  --ps-severity-4:   #2a2520;
+
+  /* ---- type ------------------------------------------------------------- */
+  --ps-font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --ps-font-text:    "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --ps-font-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --ps-stretch-display: 112.5%;   /* semi-expanded: the width of the nave   */
+  --ps-weight-light:   300;
+  --ps-weight-regular: 400;
+  --ps-weight-medium:  500;
+
+  --ps-fs-display: clamp(2.5rem, 1.1rem + 6.2vw, 6.5rem);
+  --ps-fs-h1:      clamp(1.75rem, 1.2rem + 2.4vw, 3rem);
+  --ps-fs-h2:      clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+  --ps-fs-body:    1rem;
+  --ps-fs-small:   0.875rem;
+  --ps-fs-caption: 0.75rem;
+  --ps-fs-data:    0.8125rem;
+  --ps-fs-metric:  clamp(2.75rem, 1.6rem + 4.5vw, 5rem);
+
+  --ps-lh-tight:   1.05;
+  --ps-lh-body:    1.55;
+  --ps-tracking-caps:    0.08em;
+  --ps-tracking-display: 0.01em;
+  --ps-measure:    62ch;
+
+  /* ---- space & grid ------------------------------------------------------
+     Space grows slowly then steeply, like walking up into the nave.       */
+  --ps-space-1: 0.25rem;  /*   4 */
+  --ps-space-2: 0.5rem;   /*   8 */
+  --ps-space-3: 0.75rem;  /*  12 */
+  --ps-space-4: 1rem;     /*  16 */
+  --ps-space-5: 1.5rem;   /*  24 */
+  --ps-space-6: 2.5rem;   /*  40 */
+  --ps-space-7: 4rem;     /*  64 */
+  --ps-space-8: 6.5rem;   /* 104 */
+
+  --ps-gutter:     clamp(1rem, 0.4rem + 3vw, 2.5rem);  /* 16px at phone width */
+  --ps-cols:       12;                                  /* integer, for repeat() */
+  --ps-max:        90rem;
+  --ps-floor-cell: 3rem;                                /* quartz grid cell    */
+
+  --ps-rule-w:        1px;
+  --ps-rule-w-strong: 2px;
+  --ps-radius:        0;   /* there are no radii in this system */
+
+  /* ---- motion: forms emerge and recede ---------------------------------- */
+  --ps-dur-fast: 160ms;
+  --ps-dur-slow: 1200ms;
+  --ps-ease:     cubic-bezier(0.33, 0, 0.15, 1);
+}
+
+@media (max-width: 40rem) {
+  :root { --ps-cols: 4; }
+}
+
+/* ---- NIGHT: follows the OS unless the page forces day ------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ps-paper:      #090f1c;
+    --ps-paper-2:    #121a2b;
+    --ps-ink:        #edebe7;
+    --ps-ink-2:      #a6abb5;
+    --ps-rule:       #2b3342;
+    --ps-quartz:     #1a2131;
+    --ps-accent:     #ff7a07;
+    --ps-accent-ink: #090f1c;
+    --ps-lineage-1:  #ba5947;
+    --ps-lineage-2:  #6290e7;
+    --ps-lineage-3:  #47c58c;
+    --ps-lineage-4:  #f8a3e5;
+    --ps-lineage-5:  #fdd89e;
+    --ps-severity-1: #3d424d;
+    --ps-severity-2: #6c727e;
+    --ps-severity-3: #a0a5ae;
+    --ps-severity-4: #e7e4df;
+  }
+}
+
+/* ---- NIGHT: forced by the page ----------------------------------------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ps-paper:      #090f1c;
+  --ps-paper-2:    #121a2b;
+  --ps-ink:        #edebe7;
+  --ps-ink-2:      #a6abb5;
+  --ps-rule:       #2b3342;
+  --ps-quartz:     #1a2131;
+  --ps-accent:     #ff7a07;
+  --ps-accent-ink: #090f1c;
+  --ps-lineage-1:  #ba5947;
+  --ps-lineage-2:  #6290e7;
+  --ps-lineage-3:  #47c58c;
+  --ps-lineage-4:  #f8a3e5;
+  --ps-lineage-5:  #fdd89e;
+  --ps-severity-1: #3d424d;
+  --ps-severity-2: #6c727e;
+  --ps-severity-3: #a0a5ae;
+  --ps-severity-4: #e7e4df;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ps-dur-fast: 0ms;
+    --ps-dur-slow: 0ms;
+    --ps-ease: linear;
+  }
+}

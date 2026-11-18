@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en" class="ps-root">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfect Storm Design System</title>
+<meta name="description" content="Tokens and components for Perfect Storm: matter, image, light.">
+<script>
+  /* apply a saved theme before first paint so nothing fades in from the wrong one */
+  try { const t = localStorage.getItem('ps-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./components.css">
+<style>
+  /* Page layout only — everything reusable lives in components.css */
+  body { min-height: 100vh; overflow-x: hidden; }
+  .page { max-width: var(--ps-max); margin: 0 auto; padding: 0 var(--ps-gutter) var(--ps-space-8); }
+  .hero { padding: var(--ps-space-8) var(--ps-gutter) var(--ps-space-6); border-bottom: var(--ps-rule-w) solid var(--ps-rule); }
+  .hero__inner { max-width: var(--ps-max); margin: 0 auto; display: grid; gap: var(--ps-space-6); }
+  .hero__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.35em; }
+  .hero__title .arrow { color: var(--ps-accent); font-weight: 200; }
+  .lede { max-width: 38rem; margin: 0; font-size: var(--ps-fs-h2); line-height: 1.4; font-weight: var(--ps-weight-light); }
+  main > section { margin-top: var(--ps-space-7); scroll-margin-top: 4.5rem; }
+  .cols { display: grid; gap: var(--ps-space-6) var(--ps-space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  .cols--wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+  .stack { display: grid; gap: var(--ps-space-4); align-content: start; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--ps-space-3); align-items: center; }
+  p { margin: 0; max-width: var(--ps-measure); }
+  .muted { color: var(--ps-ink-2); }
+  code, .mono { font-family: var(--ps-font-mono); font-size: var(--ps-fs-data); overflow-wrap: anywhere; }
+
+  /* principles */
+  .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 var(--ps-space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); counter-reset: pr; }
+  .principles li { counter-increment: pr; border-top: var(--ps-rule-w) solid var(--ps-rule); padding: var(--ps-space-4) 0 var(--ps-space-5); display: grid; gap: var(--ps-space-2); align-content: start; }
+  .principles li::before { content: counter(pr, upper-roman); font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-accent); }
+  .principles strong { font-weight: var(--ps-weight-medium); text-transform: uppercase; letter-spacing: var(--ps-tracking-caps); font-size: var(--ps-fs-small); }
+
+  /* colour chips */
+  .chips { display: grid; gap: var(--ps-space-5) var(--ps-space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); }
+  .chip { display: grid; gap: var(--ps-space-1); min-width: 0; }
+  .chip__field { height: 4.5rem; background: var(--c); border: var(--ps-rule-w) solid var(--ps-rule); display: grid; place-items: center; }
+  .chip__glyph { width: 1.5rem; height: 1.5rem; background: var(--ps-paper); }
+  .chip__name { font-size: var(--ps-fs-small); font-weight: var(--ps-weight-medium); }
+  .chip__meta { font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); overflow-wrap: anywhere; }
+  .ramp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+  .ramp > div { height: 3rem; background: var(--c); }
+  .ramp > div:first-child { box-shadow: inset 0 0 0 var(--ps-rule-w) var(--ps-ink-2); }
+  .ramp-labels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); }
+
+  /* type specimens */
+  .spec { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: var(--ps-space-2) var(--ps-space-5); align-items: baseline; padding: var(--ps-space-4) 0; border-top: var(--ps-rule-w) solid var(--ps-rule); }
+  .spec__sample { min-width: 0; overflow-wrap: anywhere; }
+  @media (max-width: 40rem) { .spec { grid-template-columns: 1fr; } }
+
+  /* space */
+  .space-row { display: grid; grid-template-columns: 7.5rem 3.5rem minmax(0, 1fr); gap: var(--ps-space-3); align-items: center; padding: var(--ps-space-1) 0; }
+  .space-bar { height: 0.75rem; background: var(--ps-ink); width: var(--w); max-width: 100%; }
+  .gridviz { display: grid; grid-template-columns: repeat(var(--ps-cols), minmax(0, 1fr)); gap: var(--ps-space-4); }
+  .gridviz > div { height: 5rem; background: var(--ps-paper-2); border-top: var(--ps-rule-w-strong) solid var(--ps-ink); font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); padding: var(--ps-space-1); }
+  .rules > div { display: grid; grid-template-columns: 9rem 1fr; gap: var(--ps-space-3); align-items: center; padding: var(--ps-space-2) 0; }
+
+  /* motion */
+  .motion-stage { position: relative; height: 10rem; overflow: hidden; }
+  .motion-stage .ps-emerge { position: absolute; inset: var(--ps-space-5) auto auto 50%; transform: translateX(-50%); width: 5rem; height: 6.5rem; background: linear-gradient(to bottom, var(--ps-lineage-2), var(--ps-lineage-4) 70%, var(--ps-accent)); }
+
+  /* components demo */
+  .demo { display: grid; gap: var(--ps-space-4); align-content: start; padding: var(--ps-space-5) 0; border-top: var(--ps-rule-w) solid var(--ps-rule); min-width: 0; }
+  .demo__name { display: flex; justify-content: space-between; gap: var(--ps-space-3); flex-wrap: wrap; }
+  .metrics { display: grid; gap: var(--ps-space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); }
+  .topbar-frame { border: var(--ps-rule-w) solid var(--ps-rule); overflow: hidden; }
+  .topbar-frame .ps-topbar { position: static; }
+
+  /* in use: floor + epicurve */
+  .floor { position: relative; height: 18rem; border: var(--ps-rule-w) solid var(--ps-rule); overflow: hidden; }
+  .drop { position: absolute; width: 0.875rem; height: 0.875rem; transform: translate(-50%, -50%); background: var(--c); clip-path: var(--g); }
+  .epicurve { display: flex; align-items: flex-end; gap: 2px; height: 12rem; border-bottom: var(--ps-rule-w) solid var(--ps-ink); }
+  .epicurve > div { flex: 1 1 0; height: 100%; display: flex; flex-direction: column-reverse; gap: 2px; min-width: 0; }
+  .epicurve span { display: block; background: var(--c); }
+  .epicurve span.s1 { box-shadow: inset 0 0 0 var(--ps-rule-w) var(--ps-ink-2); }
+  .axis-labels { display: flex; justify-content: space-between; font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); }
+
+  footer { margin-top: var(--ps-space-8); }
+</style>
+</head>
+<body>
+
+<header class="ps-topbar">
+  <span class="ps-topbar__meta">DESIGN SYSTEM · 1.0</span>
+  <a class="ps-wordmark" href="#top">Perfect <span class="ps-wordmark__slit" aria-hidden="true"></span> Storm</a>
+  <fieldset class="ps-seg" id="theme">
+    <legend>Theme</legend>
+    <label><input type="radio" name="theme" value="auto" checked><span>Auto</span></label>
+    <label><input type="radio" name="theme" value="light"><span>Day</span></label>
+    <label><input type="radio" name="theme" value="dark"><span>Night</span></label>
+  </fieldset>
+</header>
+
+<div class="hero ps-floor" id="top">
+  <div class="hero__inner">
+    <span class="ps-label">Perfect Storm — tokens &amp; components</span>
+    <h1 class="ps-display hero__title"><span>Matter</span><span class="arrow">→</span><span>Image</span><span class="arrow">→</span><span>Light</span></h1>
+    <p class="lede">A visual language for an auditory epidemic. Every infection is a drop of sound; the system gives each one a floor to land on, a pigment to carry, and a passage to move through.</p>
+    <nav aria-label="Sections">
+      <ol class="ps-chapters" id="chapters">
+        <li><a href="#principles" class="is-active">Principles</a></li>
+        <li><a href="#colour">Colour</a></li>
+        <li><a href="#type">Type</a></li>
+        <li><a href="#space">Space</a></li>
+        <li><a href="#motion">Motion</a></li>
+        <li><a href="#components">Components</a></li>
+        <li><a href="#in-use">In use</a></li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<main class="page">
+
+  <!-- 01 ─────────────────────────────────────────────────────────── -->
+  <section id="principles" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">01</span>Principles</h2><span class="ps-label">From the nave, the floor and the pigments</span></div>
+    <ol class="principles">
+      <li><strong>The floor is the grid</strong><span class="muted">Structure is a fine light line laid on raw ground. Data is placed on it, never boxed in.</span></li>
+      <li><strong>Every case is a glyph</strong><span class="muted">One mark per event, set precisely in relation to the others. Shape carries identity as well as colour.</span></li>
+      <li><strong>Colour is matter</strong><span class="muted">Five mineral pigments for lineages, nothing decorative. Everything else is concrete, graphite and quartz.</span></li>
+      <li><strong>One slit of light</strong><span class="muted">A single accent marks what is active now. If two things glow, neither does.</span></li>
+      <li><strong>Symmetry along an axis</strong><span class="muted">Centre the wordmark and the main view on one vertical axis; let the rest settle around it.</span></li>
+      <li><strong>Day and night</strong><span class="muted">Two themes, each tuned on its own surface: washed concrete by day, deep blue passage by night.</span></li>
+      <li><strong>Forms emerge and recede</strong><span class="muted">Motion is slow change of light, not travel. Nothing bounces; under reduced motion, nothing moves.</span></li>
+      <li><strong>Raw and honest</strong><span class="muted">No radii, no shadows, no gradients on controls. A line, a fill, a word.</span></li>
+    </ol>
+  </section>
+
+  <!-- 02 ─────────────────────────────────────────────────────────── -->
+  <section id="colour" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">02</span>Colour</h2><span class="ps-label" id="theme-name">Day</span></div>
+
+    <div class="stack">
+      <span class="ps-label">Ground &amp; ink</span>
+      <div class="chips" data-chips="--ps-paper:Paper,--ps-paper-2:Paper 2,--ps-ink:Ink,--ps-ink-2:Ink 2,--ps-rule:Rule,--ps-quartz:Quartz,--ps-accent:Accent"></div>
+    </div>
+
+    <div class="stack">
+      <span class="ps-label">Lineages — mineral pigments, fixed order, ≥3:1, each with its glyph</span>
+      <div class="chips" data-chips="--ps-lineage-1:Iron:1,--ps-lineage-2:Lapis:2,--ps-lineage-3:Malachite:3,--ps-lineage-4:Manganese:4,--ps-lineage-5:Ochre:5"></div>
+    </div>
+
+    <div class="stack">
+      <span class="ps-label">Severity — none → severe, hue-free</span>
+      <div class="ramp"><div style="--c:var(--ps-severity-1)"></div><div style="--c:var(--ps-severity-2)"></div><div style="--c:var(--ps-severity-3)"></div><div style="--c:var(--ps-severity-4)"></div></div>
+      <div class="ramp-labels"><span>1 · none</span><span>2 · mild</span><span>3 · serious</span><span>4 · severe</span></div>
+    </div>
+  </section>
+
+  <!-- 03 ─────────────────────────────────────────────────────────── -->
+  <section id="type" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">03</span>Type</h2><span class="ps-label">Archivo · Hanken Grotesk · IBM Plex Mono</span></div>
+    <div>
+      <div class="spec"><code>--ps-fs-display</code><div class="spec__sample ps-display">Coming forth</div></div>
+      <div class="spec"><code>--ps-fs-h1</code><div class="spec__sample ps-h1">Passage of a lineage</div></div>
+      <div class="spec"><code>--ps-fs-h2</code><div class="spec__sample ps-h2">Transmission tree</div></div>
+      <div class="spec"><code>--ps-fs-body</code><p class="spec__sample">Each new infection lands as one drop of sound and one falling mark. Over weeks the marks accumulate into a field, and the field into a shape you can read.</p></div>
+      <div class="spec"><code>--ps-fs-small</code><p class="spec__sample" style="font-size:var(--ps-fs-small)">Generation interval drawn from a gamma distribution, mean 5.2 days.</p></div>
+      <div class="spec"><code>--ps-fs-caption</code><p class="spec__sample muted" style="font-size:var(--ps-fs-caption)">Simulated data. Day 0 is the first recorded case.</p></div>
+      <div class="spec"><code>--ps-fs-data</code><div class="spec__sample ps-data">day 087 · cases 12 408 · Rt 1.34 · lineage B.2.1</div></div>
+      <div class="spec"><code>--ps-fs-metric</code><div class="spec__sample ps-metric__value" style="order:0">12 408</div></div>
+      <div class="spec"><code>--ps-tracking-caps</code><div class="spec__sample ps-label" style="color:var(--ps-ink)">Uppercase is always tracked</div></div>
+      <div class="spec"><code>--ps-lh-tight / body</code><div class="spec__sample mono"><span id="lh"></span></div></div>
+    </div>
+  </section>
+
+  <!-- 04 ─────────────────────────────────────────────────────────── -->
+  <section id="space" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">04</span>Space &amp; grid</h2><span class="ps-label">Slow, then steep</span></div>
+    <div class="cols cols--wide">
+      <div class="stack" id="spaces"></div>
+      <div class="stack">
+        <span class="ps-label">Columns — <code id="cols-val"></code> · gutter <code id="gutter-val"></code></span>
+        <div class="gridviz" id="gridviz"></div>
+        <div class="rules">
+          <div><code>--ps-rule-w</code><div style="border-top:var(--ps-rule-w) solid var(--ps-ink)"></div></div>
+          <div><code>--ps-rule-w-strong</code><div style="border-top:var(--ps-rule-w-strong) solid var(--ps-ink)"></div></div>
+          <div><code>--ps-rule</code><div style="border-top:var(--ps-rule-w) solid var(--ps-rule)"></div></div>
+        </div>
+        <span class="ps-label">Floor — <code>.ps-floor</code> · axis — <code>.ps-axis</code></span>
+        <div class="ps-floor ps-axis" style="height:8rem;border:var(--ps-rule-w) solid var(--ps-rule)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 ─────────────────────────────────────────────────────────── -->
+  <section id="motion" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">05</span>Motion</h2><span class="ps-label">Forms emerge and recede</span></div>
+    <div class="cols">
+      <div class="stack">
+        <p class="muted">Light changes; objects don't travel. Use <code>--ps-dur-slow</code> for things appearing and fading, <code>--ps-dur-fast</code> for direct feedback on controls. Both drop to 0 under <code>prefers-reduced-motion</code>.</p>
+        <div class="mono" id="motion-vals"></div>
+        <div class="row"><button class="ps-btn" id="light-btn" type="button">Change the light</button></div>
+      </div>
+      <div class="motion-stage ps-floor"><div class="ps-emerge" id="emerge"></div></div>
+    </div>
+  </section>
+
+  <!-- 06 ─────────────────────────────────────────────────────────── -->
+  <section id="components" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">06</span>Components</h2><span class="ps-label">components.css</span></div>
+
+    <div class="demo">
+      <div class="demo__name"><code>.ps-topbar · .ps-wordmark</code><span class="ps-label">sticky, hairline below</span></div>
+      <div class="topbar-frame">
+        <div class="ps-topbar">
+          <span class="ps-topbar__meta">DAY 087</span>
+          <span class="ps-wordmark">Perfect <span class="ps-wordmark__slit" aria-hidden="true"></span> Storm</span>
+          <button class="ps-btn ps-btn--quiet" type="button">About</button>
+        </div>
+      </div>
+      <div class="row"><span class="ps-wordmark ps-wordmark--large">Perfect <span class="ps-wordmark__slit" aria-hidden="true"></span> Storm</span></div>
+    </div>
+
+    <div class="cols cols--wide">
+      <div class="demo">
+        <div class="demo__name"><code>.ps-chapters</code><span class="ps-label">.is-active</span></div>
+        <ol class="ps-chapters">
+          <li><button type="button">Matter</button></li>
+          <li><button type="button" class="is-active">Image</button></li>
+          <li><button type="button">Light</button></li>
+        </ol>
+        <ol class="ps-chapters ps-chapters--stacked">
+          <li><button type="button">Outbreak</button></li>
+          <li><button type="button">Spread</button></li>
+          <li><button type="button" class="is-active">Variants</button></li>
+          <li><button type="button">Recession</button></li>
+        </ol>
+      </div>
+
+      <div class="demo">
+        <div class="demo__name"><code>.ps-metric</code><span class="ps-label">numeral + label</span></div>
+        <div class="metrics">
+          <div class="ps-metric"><span class="ps-metric__value">12&#8239;408</span><span class="ps-metric__label">Infections</span></div>
+          <div class="ps-metric"><span class="ps-metric__value">1.34</span><span class="ps-metric__label"><var>R<sub>t</sub></var> today</span><span class="ps-metric__note">7-day mean</span></div>
+          <div class="ps-metric"><span class="ps-metric__value">87<span class="ps-metric__unit">d</span></span><span class="ps-metric__label">Elapsed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols cols--wide">
+      <div class="demo">
+        <div class="demo__name"><code>.ps-slider · .ps-field</code><span class="ps-label">input[type=range]</span></div>
+        <label class="ps-field"><span class="ps-label">Transmission <var>β</var></span><output class="ps-field__value">0.32</output><input class="ps-slider" type="range" min="0" max="1" step="0.01" value="0.32"></label>
+        <label class="ps-field"><span class="ps-label">Recovery <var>γ</var></span><output class="ps-field__value">0.14</output><input class="ps-slider" type="range" min="0" max="1" step="0.01" value="0.14"></label>
+        <label class="ps-field"><span class="ps-label">Disabled</span><output class="ps-field__value">0.50</output><input class="ps-slider" type="range" min="0" max="1" step="0.01" value="0.5" disabled></label>
+      </div>
+
+      <div class="demo">
+        <div class="demo__name"><code>.ps-switch · .ps-seg</code><span class="ps-label">role=switch · radios</span></div>
+        <div class="row" style="gap:var(--ps-space-5)">
+          <label class="ps-switch"><input type="checkbox" role="switch" checked><span>Sound</span></label>
+          <label class="ps-switch"><input type="checkbox" role="switch"><span>Tree</span></label>
+          <label class="ps-switch"><input type="checkbox" role="switch" disabled><span>Off</span></label>
+        </div>
+        <fieldset class="ps-seg">
+          <legend>View</legend>
+          <label><input type="radio" name="view" value="tree" checked><span>Tree</span></label>
+          <label><input type="radio" name="view" value="curve"><span>Epicurve</span></label>
+          <label><input type="radio" name="view" value="both"><span>Both</span></label>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="cols cols--wide">
+      <div class="demo">
+        <div class="demo__name"><code>.ps-btn · --primary · --quiet</code><span class="ps-label">hover inverts</span></div>
+        <div class="row">
+          <button class="ps-btn ps-btn--primary" type="button">Begin</button>
+          <button class="ps-btn" type="button">Reset</button>
+          <button class="ps-btn ps-btn--quiet" type="button">Sources</button>
+          <button class="ps-btn" type="button" disabled>Disabled</button>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="demo__name"><code>.ps-label · .ps-tooltip</code><span class="ps-label">inverted block</span></div>
+        <div class="row"><span class="ps-label">Generation 14</span><span class="ps-label" style="color:var(--ps-ink)">Ink label</span></div>
+        <div class="ps-tooltip ps-tooltip--static" role="tooltip">
+          <span class="ps-tooltip__title">Case 4 117</span>
+          <dl><dt>lineage</dt><dd>lapis · B.2</dd><dt>day</dt><dd>061</dd><dt>infected by</dt><dd>3 902</dd><dt>severity</dt><dd>2 / 4</dd></dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols cols--wide">
+      <div class="demo">
+        <div class="demo__name"><code>.ps-legend · .ps-swatch</code><span class="ps-label">glyph + colour + word</span></div>
+        <ul class="ps-legend">
+          <li><span class="ps-swatch ps-swatch--l1"></span>A · Iron</li>
+          <li><span class="ps-swatch ps-swatch--l2"></span>B · Lapis</li>
+          <li><span class="ps-swatch ps-swatch--l3"></span>C · Malachite</li>
+          <li><span class="ps-swatch ps-swatch--l4"></span>D · Manganese</li>
+          <li><span class="ps-swatch ps-swatch--l5"></span>E · Ochre</li>
+        </ul>
+        <ul class="ps-legend">
+          <li><span class="ps-swatch ps-swatch--s1"></span>None</li>
+          <li><span class="ps-swatch ps-swatch--s2"></span>Mild</li>
+          <li><span class="ps-swatch ps-swatch--s3"></span>Serious</li>
+          <li><span class="ps-swatch ps-swatch--s4"></span>Severe</li>
+        </ul>
+      </div>
+
+      <div class="demo">
+        <div class="demo__name"><code>.ps-panel · __head</code><span class="ps-label">strong line opens a bay</span></div>
+        <div class="ps-panel">
+          <div class="ps-panel__head"><h3 class="ps-panel__title"><span class="ps-panel__index">II</span>Phylogeny</h3><span class="ps-label">5 lineages · 412 nodes</span></div>
+          <div class="ps-panel__body"><p class="muted" style="font-size:var(--ps-fs-small)">Panels have no box. A strong ink line above, a title in tracked capitals, and the content below on the same ground.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="demo__name"><code>.ps-source</code><span class="ps-label">citation / footnote</span></div>
+      <div class="ps-source">
+        <ol>
+          <li><span>Kermack, W. O. &amp; McKendrick, A. G. (1927). <cite>A contribution to the mathematical theory of epidemics.</cite> Proc. R. Soc. Lond. A 115, 700–721.</span></li>
+          <li><span>Visual language after the exhibition <cite>Manifestations in the Light</cite> by Rachel Garrard, St. Agnes, Berlin (2026). No images or text from it are reproduced here.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 ─────────────────────────────────────────────────────────── -->
+  <section id="in-use" class="ps-panel">
+    <div class="ps-panel__head"><h2 class="ps-panel__title"><span class="ps-panel__index">07</span>In use</h2><span class="ps-label">Simulated</span></div>
+    <div class="cols cols--wide">
+      <div class="stack">
+        <span class="ps-label">The floor — each case placed as a glyph</span>
+        <div class="floor ps-floor" id="floor" aria-label="Simulated cases on the floor grid" role="img"></div>
+        <ul class="ps-legend">
+          <li><span class="ps-swatch ps-swatch--l1"></span>A</li><li><span class="ps-swatch ps-swatch--l2"></span>B</li><li><span class="ps-swatch ps-swatch--l3"></span>C</li><li><span class="ps-swatch ps-swatch--l4"></span>D</li><li><span class="ps-swatch ps-swatch--l5"></span>E</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <span class="ps-label">Case series by severity — daily</span>
+        <div class="epicurve" id="epicurve" aria-label="Simulated epidemic curve stacked by severity" role="img"></div>
+        <div class="axis-labels"><span>day 0</span><span>15</span><span>30</span><span>45</span></div>
+        <ul class="ps-legend">
+          <li><span class="ps-swatch ps-swatch--s1"></span>None</li><li><span class="ps-swatch ps-swatch--s2"></span>Mild</li><li><span class="ps-swatch ps-swatch--s3"></span>Serious</li><li><span class="ps-swatch ps-swatch--s4"></span>Severe</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="ps-source"><p>Perfect Storm design system. Fonts: Archivo, Hanken Grotesk, IBM Plex Mono — SIL Open Font License 1.1, served by Google Fonts.</p></div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const css = name => getComputedStyle(root).getPropertyValue(name).trim();
+
+  /* ---- theme ---------------------------------------------------------- */
+  const KEY = 'ps-theme';
+  const themeName = document.getElementById('theme-name');
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(v) {
+    if (v === 'light' || v === 'dark') root.setAttribute('data-theme', v);
+    else root.removeAttribute('data-theme');
+    const dark = v === 'dark' || (v !== 'light' && mq.matches);
+    themeName.textContent = dark ? 'Night' : 'Day';
+    try { localStorage.setItem(KEY, v); } catch (e) {}
+    refresh();
+  }
+  let saved = 'auto';
+  try { saved = localStorage.getItem(KEY) || 'auto'; } catch (e) {}
+  document.querySelectorAll('#theme input').forEach(i => {
+    i.checked = i.value === saved;
+    i.addEventListener('change', () => applyTheme(i.value));
+  });
+  mq.addEventListener('change', () => applyTheme(document.querySelector('#theme input:checked').value));
+
+  /* ---- colour maths (WCAG 2) ----------------------------------------- */
+  function rgb(c) {
+    const el = document.createElement('i'); el.style.color = c; document.body.appendChild(el);
+    const m = getComputedStyle(el).color.match(/[\d.]+/g).map(Number); el.remove(); return m;
+  }
+  const hex = c => '#' + rgb(c).slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const lum = c => { const [r, g, b] = rgb(c).slice(0, 3).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+
+  /* ---- chips ---------------------------------------------------------- */
+  document.querySelectorAll('[data-chips]').forEach(box => {
+    box.innerHTML = box.dataset.chips.split(',').map(s => {
+      const [tok, name, glyph] = s.split(':');
+      const g = glyph ? `<span class="chip__glyph" style="clip-path:var(--ps-glyph-${glyph})"></span>` : '';
+      return `<div class="chip" data-tok="${tok}"><div class="chip__field" style="--c:var(${tok})">${g}</div>
+        <span class="chip__name">${name}</span><code class="chip__meta">${tok}</code><span class="chip__meta" data-out></span></div>`;
+    }).join('');
+  });
+
+  /* ---- spaces & grid -------------------------------------------------- */
+  const spaces = document.getElementById('spaces');
+  spaces.innerHTML = '<span class="ps-label">Space scale</span>' + [1,2,3,4,5,6,7,8].map(n =>
+    `<div class="space-row"><code>--ps-space-${n}</code><code data-space="${n}"></code><div class="space-bar" style="--w:var(--ps-space-${n})"></div></div>`).join('');
+
+  function refresh() {
+    const paper = css('--ps-paper');
+    document.querySelectorAll('.chip').forEach(ch => {
+      const v = css(ch.dataset.tok);
+      const r = ratio(v, paper);
+      ch.querySelector('[data-out]').textContent = `${hex(v)} · ${r.toFixed(2)}:1`;
+    });
+    document.querySelectorAll('[data-space]').forEach(e => { e.textContent = css('--ps-space-' + e.dataset.space); });
+    const cols = parseInt(css('--ps-cols'), 10) || 12;
+    document.getElementById('cols-val').textContent = cols;
+    document.getElementById('gutter-val').textContent = getComputedStyle(document.querySelector('.page')).paddingLeft;
+    document.getElementById('gridviz').innerHTML = Array.from({ length: cols }, (_, i) => `<div>${i + 1}</div>`).join('');
+    document.getElementById('lh').textContent = `${css('--ps-lh-tight')} / ${css('--ps-lh-body')}`;
+    document.getElementById('motion-vals').textContent = `fast ${css('--ps-dur-fast')} · slow ${css('--ps-dur-slow')} · ease ${css('--ps-ease')}`;
+  }
+  window.addEventListener('resize', refresh);
+
+  /* ---- sliders -------------------------------------------------------- */
+  document.querySelectorAll('.ps-field').forEach(f => {
+    const s = f.querySelector('.ps-slider'), o = f.querySelector('output');
+    const set = () => { const p = (s.value - s.min) / (s.max - s.min) * 100; s.style.setProperty('--ps-fill', p + '%'); o.textContent = Number(s.value).toFixed(2); };
+    s.addEventListener('input', set); set();
+  });
+
+  /* ---- motion --------------------------------------------------------- */
+  const em = document.getElementById('emerge');
+  document.getElementById('light-btn').addEventListener('click', () => em.classList.toggle('is-lit'));
+  setTimeout(() => em.classList.add('is-lit'), 400);
+
+  /* ---- chapters: follow scroll --------------------------------------- */
+  const links = [...document.querySelectorAll('#chapters a')];
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    links.forEach(a => a.classList.toggle('is-active', a.getAttribute('href') === '#' + e.target.id));
+  }), { rootMargin: '-40% 0px -55% 0px' });
+  document.querySelectorAll('main section').forEach(s => io.observe(s));
+
+  /* ---- in use: seeded simulated data --------------------------------- */
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const floor = document.getElementById('floor');
+  function placeDrops() {
+    seed = 7;
+    const cell = parseFloat(getComputedStyle(floor).backgroundSize) || 48;
+    const nx = Math.floor(floor.clientWidth / cell), ny = Math.floor(floor.clientHeight / cell);
+    const taken = new Set(); let drops = '';
+    const target = Math.round((nx - 1) * (ny - 1) * 0.55);
+    for (let i = 0; i < target * 6 && taken.size < target; i++) {
+      const l = 1 + Math.min(4, Math.floor(Math.pow(rnd(), 0.8) * 5));
+      const gx = 1 + Math.floor(rnd() * (nx - 1)), gy = 1 + Math.floor(rnd() * (ny - 1));
+      if (taken.has(gx + ',' + gy)) continue; taken.add(gx + ',' + gy);
+      drops += `<span class="drop" style="left:${gx * cell - 0.5}px;top:${gy * cell - 0.5}px;--c:var(--ps-lineage-${l});--g:var(--ps-glyph-${l})"></span>`;
+    }
+    floor.innerHTML = drops;
+  }
+  placeDrops();
+  window.addEventListener('resize', placeDrops);
+  const curve = document.getElementById('epicurve');
+  const days = [];
+  for (let d = 0; d < 45; d++) {
+    const t = d / 44, total = 4 + 92 * Math.exp(-((t - 0.45) ** 2) / 0.035) * (0.8 + rnd() * 0.4);
+    days.push([0.52, 0.28, 0.14, 0.06].map(w => total * w * (0.8 + rnd() * 0.4)));
+  }
+  const peak = Math.max(...days.map(p => p.reduce((a, b) => a + b, 0)));
+  curve.innerHTML = days.map(parts => '<div>' + parts.map((h, i) =>
+    `<span class="s${i + 1}" style="height:calc(${(h / peak * 100).toFixed(2)}% - 2px);--c:var(--ps-severity-${i + 1})"></span>`).join('') + '</div>').join('');
+
+  applyTheme(saved);
+})();
+</script>
+</body>
+</html>
