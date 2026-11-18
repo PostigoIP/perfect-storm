@@ -209,7 +209,8 @@ body[data-mode="obs"] .sim-only { display: none; }
   all: unset; position: absolute; pointer-events: auto; cursor: pointer; white-space: nowrap;
   font-family: var(--ps-font-mono); font-size: 9.5px; line-height: 1; padding: 2px 3px; color: var(--ps-ink-2);
 }
-.stage__event:hover, .stage__event:focus-visible { color: var(--ps-ink); text-decoration: underline; }
+.stage__event[style*='--ev-colour'] { color: var(--ev-colour); font-weight: 600; }
+.stage__event:hover, .stage__event:focus-visible { text-decoration: underline; }
 .stage__event:focus-visible { outline: var(--ps-rule-w) solid var(--ps-accent); }
 .stage__event[aria-pressed="true"] { color: var(--ps-paper); background: var(--ps-accent); }
 .stage__back {

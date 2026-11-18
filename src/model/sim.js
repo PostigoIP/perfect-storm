@@ -172,6 +172,19 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
 
   api.setParam = (k, v) => { if (k in p) p[k] = v; };
 
+  // Exact checkpoints (for rewinding to a milestone): the whole state, RNG included.
+  api.save = () => structuredClone({
+    rng: r.getState(), t, S, R, E, I, cases, lineages, byLineage, vaccinated,
+    onsetsLog, pos, inI, dayStart, weekStart, weekCounts, p,
+  });
+  api.restore = (snap) => {
+    const s = structuredClone(snap);
+    r = mulberry32(1); r.setState(s.rng);
+    ({ t, S, R, E, I, cases, lineages, byLineage, vaccinated, onsetsLog, pos, inI, dayStart, weekStart, weekCounts } = s);
+    Object.assign(p, s.p);
+    api.generation++;
+  };
+
   api.importCases = (n) => {
     const k = Math.min(n, S);
     for (let i = 0; i < k; i++) { S--; api._import(t); }
@@ -229,6 +242,7 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
 
   Object.defineProperties(api, {
     cases: { get: () => cases },
+    onsets: { get: () => onsetsLog },
     lineages: { get: () => lineages },
     t: { get: () => t },
   });

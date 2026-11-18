@@ -87,3 +87,19 @@ describe.each([1, 2, 3, 4, 5])('story arc, seed %i', (seed) => {
     expect(c.exit.incidenceToday).toBeLessThan(byId(log, 'wall').peak);
   });
 });
+
+describe('story save/restore', () => {
+  it('rewinds to a chapter and continues identically', () => {
+    const sim = createSim({ seed: 9 });
+    const story = createStory(sim, {});
+    story.start();
+    while (CHAPTERS[story.index].id !== 'lockdown') story.step(0.25);
+    const snap = { sim: sim.save(), story: story.save() };
+    for (let i = 0; i < 200; i++) story.step(0.25);
+    const later = [story.index, sim.t, sim.snapshot().cumulative];
+    sim.restore(snap.sim); story.restore(snap.story);
+    expect(CHAPTERS[story.index].id).toBe('lockdown');
+    for (let i = 0; i < 200; i++) story.step(0.25);
+    expect([story.index, sim.t, sim.snapshot().cumulative]).toEqual(later);
+  });
+});

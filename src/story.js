@@ -42,7 +42,7 @@ export const CHAPTERS = [
     until: () => false, minDays: 24, maxDays: 24,
   },
   {
-    id: 'alpha', mark: 'Variant α', title: 'A new variant',
+    id: 'alpha', mark: 'Variant α', lineageName: 'Variant α', title: 'A new variant',
     body: 'A more transmissible lineage arises in one infected person. Thunder marks the moment; from then on its drops fall a little brighter.',
     enter: ({ sim, thunder, setR }) => {
       setR(0.95);   // founder transmission now fixed: the variant's advantage is all that changes
@@ -64,7 +64,7 @@ export const CHAPTERS = [
     until: (s, m) => s.reffAnalytic < 1 && s.incidenceToday < 0.12 * m.peak, minDays: 20, maxDays: 110,
   },
   {
-    id: 'escape', mark: 'Variant β', title: 'A partial-escape variant',
+    id: 'escape', mark: 'Variant β', lineageName: 'Variant β', title: 'A partial-escape variant',
     body: 'A second variant evades some immunity; its drops fall darker. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
     enter: ({ sim, thunder }) => {
       const l = sim.introduceVariant('Variant β', { tx: 2.0, escape: 0.6, cluster: 60 });
@@ -129,6 +129,13 @@ export function createStory(sim, { onChapter, setSpeed = () => {}, thunder = () 
   }
 
   return {
+    save: () => structuredClone({ index, t0, ramp, auto, mem, m }),
+    restore(snap) {
+      const s = structuredClone(snap);
+      ({ index, t0, ramp, auto } = s);
+      Object.assign(mem, s.mem);
+      m = { ...s.m, mem };
+    },
     start: () => enter(0),
     goto: enter,
     step,

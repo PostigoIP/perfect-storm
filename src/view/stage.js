@@ -151,7 +151,8 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
       const xx = Math.round(x(e.t));
       if (xx < left() || xx > right()) return;
       const sel = k === selectedEvent;
-      ctx.globalAlpha = sel ? 1 : 0.45; ctx.fillStyle = sel ? tk.accent : tk.ink;
+      const col = (e.colour && tk[e.colour]) || tk.ink;
+      ctx.globalAlpha = sel ? 1 : (e.colour ? 0.85 : 0.45); ctx.fillStyle = sel ? tk.accent : col;
       ctx.fillRect(xx, yTop, sel ? 2 * dpr : dpr, zh);
       ctx.globalAlpha = 1;
     });

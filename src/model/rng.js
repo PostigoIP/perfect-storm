@@ -2,13 +2,16 @@
 
 export function mulberry32(seed) {
   let t = seed >>> 0 || 1;
-  return function () {
+  const next = function () {
     t += 0x6d2b79f5;
     let r = t;
     r = Math.imul(r ^ (r >>> 15), r | 1);
     r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
+  next.getState = () => t;          // for exact save/restore
+  next.setState = (v) => { t = v; };
+  return next;
 }
 
 export function normal(r) {

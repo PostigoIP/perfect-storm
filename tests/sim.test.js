@@ -110,6 +110,32 @@ describe('createSim', () => {
     expect(after / before).toBeLessThan(0.5);
   });
 
+  it('save/restore rewinds exactly: same state, and the same future', () => {
+    const sim = createSim({ seed: 21, pop: 30000, params: { beta: 0.45 } });
+    run(sim, 30);
+    sim.introduceVariant('α', { tx: 1.6 });
+    const snap = sim.save();
+    const at = sim.snapshot();
+    run(sim, 25);
+    const futureA = sim.cases.slice(at.cumulative).map((c) => [c.id, c.parent, c.tInf, c.lineage]);
+    const nA = sim.cases.length;
+    sim.restore(snap);
+    const back = sim.snapshot();
+    expect([back.t, back.S, back.E, back.I, back.R, back.cumulative]).toEqual([at.t, at.S, at.E, at.I, at.R, at.cumulative]);
+    run(sim, 25);
+    expect(sim.cases.length).toBe(nA);
+    expect(sim.cases.slice(at.cumulative).map((c) => [c.id, c.parent, c.tInf, c.lineage])).toEqual(futureA);
+  });
+
+  it('a saved checkpoint is not changed by running on', () => {
+    const sim = createSim({ seed: 22, pop: 20000, params: { beta: 0.4 } });
+    run(sim, 20);
+    const snap = sim.save();
+    const n = snap.cases.length;
+    run(sim, 30);
+    expect(snap.cases.length).toBe(n);
+  });
+
   it('imports attach to the reservoir', () => {
     const sim = createSim({ seed: 4, pop: 20000 });
     run(sim, 5);
