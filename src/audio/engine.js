@@ -10,7 +10,7 @@ import { pickGrain, grainLength } from './grains.js';
 import { mulberry32 } from '../model/rng.js';
 
 export const LOOKAHEAD = 0.08;       // seconds between "now" and the earliest onset
-export const MAX_VOICES = 96;        // per 0.5 s window
+export const MAX_VOICES = 14;        // distinct near drops per 0.5 s; beyond that the bed carries the mass
 
 // Player bound to one context: schedules voices, tracks density, enforces the cap.
 function createPlayer(ctx, bank, seed = 9) {
@@ -42,23 +42,44 @@ function createPlayer(ctx, bank, seed = 9) {
     lp.type = 'lowpass'; lp.frequency.value = Math.min(18000, v.lowpassHz); lp.Q.value = 0.5;
     const g = ctx.createGain();
     if (grain) {
-      // short fade in, hold, natural-sounding release over the second half
+      // one drop: near-instant attack, then a natural exponential decay (no hold)
       g.gain.setValueAtTime(0, at);
-      g.gain.linearRampToValueAtTime(v.gain, at + 0.004);
-      g.gain.setValueAtTime(v.gain, at + grain.len * 0.45);
-      g.gain.exponentialRampToValueAtTime(0.0008, at + grain.len);
+      g.gain.linearRampToValueAtTime(v.gain, at + 0.0015);
+      g.gain.exponentialRampToValueAtTime(0.0005, at + grain.len);
     } else g.gain.value = v.gain;
     const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, v.pan));
-    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.35 : v.send;   // recordings carry their own space
+    const send = ctx.createGain(); send.gain.value = grain ? Math.min(0.04, v.send * 0.25) : v.send;   // recordings carry their own space
     src.connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
-    if (grain) src.start(at, grain.offset, grain.len + 0.01); else src.start(at);
+    if (grain) src.start(at, grain.offset + 0.008, grain.len + 0.01); else src.start(at);   // ~9 ms before the impact
     src.onended = () => { src.disconnect(); lp.disconnect(); g.disconnect(); pan.disconnect(); send.disconnect(); };
+  }
+
+  // The rain bed: one looping real recording per material, silent until the
+  // epidemic's own density fades it in (setBed). Its texture follows the mix of lineages.
+  const bed = {};
+  if (bank.grains) {
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000; lp.Q.value = 0.4;
+    lp.connect(space.bedIn);
+    for (const [mat, entries] of Object.entries(bank.grains)) {
+      const src = ctx.createBufferSource();
+      src.buffer = entries[0].buffer; src.loop = true;
+      const g = ctx.createGain(); g.gain.value = 0;
+      src.connect(g).connect(lp);
+      src.start(ctx.currentTime, rand() * Math.max(0, src.buffer.duration - 1));
+      bed[mat] = g;
+    }
+    bed._lp = lp;
   }
 
   return {
     space,
+    // levels: { material: 0..1 }, darkness 0..1 (denser rain → darker, less sizzle)
+    setBed(levels, darkness, at = ctx.currentTime) {
+      for (const [mat, g] of Object.entries(bed)) if (mat !== '_lp') g.gain.setTargetAtTime(0.5 * (levels[mat] ?? 0), at, 1.5);
+      if (bed._lp) bed._lp.frequency.setTargetAtTime(7500 - 4000 * darkness, at, 1.5);
+    },
     playCase(c, surface, at) {
       const evps = density(at);
       const inWindow = recent.filter((x) => x > at - 0.5).length;
@@ -79,7 +100,7 @@ function createPlayer(ctx, bank, seed = 9) {
       const src = ctx.createBufferSource();
       src.buffer = set[Math.floor(rand() * set.length)];
       src.playbackRate.value = 0.92 + rand() * 0.12;
-      const g = ctx.createGain(); g.gain.value = 0.85 * intensity;
+      const g = ctx.createGain(); g.gain.value = 1.1 * intensity;
       src.connect(g).connect(space.thunderBus);
       src.start(at);
       space.duckFor(at + 0.05, 1.8, -5);
@@ -148,6 +169,7 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
       if (!player || muted) return false;
       return player.playCase(c, surface, ctx.currentTime + LOOKAHEAD + Math.max(0, offsetSec));
     },
+    setBed(levels, darkness = 0) { player?.setBed(levels, darkness); },
     thunder(intensity = 1) {
       if (!player || muted) return;
       player.thunder(ctx.currentTime + LOOKAHEAD, intensity);

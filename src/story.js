@@ -37,7 +37,7 @@ export const CHAPTERS = [
   },
   {
     id: 'plateau', mark: 'Plateau', title: 'A long plateau',
-    body: 'Cases settle into a low murmur. Mobility returns, transmission creeps back toward one, and travellers seed new clusters: listen for the leaves.',
+    body: 'Cases settle into a low murmur. Mobility returns, transmission creeps back toward one, and travellers seed new clusters: listen for the metal.',
     enter: ({ sim, rampR }) => { rampR(0.9, 6); sim.setParam('importRate', 1.2); },
     until: () => false, minDays: 24, maxDays: 24,
   },
@@ -65,7 +65,7 @@ export const CHAPTERS = [
   },
   {
     id: 'escape', mark: 'Variant β', title: 'A partial-escape variant',
-    body: 'A second variant evades some immunity and falls on metal. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
+    body: 'A second variant evades some immunity and falls on stone. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
     enter: ({ sim, thunder }) => {
       const l = sim.introduceVariant('Variant β', { tx: 2.0, escape: 0.6, cluster: 60 });
       thunder({ lineage: l, kind: 'variant' });

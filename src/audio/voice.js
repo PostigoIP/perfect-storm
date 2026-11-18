@@ -8,8 +8,13 @@
 const VARIANT_SURFACES = ['glass', 'metal'];
 const PAN_ZONES = [0, -0.55, 0.55, -0.3, 0.3];
 const GAIN = [0.42, 0.58, 0.74, 0.9];
-const BRIGHT = [3200, 5200, 8500, 14000];
+const BRIGHT = [9000, 11000, 14000, 18000];   // drops stay bright; distance is level + wetness, not muffling
 const SEND = { near: 0.06, mid: 0.2, far: 0.42 };
+
+// colour key (role) → recorded material. Founder = leaves (most rain-like, most cases);
+// variant 1 = glass; variant 2 = stone (user's test: is stone the "puff"?); imports = metal.
+export const MATERIAL = { stone: 'leaf', glass: 'glass', metal: 'stone', leaf: 'metal' };
+export const materialFor = (lineage, lineages) => MATERIAL[surfaceFor(lineage, lineages)] ?? 'leaf';
 
 export function surfaceFor(lineage, lineages) {
   const L = lineages[lineage];
@@ -38,11 +43,11 @@ const hash01 = (n) => (((n * 2654435761) >>> 0) % 100000) / 100000;
 
 export function caseToVoice(c, surface, eventsPerSec, rand) {
   const layer = layerFor(eventsPerSec, c.detected, rand);
-  const dark = c.detected ? 1 : 0.55;
+  const dark = c.detected ? 1 : 0.75;
   return {
     set: surface,
     index: Math.floor(hash01(c.id + 7) * 1e6),
-    rate: 1 + 0.02 * Math.sin(c.muts * 1.7) + (rand() - 0.5) * 0.02,
+    rate: 0.865 + 0.3 * hash01(c.id * 7 + 3) + 0.015 * Math.sin(c.muts * 1.7),   // 0.85–1.18: repeats stay unrecognisable
     gain: GAIN[c.severity] * densityGain(eventsPerSec) * (c.detected ? 1 : 0.8),
     lowpassHz: BRIGHT[c.severity] * dark,
     pan: PAN_ZONES[c.lineage % PAN_ZONES.length] + (hash01(c.id) - 0.5) * 0.5,

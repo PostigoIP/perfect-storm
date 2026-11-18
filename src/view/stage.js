@@ -9,7 +9,7 @@ import { MARGIN } from './figures.js';
 import { yScale } from './scale.js';
 
 const AXIS_H = 20;          // css px under the bars for time labels
-const BARS_SHARE = 0.36;    // share of stage height (above ground) for the bars
+const BARS_SHARE = 0.3;     // share of stage height (above ground) for the bars; leaves air under the text
 const MAX_FLIGHTS = 700;
 
 export function createStage(canvas, { stageEl, groundOffset, domain, ledger, surfaceOf, order, fmt }) {
@@ -17,7 +17,7 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   let W = 0, H = 0, dpr = 1, raf = 0, running = false;
   let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let spread = 'wide';
-  let scaleKind = 'log';
+  let scaleKind = 'linear';
   let events = [];          // [{ t, label }] story events marked on the time axis
   let unitLabel = 'cases per day';
   let yMaxShown = 10, lastTs = 0;

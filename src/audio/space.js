@@ -5,8 +5,8 @@
 export function createSpace(ctx) {
   const master = ctx.createGain();
   const glue = ctx.createDynamicsCompressor();
-  glue.threshold.value = -18; glue.ratio.value = 3; glue.knee.value = 6;
-  glue.attack.value = 0.01; glue.release.value = 0.25;
+  glue.threshold.value = -10; glue.ratio.value = 1.5; glue.knee.value = 6;    // gentle: no pumping
+  glue.attack.value = 0.1; glue.release.value = 0.4;
   const limiter = ctx.createDynamicsCompressor();
   limiter.threshold.value = -4; limiter.ratio.value = 20; limiter.knee.value = 0;
   limiter.attack.value = 0.001; limiter.release.value = 0.1;
@@ -24,6 +24,10 @@ export function createSpace(ctx) {
   const reverbTone = ctx.createBiquadFilter(); reverbTone.type = 'highpass'; reverbTone.frequency.value = 180;
   reverb.connect(reverbTone).connect(reverbReturn).connect(duck);
 
+  // the rain bed enters on the duckable bus, unfiltered by the distance buses
+  const bedIn = ctx.createGain();
+  bedIn.connect(duck);
+
   const near = ctx.createGain();
   near.connect(duck);
   const mid = ctx.createGain(); mid.gain.value = 0.75;
@@ -34,13 +38,25 @@ export function createSpace(ctx) {
   const farLp = ctx.createBiquadFilter(); farLp.type = 'lowpass'; farLp.frequency.value = 3200;
   far.connect(farHp).connect(farLp).connect(duck);
 
+  // Thunder recordings are mostly < 250 Hz, which laptop speakers can't reproduce.
+  // Psychoacoustic bass: saturate the rumble to create harmonics at 200 Hz–1.2 kHz
+  // (audible on small speakers; the ear infers the fundamental), in parallel with the dry signal.
   const thunderBus = ctx.createGain();
-  thunderBus.connect(master);
+  const sub = ctx.createBiquadFilter(); sub.type = 'highpass'; sub.frequency.value = 40;
+  thunderBus.connect(sub).connect(master);
+  const lowOnly = ctx.createBiquadFilter(); lowOnly.type = 'lowpass'; lowOnly.frequency.value = 300;
+  const shaper = ctx.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(4 * x) / Math.tanh(4); }
+  shaper.curve = curve; shaper.oversample = '2x';
+  const harmonics = ctx.createBiquadFilter(); harmonics.type = 'bandpass'; harmonics.frequency.value = 500; harmonics.Q.value = 0.5;
+  const harmGain = ctx.createGain(); harmGain.gain.value = 0.55;
+  thunderBus.connect(lowOnly).connect(shaper).connect(harmonics).connect(harmGain).connect(master);
   const thunderSend = ctx.createGain(); thunderSend.gain.value = 0.35;
   thunderBus.connect(thunderSend).connect(reverb);
 
   return {
-    ctx, master, volume, reverb, thunderBus,
+    ctx, master, volume, reverb, thunderBus, bedIn,
     layers: { near, mid, far },
     duckFor(at, seconds = 1.5, db = -4) {
       const g = duck.gain, lo = Math.pow(10, db / 20);
@@ -54,7 +70,7 @@ export function createSpace(ctx) {
 // Stereo impulse response: 18 ms pre-delay, sparse early reflections,
 // then a decorrelated tail that darkens as it decays (≈2.4 s).
 function courtyardIR(ctx) {
-  const sr = ctx.sampleRate, len = Math.floor(sr * 2.6);
+  const sr = ctx.sampleRate, len = Math.floor(sr * 0.9);   // short diffuser, not a hall: no metallic phasing
   const buf = ctx.createBuffer(2, len, sr);
   const pre = Math.floor(0.018 * sr);
   const taps = [[0.011, 0.5], [0.019, 0.38], [0.027, 0.3], [0.041, 0.24], [0.058, 0.18], [0.073, 0.14]];

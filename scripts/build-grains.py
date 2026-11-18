@@ -20,8 +20,11 @@ MIN_GAP = 0.035                # s between kept onsets
 PRE = 0.012                    # grain starts this long before the detected onset
 RISE = float(os.environ.get('GRAIN_RISE_DB', '6'))   # dB above local background to count as an impact
 
+HP = float(os.environ.get('GRAIN_HP', '80'))   # keep the drops' low-mid body; only remove rumble below ~80 Hz
+
 def decode(path):
-    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-ac', '2', '-ar', str(SR), '-f', 'f32le', '-'],
+    af = [] if HP <= 0 else ['-af', f'highpass=f={HP}:poles=2']   # 2nd-order high-pass
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, *af, '-ac', '2', '-ar', str(SR), '-f', 'f32le', '-'],
                          check=True, capture_output=True).stdout
     return np.frombuffer(raw, dtype=np.float32).reshape(-1, 2)
 
@@ -81,6 +84,11 @@ def main():
                 print(f'  {f}: kept {a0:.0f}-{a0 + win:.0f} s ({max(counts)} impacts in window)')
             peak = float(np.abs(x).max()) or 1.0
             x = x * (10 ** (-1 / 20) / peak)          # normalise to -1 dBFS
+            # make it loopable for the rain bed: crossfade the last 1.5 s into the start (equal power)
+            nx = int(1.5 * SR)
+            if len(x) > 4 * nx:
+                fi = np.sin(np.linspace(0, np.pi / 2, nx))[:, None]; fo = np.cos(np.linspace(0, np.pi / 2, nx))[:, None]
+                x = np.concatenate([x[:nx] * fi + x[-nx:] * fo, x[nx:-nx]])
             ons = onsets(x, max_n)
             name = f'{surface}-{k}.mp3'
             subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'f32le', '-ar', str(SR), '-ac', '2', '-i', '-',

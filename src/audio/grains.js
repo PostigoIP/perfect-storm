@@ -15,5 +15,14 @@ export function pickGrain(entries, index) {
 
 // seconds of recording a case plays: longer for more severe cases
 export function grainLength(severity, u) {
-  return 0.26 + severity * 0.08 + u * 0.1;   // long enough for a drop to ring out
+  return 0.03 + severity * 0.015 + u * 0.04;   // one drop: impact and its short ring (30–115 ms)
+}
+
+// How much of the continuous rain bed to fade in, from the rate of drops
+// actually falling (cases per real second). Silent while drops are countable
+// (< 8/s); full by 400/s; log-shaped in between, so the bed is the epidemic's
+// own density, never a fixed ambience.
+export function bedLevel(dropsPerSec) {
+  if (dropsPerSec <= 8) return 0;
+  return Math.min(1, Math.log(dropsPerSec / 8) / Math.log(400 / 8));
 }

@@ -2,13 +2,15 @@
 // audio engine (OfflineAudioContext), reports peaks, and saves WAVs (dev only).
 import { createSim } from '../src/model/sim.js';
 import { createAudio } from '../src/audio/engine.js';
-import { surfaceFor } from '../src/audio/voice.js';
+import { materialFor } from '../src/audio/voice.js';
+import { bedLevel } from '../src/audio/grains.js';
 
 const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
 const SECONDS = 12;
 const SCENARIOS = [
   { name: 'sparse', rate: 2, beta: 0.32 },
   { name: 'building', rate: 20, beta: 0.45, variantAt: null },
+  { name: 'heavy', rate: 200, beta: 0.55, variantAt: null },   // dense rain, no thunder: for spectral checks
   { name: 'storm', rate: 200, beta: 0.55, variantAt: 4 },
 ];
 
@@ -41,7 +43,16 @@ async function render(audio, sc, bankName) {
     for (const c of sim.step(0.1)) events.push({ c, at: 0.3 + (c.tOnset - t0) / daysPerSec });
   }
   const buf = await audio.offline(SECONDS + 2, (p) => {
-    for (const e of events) if (e.at < SECONDS) p.playCase(e.c, surfaceFor(e.c.lineage, sim.lineages), e.at);
+    for (const e of events) if (e.at < SECONDS) p.playCase(e.c, materialFor(e.c.lineage, sim.lineages), e.at);
+    // drive the bed exactly as the app does: level from drops/s, texture from recent lineages
+    for (let t = 0; t < SECONDS; t += 0.25) {
+      const win = events.filter((e) => e.at > t - 1 && e.at <= t);
+      const mix = events.filter((e) => e.at > t - 3 && e.at <= t);
+      const level = bedLevel(win.length);
+      const levels = {};
+      for (const e of mix) { const m = materialFor(e.c.lineage, sim.lineages); levels[m] = (levels[m] ?? 0) + level / mix.length; }
+      p.setBed(levels, level, t);
+    }
     if (thunderAt != null) p.thunder(thunderAt + 0.3, 1);
   });
   let peak = 0;

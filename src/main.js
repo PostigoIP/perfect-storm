@@ -3,7 +3,8 @@ import { createBus } from './bus.js';
 import { createSim } from './model/sim.js';
 import { buildTree, thinTips } from './model/tree.js';
 import { createAudio, LOOKAHEAD } from './audio/engine.js';
-import { surfaceFor } from './audio/voice.js';
+import { surfaceFor, MATERIAL } from './audio/voice.js';
+import { bedLevel } from './audio/grains.js';
 import { createStage } from './view/stage.js';
 import { createLedger } from './view/ledger.js';
 import { renderCollapsedTree } from './view/figures.js';
@@ -48,10 +49,8 @@ const stage = createStage($('stage'), {
 });
 
 const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
-// What each lineage sounds like. Test (user, 2026-11-18): stone moved to the last lineage
-// to check whether the stone recording is what sounds like "puff/ffff".
-const MATERIAL_SWAP = { stone: 'glass', glass: 'metal', metal: 'stone', leaf: 'leaf' };
-const materialOf = (l) => MATERIAL_SWAP[surfaceOf(l)] ?? 'glass';
+// what each lineage sounds like: colour key (role) → recorded material, shared with the clip renderer
+const materialOf = (l) => MATERIAL[surfaceOf(l)] ?? 'leaf';
 const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
 
 // ── clock ────────────────────────────────────────────────────────────────
@@ -82,7 +81,7 @@ function frame(now) {
     }
     state.pending = keep;
   }
-  if (now - lastMetrics > 250) { lastMetrics = now; drawMetrics(); }
+  if (now - lastMetrics > 250) { lastMetrics = now; drawMetrics(); updateBed(); }
   if (now - lastEpi > 500) { lastEpi = now; drawLegend(lineageOrder()); }
   if (now - lastTree > 1000) { lastTree = now; drawTree(); }
   requestAnimationFrame(frame);
@@ -133,10 +132,27 @@ function drawLegend(order) {
   const key = items.join(',') + state.mode;
   if (key === legendKey) return;
   legendKey = key;
+  const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
+  const MAT = { leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
-    return `<li><span class="ps-swatch" style="--ps-swatch:var(${SURFACE_VAR[s]})"></span>${lineageLabel(l)}<span class="legend__sub">${`— ${materialOf(l)}`}</span></li>`;
-  }).join('') + '<li class="legend__key"><span class="ps-swatch"></span>reported <span class="ps-swatch swatch--faint"></span>not reported</li>';
+    const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
+    return `<li><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · sounds like ${MAT[materialOf(l)] ?? materialOf(l)}</span></li>`;
+  }).join('') + `<li class="stage__legend-key"><span class="stage__legend-sw"></span>reported<span class="stage__legend-sw stage__legend-sw--faint"></span>never reported</li>`;
+}
+
+// The rain bed follows the epidemic: its level from how many drops are falling per
+// second, its texture from the lineages of the last week of landed drops.
+function updateBed() {
+  if (!state.running) { audio.setBed({}, 0); return; }
+  const rate = source.snapshot().incidenceToday * state.speed;
+  const level = bedLevel(rate);
+  const recent = ledger.bins().slice(-Math.ceil(7 / ledger.binDays));
+  const byMat = {}; let tot = 0;
+  for (const b of recent) b.byLineage.forEach((n, l) => { if (n) { const m = materialOf(l); byMat[m] = (byMat[m] ?? 0) + n; tot += n; } });
+  const levels = {};
+  for (const m in byMat) levels[m] = (level * byMat[m]) / tot;
+  audio.setBed(levels, level);
 }
 
 function drawMetrics() {

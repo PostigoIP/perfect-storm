@@ -36,6 +36,10 @@
         <h1 class="ps-display" id="chapter-title">Every case is one drop.</h1>
         <p class="lede" id="chapter-body">Rain is what an outbreak sounds like.</p>
       </div>
+      <aside class="stage__legend" aria-label="Legend">
+        <p class="stage__legend-title">One drop = one case · colour = lineage</p>
+        <ul class="stage__legend-list" id="legend"></ul>
+      </aside>
       <dl class="metrics" id="metrics">
         <div class="ps-metric"><dt class="ps-metric__label">Day</dt><dd class="ps-metric__value" id="m-day">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label" id="m-inc-label">Onsets / day</dt><dd class="ps-metric__value" id="m-inc">0</dd></div>
@@ -87,12 +91,11 @@
               <span class="ps-label" aria-hidden="true">Scale</span>
               <fieldset class="ps-seg">
                 <legend>Scale</legend>
-                <label><input type="radio" name="scale" data-scale="log" checked /><span>Log</span></label>
-                <label><input type="radio" name="scale" data-scale="linear" /><span>Linear</span></label>
+                <label><input type="radio" name="scale" data-scale="linear" checked /><span>Linear</span></label>
+                <label><input type="radio" name="scale" data-scale="log" /><span>Log</span></label>
               </fieldset>
             </div>
           </div>
-          <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
           <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Colours are lineages; the thin labelled lines mark what happened in the story.<span id="tree-note" hidden></span></p>
         </section>
 

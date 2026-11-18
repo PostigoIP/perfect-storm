@@ -30,11 +30,10 @@ describe('caseToVoice', () => {
     expect(v({ severity: 3 }).gain).toBeGreaterThan(v({ severity: 0 }).gain);
     expect(v({ severity: 3 }).lowpassHz).toBeGreaterThan(v({ severity: 0 }).lowpassHz);
   });
-  it('mutations detune by at most ±3%', () => {
-    for (let m = 0; m < 200; m++) {
-      const x = v({ muts: m });
-      expect(Math.abs(x.rate - 1)).toBeLessThanOrEqual(0.03 + 1e-9);
-    }
+  it('drops vary in pitch within 0.85–1.18 so repeats are not recognisable', () => {
+    const rates = Array.from({ length: 400 }, (_, i) => v({ id: i, muts: i % 9 }).rate);
+    for (const r of rates) { expect(r).toBeGreaterThanOrEqual(0.85); expect(r).toBeLessThanOrEqual(1.18); }
+    expect(Math.max(...rates) - Math.min(...rates)).toBeGreaterThan(0.2);
   });
   it('pan stays within the lineage zone ±0.25', () => {
     const pans = Array.from({ length: 300 }, (_, i) => caseToVoice({ ...base, id: i, lineage: 2 }, 'glass', 1, r).pan);
