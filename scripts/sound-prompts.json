@@ -1,0 +1,53 @@
+{
+  "model_id": "eleven_text_to_sound_v3",
+  "output_format": "wav_48000",
+  "suffix": ", isolated single one-shot, close microphone, completely dry, no reverb, no background noise, no music, silence after",
+  "sets": {
+    "stone": {
+      "duration_seconds": 0.6, "prompt_influence": 0.75, "takes": 4,
+      "prompts": [
+        "a single raindrop hitting a wet flat granite slab, crisp tiny tick with a soft watery splatter",
+        "one small water drop landing on smooth wet concrete, short dull tap with a faint wet spray",
+        "a single raindrop falling onto an old stone step, soft clicky splash"
+      ]
+    },
+    "glass": {
+      "duration_seconds": 0.6, "prompt_influence": 0.75, "takes": 4,
+      "prompts": [
+        "a single raindrop striking a thick glass windowpane, bright clear tap with a faint glassy ring",
+        "one water drop hitting the rim of an empty drinking glass, delicate high tink",
+        "a single raindrop landing on a glass skylight, clean sharp tick"
+      ]
+    },
+    "metal": {
+      "duration_seconds": 0.8, "prompt_influence": 0.75, "takes": 4,
+      "prompts": [
+        "a single raindrop hitting a thin corrugated metal roof, short metallic tink with a small resonant ring",
+        "one water drop falling on an upturned steel bucket, hollow metallic plink",
+        "a single raindrop landing on a tin can lid, bright tinny ping"
+      ]
+    },
+    "leaf": {
+      "duration_seconds": 0.5, "prompt_influence": 0.75, "takes": 4,
+      "prompts": [
+        "a single raindrop landing on a large broad tropical leaf, soft muted pat",
+        "one water drop falling on a dry paper-thin leaf, light papery tap",
+        "a single raindrop hitting dense foliage, tiny soft flick"
+      ]
+    },
+    "heavy": {
+      "duration_seconds": 1.0, "prompt_influence": 0.7, "takes": 3,
+      "prompts": [
+        "a single large heavy water drop falling into a deep still puddle, low round plop with a bubble",
+        "one big drop of water falling into a stone well, deep resonant bloop"
+      ]
+    },
+    "thunder": {
+      "duration_seconds": 7, "prompt_influence": 0.6, "takes": 3,
+      "prompts": [
+        "distant rolling thunder, deep low rumble slowly fading out, no rain",
+        "close thunder crack followed by a long rolling low rumble, no rain"
+      ]
+    }
+  }
+}
