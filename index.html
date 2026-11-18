@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="ps-root">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,90 +7,107 @@
   <meta name="description" content="Auditory epidemiology. Every case is one drop; rain is what an outbreak sounds like." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,600;62..125,800&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/design-system/tokens.css" />
+  <link rel="stylesheet" href="/design-system/components.css" />
   <link rel="stylesheet" href="/src/styles/tokens.css" />
   <link rel="stylesheet" href="/src/styles/app.css" />
 </head>
 <body>
-  <header class="topbar">
-    <a class="wordmark" href="./">Perfect&nbsp;Storm</a>
-    <span class="topbar__sub">Auditory epidemiology</span>
-    <div class="seg" role="group" aria-label="Data source">
-      <button type="button" id="mode-sim" aria-pressed="true">Simulate</button>
-      <button type="button" id="mode-obs" aria-pressed="false">Observed</button>
+  <header class="ps-topbar">
+    <span class="ps-topbar__meta">Auditory epidemiology</span>
+    <a class="ps-wordmark" href="./">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</a>
+    <div class="topbar__controls">
+      <fieldset class="ps-seg">
+        <legend>Data source</legend>
+        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span>Simulate</span></label>
+        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span>Observed</span></label>
+      </fieldset>
+      <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Toggle light and dark">◐</button>
     </div>
-    <button type="button" class="btn" id="theme" aria-label="Toggle light and dark">◐</button>
   </header>
 
   <main class="layout">
-    <section class="stage" id="stage-el" data-tree="behind" aria-label="Storm: cases fall as rain into the case series">
+    <section class="stage ps-floor" id="stage-el" data-tree="behind" aria-label="Storm: cases fall as rain into the case series">
       <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, on the same time axis as the case series"></svg>
       <canvas id="stage"></canvas>
       <div class="stage__text">
-        <p class="label" id="chapter-num">00</p>
-        <h1 class="display" id="chapter-title">Every case is one drop.</h1>
+        <p class="ps-label" id="chapter-num">00</p>
+        <h1 class="ps-display" id="chapter-title">Every case is one drop.</h1>
         <p class="lede" id="chapter-body">Rain is what an outbreak sounds like.</p>
       </div>
       <dl class="metrics" id="metrics">
-        <div><dt>Day</dt><dd id="m-day">0</dd></div>
-        <div><dt id="m-inc-label">Onsets / day</dt><dd id="m-inc">0</dd></div>
-        <div><dt>Cumulative</dt><dd id="m-cum">0</dd></div>
-        <div><dt>R<sub>t</sub></dt><dd id="m-rt">—</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label">Day</dt><dd class="ps-metric__value" id="m-day">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label" id="m-inc-label">Onsets / day</dt><dd class="ps-metric__value" id="m-inc">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label">Cumulative</dt><dd class="ps-metric__value" id="m-cum">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label"><var>R<sub>t</sub></var></dt><dd class="ps-metric__value" id="m-rt">—</dd></div>
       </dl>
     </section>
 
     <section class="key" aria-label="How to read it">
       <div class="key__row">
-        <div class="seg" role="group" aria-label="Tree">
-          <span class="seg__label">Tree</span>
-          <button type="button" data-tree="behind" aria-pressed="true">Behind</button>
-          <button type="button" data-tree="front" aria-pressed="false">Front</button>
-          <button type="button" data-tree="off" aria-pressed="false">Off</button>
+        <div class="key__control">
+          <span class="ps-label" aria-hidden="true">Tree</span>
+          <fieldset class="ps-seg">
+            <legend>Tree</legend>
+            <label><input type="radio" name="tree" data-tree="behind" checked /><span>Behind</span></label>
+            <label><input type="radio" name="tree" data-tree="front" /><span>Front</span></label>
+            <label><input type="radio" name="tree" data-tree="off" /><span>Off</span></label>
+          </fieldset>
         </div>
-        <div class="seg" role="group" aria-label="Rain">
-          <span class="seg__label">Rain</span>
-          <button type="button" data-spread="wide" aria-pressed="true">Everywhere</button>
-          <button type="button" data-spread="column" aria-pressed="false">Over today</button>
+        <div class="key__control">
+          <span class="ps-label" aria-hidden="true">Rain</span>
+          <fieldset class="ps-seg">
+            <legend>Rain</legend>
+            <label><input type="radio" name="spread" data-spread="wide" checked /><span>Everywhere</span></label>
+            <label><input type="radio" name="spread" data-spread="column" /><span>Over today</span></label>
+          </fieldset>
         </div>
       </div>
-      <ul class="legend" id="legend" aria-label="Lineages"></ul>
+      <ul class="ps-legend" id="legend" aria-label="Lineages"></ul>
       <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Behind the rain grows the <span id="tree-note">phylogeny of sequenced cases</span>, on the same time axis. Each wedge is a clade: cases that share one ancestor. The point is when that ancestor lived, the end is the latest case, the number is how many were sequenced. A dotted line marks where a new lineage arose.</p>
     </section>
 
     <aside class="rail" id="controls" aria-label="Controls">
-      <div class="panel">
-        <div class="panel__head">Transport</div>
+      <section class="ps-panel">
+        <div class="ps-panel__head"><h2 class="ps-panel__title">Transport</h2></div>
         <div class="row">
-          <button type="button" class="btn btn--primary" id="play">Play</button>
-          <button type="button" class="btn" id="reset">Reset</button>
-          <label class="switch"><input type="checkbox" id="sound" /> <span>Sound</span></label>
+          <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
+          <button type="button" class="ps-btn" id="reset">Reset</button>
+          <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span>Sound</span></label>
         </div>
-        <label class="slider"><span>Volume</span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" /></label>
-      </div>
-      <div class="panel sim-only">
-        <div class="panel__head">Chapters</div>
-        <ol class="chapters" id="chapters"></ol>
-      </div>
-      <div class="panel sim-only" id="params"><div class="panel__head">Transmission</div></div>
-      <div class="panel sim-only">
-        <div class="panel__head">Discontinuities</div>
+        <label class="ps-field" for="volume">
+          <span class="ps-label">Volume</span>
+          <output class="ps-field__value" for="volume" id="volume-out">80%</output>
+          <input class="ps-slider" type="range" id="volume" min="0" max="1" step="0.01" value="0.8" style="--ps-fill: 80%" />
+        </label>
+      </section>
+      <section class="ps-panel sim-only">
+        <div class="ps-panel__head"><h2 class="ps-panel__title">Chapters</h2></div>
+        <ol class="ps-chapters ps-chapters--stacked" id="chapters"></ol>
+      </section>
+      <section class="ps-panel sim-only" id="params">
+        <div class="ps-panel__head"><h2 class="ps-panel__title">Transmission</h2></div>
+      </section>
+      <section class="ps-panel sim-only">
+        <div class="ps-panel__head"><h2 class="ps-panel__title">Discontinuities</h2></div>
         <div class="row">
-          <button type="button" class="btn" id="variant">New variant</button>
-          <button type="button" class="btn" id="import">Import pulse</button>
+          <button type="button" class="ps-btn" id="variant">New variant</button>
+          <button type="button" class="ps-btn" id="import">Import pulse</button>
         </div>
-      </div>
-      <div class="panel source" id="provenance"></div>
+      </section>
+      <div class="ps-source provenance" id="provenance"></div>
     </aside>
   </main>
 
   <div class="start" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">
     <div class="start__inner">
-      <p class="label">Perfect Storm</p>
-      <h2 class="display" id="start-title">Every case is one drop.</h2>
+      <p class="ps-wordmark ps-wordmark--large">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</p>
+      <h2 class="ps-display" id="start-title">Every case is one drop.</h2>
       <p class="lede">Headphones recommended. Each infection in the model sounds once, on the surface of its lineage.</p>
       <div class="row">
-        <button type="button" class="btn btn--primary" id="start-listen">Listen</button>
-        <button type="button" class="btn" id="start-silent">Watch in silence</button>
+        <button type="button" class="ps-btn ps-btn--primary" id="start-listen">Listen</button>
+        <button type="button" class="ps-btn" id="start-silent">Watch in silence</button>
       </div>
       <p class="caption" id="bank-status"></p>
     </div>

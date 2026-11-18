@@ -108,6 +108,21 @@ Utilities:
 - `.ps-emerge` / `.is-lit`: slow fade in and out.
 - `.ps-display`, `.ps-h1`, `.ps-h2`, `.ps-data`: type styles.
 
+## How the app uses it
+
+The app (`index.html`, `src/`) links `design-system/tokens.css` and `components.css` directly and adds only a few things of its own. It defines no new token names.
+
+- **Founder lineage is ink.** `src/styles/tokens.css` sets `--ps-lineage-1: var(--ps-ink)` (under `:root:root`, so it wins over both dark selectors). In the piece, lineage 1 is the founder strain ("stone"). It is drawn in the same graphite as the text and the tree's root, so variants read as departures from it. Iron is therefore unused in the app.
+  - glass, metal and leaf take `--ps-lineage-2…4` (lapis, malachite, manganese).
+  - `--ps-lineage-5` (ochre) is the spare.
+  - Canvas code still gets a 6-digit hex from `getPropertyValue('--ps-lineage-1')`.
+- **Palette check for this mapping** (dataviz `validate_palette.js`, glass/metal/leaf against each theme's paper):
+  - CVD separation, normal-vision ΔE, chroma and contrast pass in both themes.
+  - The **lightness-band** check fails: light lapis has L 0.37 (band 0.43–0.77); dark malachite has L 0.74 and dark manganese L 0.82 (band 0.48–0.67). This is the system's deliberate dark-to-light stepping (principle 3), so it was kept.
+  - The founder (ink) against its nearest lineage still separates: light ink↔lapis ΔE 23.5 (CVD 23.0); dark ink↔manganese ΔE 17.9 (CVD 13.2).
+- **Disabled segment.** `.ps-seg` has no disabled state. The app dims the span (`src/styles/app.css`); promote it here if another page needs it.
+- **Lineage swatches in the legend are plain `.ps-swatch` squares, not `--l1…l5` glyphs.** The stage and tree do not draw glyph shapes yet, so a glyph in the legend would promise a mark that never appears.
+
 ## Font licences
 
 All three families come from Google Fonts under the **SIL Open Font License 1.1**. They are free to use, embed and self-host, including commercially. The licence travels with the font files, and the fonts cannot be sold on their own.

@@ -128,8 +128,8 @@ function drawLegend(order) {
   legendKey = key;
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
-    return `<li><span class="swatch" style="background:var(${SURFACE_VAR[s]})"></span>${lineageLabel(l)}<span class="legend__sub">${state.mode === 'obs' ? '' : `— ${s}`}</span></li>`;
-  }).join('') + '<li class="legend__key"><span class="swatch swatch--solid"></span>reported <span class="swatch swatch--faint"></span>not reported</li>';
+    return `<li><span class="ps-swatch" style="--ps-swatch:var(${SURFACE_VAR[s]})"></span>${lineageLabel(l)}<span class="legend__sub">${state.mode === 'obs' ? '' : `— ${s}`}</span></li>`;
+  }).join('') + '<li class="legend__key"><span class="ps-swatch"></span>reported <span class="ps-swatch swatch--faint"></span>not reported</li>';
 }
 
 function drawMetrics() {
@@ -144,7 +144,7 @@ function drawMetrics() {
 
 // ── controls ─────────────────────────────────────────────────────────────
 const SLIDERS = [
-  { k: 'beta', label: 'Transmission β', hint: 'per day, founder lineage', min: 0.05, max: 0.8, step: 0.01, fmt: (v) => v.toFixed(2) },
+  { k: 'beta', label: 'Transmission <var>β</var>', hint: 'per day, founder lineage', min: 0.05, max: 0.8, step: 0.01, fmt: (v) => v.toFixed(2) },
   { k: 'infectiousMean', label: 'Infectious period', hint: 'mean days', min: 2, max: 14, step: 0.5, fmt: (v) => `${v.toFixed(1)} d` },
   { k: 'immunity', label: 'Vaccination target', hint: 'share of population', min: 0, max: 0.9, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'detection', label: 'Reporting', hint: 'probability a case is reported', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
@@ -158,14 +158,15 @@ function buildSliders() {
   for (const d of SLIDERS) {
     const id = `p-${d.k}`;
     const wrap = document.createElement('label');
-    wrap.className = 'slider';
+    wrap.className = 'ps-field';
     wrap.htmlFor = id;
-    wrap.innerHTML = `<span>${d.label}</span><output for="${id}"></output><input type="range" id="${id}" min="${d.min}" max="${d.max}" step="${d.step}"><small>${d.hint}</small>`;
+    wrap.innerHTML = `<span class="ps-label">${d.label}</span><output class="ps-field__value" for="${id}"></output><input class="ps-slider" type="range" id="${id}" min="${d.min}" max="${d.max}" step="${d.step}"><small class="field__hint">${d.hint}</small>`;
     host.appendChild(wrap);
     const input = wrap.querySelector('input'), out = wrap.querySelector('output');
     input.addEventListener('input', () => {
       const v = +input.value;
       out.textContent = d.fmt(v);
+      setFill(input);
       if (d.app) state.speed = v; else sim.setParam(d.k, v);
     });
     sliderEls[d.k] = { input, out, d };
@@ -178,7 +179,13 @@ function syncSliders(params) {
     if (v == null) continue;
     input.value = v;
     out.textContent = d.fmt(v);
+    setFill(input);
   }
+}
+// WebKit draws the slider's progress from --ps-fill (Firefox uses ::-moz-range-progress)
+function setFill(input) {
+  const min = +input.min, max = +input.max;
+  input.style.setProperty('--ps-fill', `${(100 * (+input.value - min)) / (max - min || 1)}%`);
 }
 
 function buildChapters() {
@@ -228,9 +235,15 @@ function play(on = !state.running) {
   if (on && state.mode === 'sim' && state.chapter < 0) applyChapter(0);
 }
 
+// The mode radios check themselves before setMode runs; keep them honest.
+function syncModeRadios() {
+  $('mode-sim').checked = state.mode === 'sim';
+  $('mode-obs').checked = state.mode === 'obs';
+}
+
 function setMode(mode) {
-  if (mode === state.mode) return;
-  if (mode === 'obs' && !observed) return;
+  if (mode === state.mode) return syncModeRadios();
+  if (mode === 'obs' && !observed) return syncModeRadios();
   state.mode = mode;
   clearRun();
   source = mode === 'obs' ? observed : sim;
@@ -241,8 +254,7 @@ function setMode(mode) {
     $('chapter-body').textContent = observed.lede;
     state.speed = observed.defaultSpeed;
   } else if (state.chapter >= 0) applyChapter(state.chapter);
-  $('mode-sim').setAttribute('aria-pressed', mode === 'sim');
-  $('mode-obs').setAttribute('aria-pressed', mode === 'obs');
+  syncModeRadios();
   document.body.dataset.mode = mode;
   $('m-inc-label').textContent = mode === 'obs' ? 'Cases / day' : 'Onsets / day';
   drawProvenance();
@@ -251,7 +263,7 @@ function setMode(mode) {
 
 function drawProvenance() {
   if (state.mode === 'obs') { $('provenance').innerHTML = observed.provenanceHTML(); return; }
-  $('provenance').innerHTML = `<div class="panel__head">Source</div><p>Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.</p>`;
+  $('provenance').innerHTML = `<div class="panel__head">Source · simulated</div><p>Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.</p>`;
 }
 
 // ── wiring ───────────────────────────────────────────────────────────────
@@ -274,20 +286,22 @@ $('import').addEventListener('click', () => {
   discontinuity({ kind: 'import' });
 });
 $('mode-sim').addEventListener('click', () => setMode('sim'));
-for (const b of document.querySelectorAll('[data-tree]')) if (b.tagName === 'BUTTON') b.addEventListener('click', () => {
-  $('stage-el').dataset.tree = b.dataset.tree;
-  for (const o of document.querySelectorAll('button[data-tree]')) o.setAttribute('aria-pressed', o === b);
+for (const r of document.querySelectorAll('input[data-tree]')) r.addEventListener('change', () => {
+  if (r.checked) $('stage-el').dataset.tree = r.dataset.tree;
 });
-for (const b of document.querySelectorAll('button[data-spread]')) b.addEventListener('click', () => {
-  stage.setSpread(b.dataset.spread);
-  for (const o of document.querySelectorAll('button[data-spread]')) o.setAttribute('aria-pressed', o === b);
+for (const r of document.querySelectorAll('input[data-spread]')) r.addEventListener('change', () => {
+  if (r.checked) stage.setSpread(r.dataset.spread);
 });
 $('mode-obs').addEventListener('click', () => setMode('obs'));
 $('sound').addEventListener('change', async (e) => {
   if (e.target.checked) { await audio.unlock(); if (!audio.ready) await audio.loadBank(); }
   audio.setMuted(!e.target.checked);
 });
-$('volume').addEventListener('input', (e) => audio.setVolume(+e.target.value));
+$('volume').addEventListener('input', (e) => {
+  audio.setVolume(+e.target.value);
+  setFill(e.target);
+  $('volume-out').textContent = `${Math.round(+e.target.value * 100)}%`;
+});
 $('theme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -312,6 +326,7 @@ $('start-silent').addEventListener('click', () => start(false));
 fetch('./data/ebola.json').then((r) => (r.ok ? r.json() : null)).then((data) => {
   if (!data) { $('mode-obs').disabled = true; $('mode-obs').title = 'Observed dataset not built'; return; }
   observed = createObservedSource(data);
+  $('mode-obs').disabled = false;
 }).catch(() => { $('mode-obs').disabled = true; });
 
 // Check whether the sound bank exists so the start screen can say so
