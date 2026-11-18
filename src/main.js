@@ -34,7 +34,9 @@ let source = story;                 // the active event source (story-driven sim
 let observed = null;
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
 const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-drops').replace(/[^\w-]/g, '');
-const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json` });
+// Experiment (user, 2026-11-18): no rain bed at all — every sound is one case's drop.
+const BED_ENABLED = new URLSearchParams(location.search).get('bed') === '1';
+const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json`, bed: BED_ENABLED });
 let ledger = createLedger({ binDays: 1 });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FALL_MS = reducedMotion ? 0 : 1100;   // a drop's flight; its sound plays on impact
@@ -134,7 +136,7 @@ function drawLegend(order) {
   if (key === legendKey) return;
   legendKey = key;
   const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
-  const MAT = { puddle: 'drops in a puddle', plink: 'dripping water', leaves: 'drips on leaves', leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
+  const MAT = { puddle: 'drops on wet ground', 'puddle:bright': 'drops on wet ground, brighter', 'puddle:dark': 'drops on wet ground, darker', 'puddle:light': 'drops on wet ground, lighter', leaf: 'leaves', glass: 'glass', stone: 'stone', metal: 'metal' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
     const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
@@ -145,12 +147,13 @@ function drawLegend(order) {
 // The rain bed follows the epidemic: its level from how many drops are falling per
 // second, its texture from the lineages of the last week of landed drops.
 function updateBed() {
+  if (!BED_ENABLED) return;
   if (!state.running) { audio.setBed({}, 0); return; }
   const rate = source.snapshot().incidenceToday * state.speed;
   const level = bedLevel(rate, audio.mix.bedFrom, audio.mix.bedFull);
   const recent = ledger.bins().slice(-Math.ceil(7 / ledger.binDays));
   const byMat = {}; let tot = 0;
-  for (const b of recent) b.byLineage.forEach((n, l) => { if (n) { const m = materialOf(l); byMat[m] = (byMat[m] ?? 0) + n; tot += n; } });
+  for (const b of recent) b.byLineage.forEach((n, l) => { if (n) { const m = materialOf(l).split(':')[0]; byMat[m] = (byMat[m] ?? 0) + n; tot += n; } });
   const levels = {};
   for (const m in byMat) levels[m] = (level * byMat[m]) / tot;
   audio.setBed(levels, level);

@@ -13,7 +13,11 @@ const SEND = { near: 0.06, mid: 0.2, far: 0.42 };
 
 // colour key (role) → drop sound. Founder = drops into a puddle (most cases);
 // variant 1 and imports = clear dripping 'plinks'; variant 2 = drips on leaves.
-export const MATERIAL = { stone: 'puddle', glass: 'plink', metal: 'leaves', leaf: 'plink' };
+// Every lineage uses the puddle drops (Argon: 'soft wet pats, like drops on wet soil', 9/10; the
+// 'plink' and 'leaves' recordings sounded like a faucet / dry clicks). Lineages differ by tone only.
+export const MATERIAL = { stone: 'puddle', glass: 'puddle:bright', metal: 'puddle:dark', leaf: 'puddle:light' };
+// tone variants of one recording: playback-rate and brightness multipliers
+const TONES = { '': [1, 1], bright: [1.12, 1.15], dark: [0.9, 0.7], light: [1.05, 1.05] };
 // older banks name their sets by surface; map the drop sets onto them
 export const SET_ALIAS = { puddle: 'leaf', plink: 'glass', leaves: 'stone' };
 export const materialFor = (lineage, lineages) => MATERIAL[surfaceFor(lineage, lineages)] ?? 'puddle';
@@ -49,12 +53,14 @@ export function caseToVoice(c, surface, eventsPerSec, rand) {
   let d = Math.pow(hash01(c.id * 13 + 5), 0.6);
   if (!c.detected) d = 0.35 + 0.65 * d;
   const layer = d < 0.35 ? 'near' : d < 0.7 ? 'mid' : 'far';
+  const [set, tone = ''] = surface.split(':');
+  const [rateMul, brightMul] = TONES[tone] ?? TONES[''];
   return {
-    set: surface,
+    set,
     index: Math.floor(hash01(c.id + 7) * 1e6),
-    rate: 0.962 + 0.225 * hash01(c.id * 7 + 3) + 0.01 * Math.sin(c.muts * 1.7),   // 0.95–1.2: no boxy downward shifts
+    rate: (0.962 + 0.225 * hash01(c.id * 7 + 3) + 0.01 * Math.sin(c.muts * 1.7)) * rateMul,   // 0.95–1.2, shifted per lineage
     gain: GAIN[c.severity] * Math.pow(10, (-24 * d) / 20) * densityGain(eventsPerSec),
-    lowpassHz: BRIGHT[c.severity] * (1 - 0.65 * d),
+    lowpassHz: BRIGHT[c.severity] * (1 - 0.65 * d) * brightMul,
     pan: PAN_ZONES[c.lineage % PAN_ZONES.length] + (hash01(c.id) - 0.5) * 0.5,
     distance: d,
     layer,

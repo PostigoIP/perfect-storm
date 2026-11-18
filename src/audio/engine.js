@@ -10,10 +10,12 @@ import { pickGrain, grainLength } from './grains.js';
 import { mulberry32 } from '../model/rng.js';
 
 export const LOOKAHEAD = 0.08;       // seconds between "now" and the earliest onset
-export const MAX_VOICES = 14;        // distinct near drops per 0.5 s; beyond that the bed carries the mass
+export const MAX_VOICES_WITH_BED = 14;   // distinct drops per 0.5 s when the bed carries the mass
+export const MAX_VOICES_NO_BED = 80;     // without a bed the storm is built from drops alone
 
 // Player bound to one context: schedules voices, tracks density, enforces the cap.
-function createPlayer(ctx, bank, seed = 9) {
+function createPlayer(ctx, bank, { bed: useBed = true } = {}, seed = 9) {
+  const MAX_VOICES = useBed ? MAX_VOICES_WITH_BED : MAX_VOICES_NO_BED;
   const mix = bank.mix ?? {};   // optional per-bank mix profile (from the manifest)
   const space = createSpace(ctx);
   const rand = mulberry32(seed);
@@ -65,7 +67,7 @@ function createPlayer(ctx, bank, seed = 9) {
   // The rain bed: one looping real recording per material, silent until the
   // epidemic's own density fades it in (setBed). Its texture follows the mix of lineages.
   const bed = {};
-  if (bank.grains) {
+  if (bank.grains && useBed) {
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000; lp.Q.value = 0.4;
     lp.connect(space.bedIn);
     for (const [mat, entries] of Object.entries(bank.grains)) {
@@ -152,7 +154,8 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
   return bank;
 }
 
-export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = (u) => fetch(u), AC = globalThis.AudioContext || globalThis.webkitAudioContext } = {}) {
+export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = (u) => fetch(u), AC = globalThis.AudioContext || globalThis.webkitAudioContext, bed = true } = {}) {
+  const playerOpts = { bed };
   let ctx = null, bank = null, player = null, muted = false, volume = 0.8;
   const cache = new Map();              // manifest url → decoded bank (switching back is instant)
 
@@ -165,7 +168,7 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
       if (!cache.has(url)) cache.set(url, await decodeBank(() => ctx ?? new OfflineAudioContext(1, 1, 44100), url, fetchFn));
       if (manifestUrl !== url) return cache.get(url);      // a newer switch won the race
       bank = cache.get(url);
-      player = bank && ctx ? createPlayer(ctx, bank) : null;
+      player = bank && ctx ? createPlayer(ctx, bank, playerOpts) : null;
       if (player) api.setVolume(volume);
       return bank;
     },
@@ -173,13 +176,13 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
     async unlock() {
       if (!ctx) ctx = new AC({ latencyHint: 'interactive' });
       if (ctx.state !== 'running') await ctx.resume();
-      if (bank && !player) { player = createPlayer(ctx, bank); api.setVolume(volume); }
+      if (bank && !player) { player = createPlayer(ctx, bank, playerOpts); api.setVolume(volume); }
       return ctx;
     },
     async loadBank() {
       if (!cache.has(manifestUrl)) cache.set(manifestUrl, await decodeBank(() => ctx ?? new OfflineAudioContext(1, 1, 44100), manifestUrl, fetchFn));
       bank = cache.get(manifestUrl);
-      if (bank && ctx && !player) { player = createPlayer(ctx, bank); api.setVolume(volume); }
+      if (bank && ctx && !player) { player = createPlayer(ctx, bank, playerOpts); api.setVolume(volume); }
       return bank;
     },
     // offsetSec: seconds after "now + LOOKAHEAD" at which this case sounds
@@ -208,7 +211,7 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
     async offline(seconds, script, sampleRate = 44100) {
       if (!bank) throw new Error('no bank');
       const off = new OfflineAudioContext(2, Math.ceil(seconds * sampleRate), sampleRate);
-      const p = createPlayer(off, bank);
+      const p = createPlayer(off, bank, playerOpts);
       p.space.volume.gain.value = volume;
       script(p);
       return off.startRendering();

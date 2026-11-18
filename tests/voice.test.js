@@ -67,4 +67,13 @@ describe('densityGain', () => {
     let prev = 1;
     for (let e = 0; e < 5000; e += 7) { const g = densityGain(e); expect(g).toBeLessThanOrEqual(prev); expect(g).toBeGreaterThanOrEqual(0.12); prev = g; }
   });
+
+  it('tone variants of one recording: same set, brighter or darker by lineage', () => {
+    const r2 = mulberry32(5);
+    const avg = (surface, k) => { let t = 0; for (let i = 0; i < 300; i++) t += caseToVoice({ ...base, id: i }, surface, 1, r2)[k]; return t / 300; };
+    expect(caseToVoice(base, 'puddle:bright', 1, r2).set).toBe('puddle');
+    expect(avg('puddle:bright', 'rate')).toBeGreaterThan(avg('puddle', 'rate'));
+    expect(avg('puddle:dark', 'rate')).toBeLessThan(avg('puddle', 'rate'));
+    expect(avg('puddle:dark', 'lowpassHz')).toBeLessThan(avg('puddle', 'lowpassHz'));
+  });
 });

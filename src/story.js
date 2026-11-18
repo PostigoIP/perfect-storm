@@ -37,13 +37,13 @@ export const CHAPTERS = [
   },
   {
     id: 'plateau', mark: 'Plateau', title: 'A long plateau',
-    body: 'Cases settle into a low murmur. Mobility returns, transmission creeps back toward one, and travellers seed new clusters, each a clear drip.',
+    body: 'Cases settle into a low murmur. Mobility returns, transmission creeps back toward one, and travellers seed new clusters.',
     enter: ({ sim, rampR }) => { rampR(0.9, 6); sim.setParam('importRate', 1.2); },
     until: () => false, minDays: 24, maxDays: 24,
   },
   {
     id: 'alpha', mark: 'Variant α', title: 'A new variant',
-    body: 'A more transmissible lineage arises in one infected person. Thunder marks the moment; from then on its drops ring clear and bright.',
+    body: 'A more transmissible lineage arises in one infected person. Thunder marks the moment; from then on its drops fall a little brighter.',
     enter: ({ sim, thunder, setR }) => {
       setR(0.95);   // founder transmission now fixed: the variant's advantage is all that changes
       const l = sim.introduceVariant('Variant α', { tx: 1.7, cluster: 40 });
@@ -53,7 +53,7 @@ export const CHAPTERS = [
   },
   {
     id: 'second-wave', mark: 'Second wave', title: 'Second wave',
-    body: 'With the variant dominant, R climbs above one again even as testing improves. The bright drops multiply. Left alone, this wave would outgrow the first.',
+    body: 'With the variant dominant, R climbs above one again even as testing improves. The brighter drops multiply. Left alone, this wave would outgrow the first.',
     enter: ({ sim }) => sim.setParam('detection', 0.62),
     until: (s, m) => s.incidenceToday >= Math.max(200, 0.6 * m.mem.firstPeak), minDays: 6, maxDays: 60,
   },
@@ -65,7 +65,7 @@ export const CHAPTERS = [
   },
   {
     id: 'escape', mark: 'Variant β', title: 'A partial-escape variant',
-    body: 'A second variant evades some immunity; its drops fall on leaves. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
+    body: 'A second variant evades some immunity; its drops fall darker. Cases rise again, but the peak is lower: imperfect immunity still dampens the curve.',
     enter: ({ sim, thunder }) => {
       const l = sim.introduceVariant('Variant β', { tx: 2.0, escape: 0.6, cluster: 60 });
       thunder({ lineage: l, kind: 'variant' });

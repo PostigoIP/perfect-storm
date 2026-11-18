@@ -7,6 +7,7 @@ import { bedLevel } from '../src/audio/grains.js';
 
 const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
 const SECONDS = 12;
+const BED = new URLSearchParams(location.search).get('bed') === '1';
 const SCENARIOS = [
   { name: 'sparse', rate: 2, beta: 0.32 },
   { name: 'building', rate: 20, beta: 0.45, variantAt: null },
@@ -45,12 +46,12 @@ async function render(audio, sc, bankName) {
   const buf = await audio.offline(SECONDS + 2, (p) => {
     for (const e of events) if (e.at < SECONDS) p.playCase(e.c, materialFor(e.c.lineage, sim.lineages), e.at);
     // drive the bed exactly as the app does: level from drops/s, texture from recent lineages
-    for (let t = 0; t < SECONDS; t += 0.25) {
+    for (let t = 0; BED && t < SECONDS; t += 0.25) {
       const win = events.filter((e) => e.at > t - 1 && e.at <= t);
       const mix = events.filter((e) => e.at > t - 3 && e.at <= t);
       const level = bedLevel(win.length, audio.mix.bedFrom, audio.mix.bedFull);
       const levels = {};
-      for (const e of mix) { const m = materialFor(e.c.lineage, sim.lineages); levels[m] = (levels[m] ?? 0) + level / mix.length; }
+      for (const e of mix) { const m = materialFor(e.c.lineage, sim.lineages).split(':')[0]; levels[m] = (levels[m] ?? 0) + level / mix.length; }
       p.setBed(levels, level, t);
     }
     if (thunderAt != null) p.thunder(thunderAt + 0.3, 1);
@@ -65,7 +66,7 @@ async function render(audio, sc, bankName) {
 
 document.getElementById('go').onclick = async () => {
   const bankName = new URLSearchParams(location.search).get('bank') || 'sounds';
-  const audio = createAudio({ manifestUrl: `/${bankName}/manifest.json` });
+  const audio = createAudio({ manifestUrl: `/${bankName}/manifest.json`, bed: BED });
   if (!(await audio.loadBank())) { log('no sound bank (public/sounds/manifest.json) — generate it first'); return; }
   const peaks = [];
   for (const sc of SCENARIOS) peaks.push(await render(audio, sc, bankName));

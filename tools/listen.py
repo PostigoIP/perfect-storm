@@ -10,15 +10,13 @@ import json, os, shutil, subprocess, sys, tempfile
 
 AGY = '/Users/ignaciopostigo/.local/bin/agy'
 
-ENGINE = """How the clips are made: a simulated epidemic; every new case triggers one short drop grain
-(50–150 ms, starting ~3 ms before an impact, 3 ms attack, exponential decay) cut from CLEAN recordings of
-isolated drips (drops into a puddle, dripping water 'plinks', drips on leaves), one set per virus lineage.
-Per drop: distance d (most drops far): gain 0 to -24 dB, low-pass 18 kHz near → ~5 kHz far, reverb send
-grows with distance; high-pass 250 Hz; playback rate 0.95–1.2; pan. At most ~28 distinct drops start per
-second. A continuous bed of real rain recordings (looping) fades in with the case rate (silent below
-15 drops/s, full at 200/s), its texture following the lineage mix. With no cases there is silence. 0.4 s reverb; gentle master compression and a limiter; -3 dB shelf above 5 kHz.
-Thunder = real thunder recordings plus mild saturated harmonics. Sparse silence at low case counts is
-intentional: early in an outbreak only a few drops fall."""
+ENGINE = """How the clips are made: a simulated epidemic; every new case triggers exactly one short drop grain
+(50–150 ms, ~3 ms before an impact, 3 ms attack, exponential decay) cut from ONE clean recording of drops
+falling on wet ground; lineages differ only by small pitch/brightness offsets. Per drop: distance d (most
+drops far): gain 0 to -24 dB, low-pass 18 kHz near → ~5 kHz far, reverb send grows with distance;
+high-pass 250 Hz; playback rate 0.95–1.2; pan. Up to ~160 distinct drops start per second; there is NO
+background rain bed: dense rain is only the sum of drops. 0.4 s reverb; gentle compression and a limiter;
+-3 dB shelf above 5 kHz. Thunder = real thunder recordings. Sparse silence at low case counts is intentional."""
 
 def listen(ref, clips, model):
     d = tempfile.mkdtemp(prefix='listen-')
