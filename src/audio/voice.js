@@ -7,7 +7,7 @@
 
 const VARIANT_SURFACES = ['glass', 'metal'];
 const PAN_ZONES = [0, -0.55, 0.55, -0.3, 0.3];
-const GAIN = [0.42, 0.58, 0.74, 0.9];
+const GAIN = [0.6, 0.67, 0.75, 0.85];   // severity spans ~3 dB: louder, never a different instrument
 const BRIGHT = [9000, 11000, 14000, 18000];   // drops stay bright; distance is level + wetness, not muffling
 const SEND = { near: 0.06, mid: 0.2, far: 0.42 };
 

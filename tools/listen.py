@@ -10,14 +10,16 @@ import json, os, shutil, subprocess, sys, tempfile
 
 AGY = '/Users/ignaciopostigo/.local/bin/agy'
 
-ENGINE = """How the clips are made: a simulated epidemic; every new case triggers one 'grain' — a short slice
-(0.2–0.5 s, starts ~15 ms before a detected drop impact) cut from a long real rain recording of that
-lineage's surface (leaves, glass, stone, metal). Per grain: playback rate 0.97–1.03 (detune), gain by
-severity, low-pass 7–18 kHz, stereo pan, envelope = 4 ms fade-in, hold to 45% of length, exponential
-fade-out to the end. Grains go to near/mid/far buses (far = high-pass 500 Hz + low-pass 3.2 kHz, quieter),
-plus a generated 2.6 s reverb (send ~0.02–0.15). When density rises, per-grain gain falls ~1/sqrt(rate)
-and at most 96 grains start per 0.5 s. Source recordings were high-passed at 300 Hz (4th order).
-Master: compressor (-18 dB, 3:1) then limiter (-4 dB, 20:1)."""
+ENGINE = """How the clips are made: a simulated epidemic; every new case triggers one short 'drop grain'
+(30–115 ms, starting ~3 ms before a detected impact, 1.5 ms attack then exponential decay, no hold) cut
+from a long real rain recording of that lineage's surface (leaves, glass, stone, metal). Per grain:
+playback rate 0.85–1.18, gain by severity (range ±3 dB), low-pass 7–18 kHz, stereo pan. At most ~28
+distinct drops start per second. A continuous 'bed' of the same real recordings (looping) fades in with
+the case rate (silent below 8 drops/s, full at 400/s), darker as it gets denser. A very faint constant
+room tone avoids digital silence. Source recordings high-passed at 80 Hz (2nd order). Short 0.4 s
+reverb (send ≤ 0.04). Gentle master compression (-10 dB, 1.5:1) and a limiter. Thunder = real thunder
+recordings plus saturated harmonics of the rumble (for small speakers). Sparse silence at low case
+counts is intentional: early in an outbreak only a few drops fall."""
 
 def listen(ref, clips, model):
     d = tempfile.mkdtemp(prefix='listen-')

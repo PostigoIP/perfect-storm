@@ -52,7 +52,7 @@ function createPlayer(ctx, bank, seed = 9) {
     src.connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
-    if (grain) src.start(at, grain.offset + 0.008, grain.len + 0.01); else src.start(at);   // ~9 ms before the impact
+    if (grain) src.start(at, grain.offset + 0.014, grain.len + 0.01); else src.start(at);   // ~3 ms before the impact
     src.onended = () => { src.disconnect(); lp.disconnect(); g.disconnect(); pan.disconnect(); send.disconnect(); };
   }
 
@@ -71,6 +71,14 @@ function createPlayer(ctx, bank, seed = 9) {
       bed[mat] = g;
     }
     bed._lp = lp;
+    // room tone: the quietest stretch of a recording, very low and constant, so sparse drops
+    // fall into air rather than digital silence
+    const tone = ctx.createBufferSource();
+    tone.buffer = (bank.grains.stone ?? Object.values(bank.grains)[0])[0].buffer; tone.loop = true;
+    const tlp = ctx.createBiquadFilter(); tlp.type = 'lowpass'; tlp.frequency.value = 2500;
+    const tg = ctx.createGain(); tg.gain.value = 0.018;
+    tone.connect(tlp).connect(tg).connect(space.bedIn);
+    tone.start(ctx.currentTime, rand() * Math.max(0, tone.buffer.duration - 1));
   }
 
   return {
@@ -100,7 +108,7 @@ function createPlayer(ctx, bank, seed = 9) {
       const src = ctx.createBufferSource();
       src.buffer = set[Math.floor(rand() * set.length)];
       src.playbackRate.value = 0.92 + rand() * 0.12;
-      const g = ctx.createGain(); g.gain.value = 1.1 * intensity;
+      const g = ctx.createGain(); g.gain.value = 0.8 * intensity;
       src.connect(g).connect(space.thunderBus);
       src.start(at);
       space.duckFor(at + 0.05, 1.8, -5);

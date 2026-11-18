@@ -12,7 +12,9 @@ export function createSpace(ctx) {
   limiter.attack.value = 0.001; limiter.release.value = 0.1;
   const trim = ctx.createGain(); trim.gain.value = 1.27;   // +3 dB over the old 0.9: sparse chapters were too quiet
   const volume = ctx.createGain(); volume.gain.value = 0.8;
-  master.connect(glue).connect(limiter).connect(trim).connect(volume).connect(ctx.destination);
+  // a gentle tilt: -3 dB above 5 kHz so dense rain is a wash, not a sizzle
+  const tilt = ctx.createBiquadFilter(); tilt.type = 'highshelf'; tilt.frequency.value = 5000; tilt.gain.value = -3;
+  master.connect(tilt).connect(glue).connect(trim).connect(limiter).connect(volume).connect(ctx.destination);   // gain before the limiter, so nothing escapes it
 
   // rain sits on a duckable bus so thunder can breathe
   const duck = ctx.createGain();
@@ -50,7 +52,7 @@ export function createSpace(ctx) {
   for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(4 * x) / Math.tanh(4); }
   shaper.curve = curve; shaper.oversample = '2x';
   const harmonics = ctx.createBiquadFilter(); harmonics.type = 'bandpass'; harmonics.frequency.value = 500; harmonics.Q.value = 0.5;
-  const harmGain = ctx.createGain(); harmGain.gain.value = 0.55;
+  const harmGain = ctx.createGain(); harmGain.gain.value = 0.4;
   thunderBus.connect(lowOnly).connect(shaper).connect(harmonics).connect(harmGain).connect(master);
   const thunderSend = ctx.createGain(); thunderSend.gain.value = 0.35;
   thunderBus.connect(thunderSend).connect(reverb);
@@ -70,7 +72,7 @@ export function createSpace(ctx) {
 // Stereo impulse response: 18 ms pre-delay, sparse early reflections,
 // then a decorrelated tail that darkens as it decays (≈2.4 s).
 function courtyardIR(ctx) {
-  const sr = ctx.sampleRate, len = Math.floor(sr * 0.9);   // short diffuser, not a hall: no metallic phasing
+  const sr = ctx.sampleRate, len = Math.floor(sr * 0.4);   // short outdoor diffuser, not a hall: no metallic phasing
   const buf = ctx.createBuffer(2, len, sr);
   const pre = Math.floor(0.018 * sr);
   const taps = [[0.011, 0.5], [0.019, 0.38], [0.027, 0.3], [0.041, 0.24], [0.058, 0.18], [0.073, 0.14]];
