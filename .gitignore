@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+.vercel
+# python rain generator: local env and rendered outputs
+generador_lluvia/venv/
+generador_lluvia/rain_build.wav
+generador_lluvia/resultados_*/

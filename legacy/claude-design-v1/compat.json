@@ -1,0 +1,35 @@
+{
+  "v": 1,
+  "mode": "omelette",
+  "root": "project/",
+  "title": "Perfect Storm",
+  "entry": "PerfectStorm.html",
+  "pages": [
+    {
+      "path": "PerfectStorm.html",
+      "title": "PerfectStorm — auditory epidemiology",
+      "kind": "plain"
+    }
+  ],
+  "migratorVersion": "artifact-migrator (claude-design-backend ed667f7ac9c1)",
+  "createdAt": "2026-11-09T10:21:24.473Z",
+  "source": {
+    "v": 1,
+    "app": "claude-design",
+    "url": "https://claude.ai/design/p/019e1e94-fb22-7b3a-96d2-0d6ed65d6457",
+    "projectId": "019e1e94-fb22-7b3a-96d2-0d6ed65d6457",
+    "exportedAt": "2026-11-09T10:21:24.473Z"
+  },
+  "report": {
+    "itemsVersion": 2,
+    "pages": {
+      "total": 1,
+      "ok": 1,
+      "partial": 0,
+      "notMigrated": 0
+    },
+    "items": [],
+    "truncated": 0,
+    "truncatedLeftOut": 0
+  }
+}
