@@ -1,8 +1,12 @@
-// Sample-based rain. Each audible case = one scheduled one-shot from the
-// ElevenLabs bank, placed in a shared acoustic space. No loops.
+// Sample-based rain. Each audible case = one scheduled event, placed in a shared
+// acoustic space. No loops. Two bank kinds:
+//  v1 one-shots: a short take per case
+//  v2 grains: a slice of a long real-rain recording that starts just before one
+//     real impact, so overlapping cases rebuild the recording's own texture
 
 import { createSpace } from './space.js';
 import { caseToVoice } from './voice.js';
+import { pickGrain, grainLength } from './grains.js';
 import { mulberry32 } from '../model/rng.js';
 
 export const LOOKAHEAD = 0.08;       // seconds between "now" and the earliest onset
@@ -20,20 +24,36 @@ function createPlayer(ctx, bank, seed = 9) {
   }
 
   function voiceNode(v, at) {
-    const set = bank[v.set];
-    if (!set?.length) return;
     const src = ctx.createBufferSource();
-    src.buffer = set[v.index % set.length];
+    let grain = null;
+    if (bank.grains) {
+      const entries = bank.grains[v.set] ?? bank.grains.stone;
+      const g = entries && pickGrain(entries, v.index);
+      if (!g) return;
+      src.buffer = entries[g.entry].buffer;
+      grain = { offset: g.offset, len: grainLength(v.severity ?? 1, rand()) };
+    } else {
+      const set = bank[v.set] ?? bank.stone;
+      if (!set?.length) return;
+      src.buffer = set[v.index % set.length];
+    }
     src.playbackRate.value = v.rate;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass'; lp.frequency.value = Math.min(18000, v.lowpassHz); lp.Q.value = 0.5;
-    const g = ctx.createGain(); g.gain.value = v.gain;
+    const g = ctx.createGain();
+    if (grain) {
+      // short fade in, hold, natural-sounding release over the second half
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(v.gain, at + 0.004);
+      g.gain.setValueAtTime(v.gain, at + grain.len * 0.45);
+      g.gain.exponentialRampToValueAtTime(0.0008, at + grain.len);
+    } else g.gain.value = v.gain;
     const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, v.pan));
-    const send = ctx.createGain(); send.gain.value = v.send;
+    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.35 : v.send;   // recordings carry their own space
     src.connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
-    src.start(at);
+    if (grain) src.start(at, grain.offset, grain.len + 0.01); else src.start(at);
     src.onended = () => { src.disconnect(); lp.disconnect(); g.disconnect(); pan.disconnect(); send.disconnect(); };
   }
 
@@ -48,7 +68,7 @@ function createPlayer(ctx, bank, seed = 9) {
         if (inWindow >= MAX_VOICES * 1.5) return false;
       }
       recent.push(at);
-      const v = caseToVoice(c, surface, evps, rand);
+      const v = { ...caseToVoice(c, surface, evps, rand), severity: c.severity };
       voiceNode(v, at);
       if (v.extra) voiceNode({ ...v, ...v.extra, index: v.index, layer: 'mid', send: 0.3, pan: v.pan * 0.5 }, at + 0.02);
       return true;
@@ -74,6 +94,15 @@ async function decodeBank(getCtx, manifestUrl, fetchFn) {
   const manifest = await res.json();
   const ctx = getCtx();
   const base = manifestUrl.replace(/manifest\.json$/, '');
+  const load = async (f) => ctx.decodeAudioData(await (await fetchFn(base + f)).arrayBuffer());
+  if (manifest.version === 2) {
+    const bank = { grains: {} };
+    await Promise.all(Object.entries(manifest.sets).map(async ([set, entries]) => {
+      bank.grains[set] = await Promise.all(entries.map(async (e) => ({ buffer: await load(e.file), onsets: e.onsets })));
+    }));
+    await Promise.all(Object.entries(manifest.oneshots ?? {}).map(async ([set, files]) => { bank[set] = await Promise.all(files.map(load)); }));
+    return bank;
+  }
   const bank = {};
   await Promise.all(Object.entries(manifest.sets).map(async ([set, files]) => {
     bank[set] = await Promise.all(files.map(async (f) => {

@@ -321,7 +321,7 @@ drawProvenance();
 stage.start();
 requestAnimationFrame((t) => { last = t; frame(t); });
 window.__ps = {
-  state, sim: () => sim, audio,
+  state, sim: () => sim, audio, stage,
   // debug: advance the active source by `days` and redraw (used for checks when the page is throttled)
   advance(days) {
     for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); if (state.mode === 'sim') maybeAdvanceChapter(); }

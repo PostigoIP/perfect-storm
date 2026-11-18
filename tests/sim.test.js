@@ -53,6 +53,16 @@ describe('createSim', () => {
     expect(share).toBeGreaterThan(0.5);
   });
 
+  it('starts from a single patient zero (rooted genealogy)', () => {
+    const sim = createSim({ seed: 12, pop: 20000 });
+    const roots = sim.cases.filter((c) => c.parent === -1);
+    expect(roots).toHaveLength(1);
+    for (const c of sim.cases) if (c.parent !== -1) expect(c.parent).toBe(roots[0].id);
+    run(sim, 30);
+    const isFromZero = (id) => { let x = id; while (sim.cases[x].parent !== -1) x = sim.cases[x].parent; return x === roots[0].id; };
+    for (const c of sim.cases) if (!c.imported) expect(isFromZero(c.id)).toBe(true);
+  });
+
   it('imports attach to the reservoir', () => {
     const sim = createSim({ seed: 4, pop: 20000 });
     run(sim, 5);

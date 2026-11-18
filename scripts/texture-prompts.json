@@ -1,0 +1,12 @@
+{
+  "model_id": "eleven_text_to_sound_v3",
+  "output_format": "wav_48000",
+  "suffix": ", individual raindrops clearly audible and separate, natural stereo field recording, no wind, no thunder, no birds, no music, no voices",
+  "rawDir": "generador_sounds/raw-textures",
+  "sets": {
+    "stone":  { "duration_seconds": 30, "prompt_influence": 0.5, "takes": 2, "prompts": ["light rain falling on wet stone pavement and shallow puddles in a quiet courtyard"] },
+    "glass":  { "duration_seconds": 30, "prompt_influence": 0.5, "takes": 2, "prompts": ["light rain tapping on a large window pane, recorded from inside a quiet room"] },
+    "metal":  { "duration_seconds": 30, "prompt_influence": 0.5, "takes": 2, "prompts": ["light rain on a corrugated metal roof, recorded from underneath"] },
+    "leaf":   { "duration_seconds": 30, "prompt_influence": 0.5, "takes": 2, "prompts": ["light rain falling on large broad leaves in a garden"] }
+  }
+}

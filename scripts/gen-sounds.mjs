@@ -1,16 +1,17 @@
 // Generate the raw sound bank with ElevenLabs Sound Effects (offline, once).
-// Usage: node scripts/gen-sounds.mjs [--dry-run] [--set glass]
+// Usage: node scripts/gen-sounds.mjs [--config scripts/texture-prompts.json] [--dry-run] [--set glass]
 // Key: $ELEVENLABS_API_KEY, or a file named by $ELEVENLABS_API_KEY_FILE, or .env.local (never printed). Skips takes that already exist.
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const cfg = JSON.parse(readFileSync(join(root, 'scripts/sound-prompts.json'), 'utf8'));
 const args = process.argv.slice(2);
+const cfgFile = args.includes('--config') ? args[args.indexOf('--config') + 1] : 'scripts/sound-prompts.json';
+const cfg = JSON.parse(readFileSync(join(root, cfgFile), 'utf8'));
 const dry = args.includes('--dry-run');
 const only = args.includes('--set') ? args[args.indexOf('--set') + 1] : null;
-const RAW = join(root, 'generador_sounds/raw');
+const RAW = join(root, cfg.rawDir ?? 'generador_sounds/raw');
 
 function readKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;

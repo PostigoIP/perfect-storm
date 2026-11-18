@@ -57,6 +57,11 @@ export function renderTree(svg, layout, { t0, t1, now, surfaceOf, lineageLabel, 
   let out = ax;
   for (const [surface, d] of paths) out += `<path d="${d}" fill="none" stroke="${fill(surface)}" stroke-width="${sw}" shape-rendering="crispEdges"/>`;
 
+  // root branch: a short stem into the root, as in any rooted phylogeny
+  const r0 = layout.root, rx = s.x(r0.x), ry = y(r0.y), stem = Math.max(10, (s.right - s.left) * 0.025);
+  out += `<path d="M${(rx - stem).toFixed(1)} ${ry.toFixed(1)}H${rx.toFixed(1)}" stroke="var(--ps-ink)" stroke-width="${sw}" fill="none" shape-rendering="crispEdges"/>`;
+  if (r0.synthetic) out += `<text class="fig-label" x="${(rx - stem - 4).toFixed(1)}" y="${(ry + 3).toFixed(1)}" text-anchor="end">outside</text>`;
+
   // tips: 3px squares; newly sampled ones larger
   const sz = n > 250 ? 2 : 3;
   for (const t of layout.tips) {

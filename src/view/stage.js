@@ -37,11 +37,15 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   const binW = () => Math.max(1, x(ledger().binDays) - x(0));
   const barTop = (t) => baseline() - (ledger().heightOf(t) / yMaxShown) * zoneH();
   const binCentre = (t) => { const b = ledger().binDays; return x(Math.floor(t / b) * b + b / 2); };
+  function tAt(px) { const { t0, t1 } = domain(); return t0 + ((px - left()) / Math.max(1, right() - left())) * (t1 - t0); }
+  // the surface under a point: the top of the bar there, or the baseline
+  const surfaceY = (px) => barTop(tAt(px));
+  const SLANT = -0.05;   // a light, constant wind: every drop falls at the same angle
 
   function spawn(c, surface, startAt, landAt) {
     if (flights.length >= MAX_FLIGHTS || reduced) return;           // count still lands via the queue
     const jitter = (((c.id * 0.6180339887) % 1) - 0.5) * Math.max(0, binW() - 2 * dpr);
-    const x0 = spread === 'wide' ? left() + Math.random() * (right() - left()) : null;
+    const x0 = spread === 'wide' ? left() + Math.random() * (right() - left()) : null;   // where it lands
     flights.push({
       c, surface, startAt, landAt, jitter, x0,
       len: (12 + (c.severity ?? 1) * 8) * dpr,
@@ -50,6 +54,7 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
     });
   }
 
+  // the case counted: a tick on top of its own bar (always), as the bar grows by one
   function splash(c, surface) {
     const b = ledger().binDays;
     splashes.push({ t: Math.floor(c.tOnset / b) * b + b / 2, surface, alpha: c.detected ? 1 : 0.35, life: 0 });
@@ -144,7 +149,8 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
       ctx.globalAlpha = (1 - k) * s.alpha;
       ctx.fillStyle = tk[s.surface] ?? tk.ink;
       const w = (5 + 12 * k) * dpr;
-      ctx.fillRect(binCentre(s.t) - w / 2, barTop(s.t) - 2 * dpr, w, dpr);
+      const sx = s.x ?? binCentre(s.t), sy = s.y ?? barTop(s.t);
+      ctx.fillRect(sx - w / 2, sy - 2 * dpr, w, dpr);
     }
 
     // flights
@@ -153,10 +159,15 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
       const f = flights[i];
       if (now < f.startAt) continue;
       const k = (now - f.startAt) / Math.max(1, f.landAt - f.startAt);
-      if (k >= 1) { flights.splice(i, 1); continue; }
-      const xT = binCentre(f.c.tOnset) + f.jitter;
-      const yT = barTop(f.c.tOnset);
-      const xs = f.x0 ?? xT, ys = -f.len;
+      const xT = f.x0 ?? binCentre(f.c.tOnset) + f.jitter;
+      const yT = f.x0 == null ? barTop(f.c.tOnset) : surfaceY(xT);
+      if (k >= 1) {
+        // the drop hits whatever is under it
+        if (f.x0 != null) splashes.push({ x: xT, y: yT, surface: f.surface, alpha: f.alpha * 0.7, life: 0 });
+        flights.splice(i, 1);
+        continue;
+      }
+      const ys = -f.len, xs = xT - SLANT * (yT - ys);
       const px = xs + (xT - xs) * k, py = ys + (yT - ys) * k;
       const dx = xT - xs, dy = yT - ys, n = Math.hypot(dx, dy) || 1;
       ctx.globalAlpha = f.alpha;

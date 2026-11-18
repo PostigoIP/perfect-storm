@@ -72,8 +72,14 @@ export function createSim({ seed = 42, pop = 100000, params = {} } = {}) {
     t = 0; R = 0; vaccinated = 0;
     E = []; I = []; cases = []; lineages = []; byLineage = []; onsetsLog = []; pos = []; inI = [];
     newLineage('Founder');
+    // One patient zero (a spillover, infected before day 0, symptoms on day 0)
+    // who seeds the first cluster, so the whole genealogy has a single root.
+    // The cluster's infection times are pre-scheduled just after onset.
     S = pop - SEEDS;
-    for (let k = 0; k < SEEDS; k++) addCase(-1, 0, -r() * 2, true);
+    const zero = addCase(-1, 0, -4, false);
+    zero.tOnset = 0.05;
+    zero.tEnd = zero.tOnset + Math.max(4, gamma(r, p.infectiousShape, p.infectiousMean / p.infectiousShape));
+    for (let k = 1; k < SEEDS; k++) addCase(zero.id, 0, zero.tOnset + r() * 1.5);
   }
 
   function infectiousOf(l) { return byLineage[l]; }

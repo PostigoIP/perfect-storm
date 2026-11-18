@@ -25,7 +25,7 @@ function wav(buf) {
   return out.buffer;
 }
 
-async function render(audio, sc) {
+async function render(audio, sc, bankName) {
   const sim = createSim({ seed: 21, params: { beta: sc.beta, importRate: 0.5 } });
   let guard = 0;
   while (sim.snapshot().incidenceToday < sc.rate * 0.6 && guard++ < 3000) sim.step(0.1);
@@ -48,15 +48,16 @@ async function render(audio, sc) {
   for (let c = 0; c < buf.numberOfChannels; c++) for (const x of buf.getChannelData(c)) peak = Math.max(peak, Math.abs(x));
   const db = 20 * Math.log10(peak || 1e-9);
   log(`${sc.name}: ${events.filter((e) => e.at < SECONDS).length} cases in ${SECONDS}s (${(events.length / SECONDS).toFixed(0)}/s), peak ${db.toFixed(2)} dBFS ${db <= -1 ? 'OK' : 'TOO HOT'}`);
-  await fetch(`/__save-clip?name=${sc.name}.wav`, { method: 'POST', body: wav(buf) });
+  await fetch(`/__save-clip?name=${bankName}-${sc.name}.wav`, { method: 'POST', body: wav(buf) });
   return db;
 }
 
 document.getElementById('go').onclick = async () => {
-  const audio = createAudio({ manifestUrl: '/sounds/manifest.json' });
+  const bankName = new URLSearchParams(location.search).get('bank') || 'sounds';
+  const audio = createAudio({ manifestUrl: `/${bankName}/manifest.json` });
   if (!(await audio.loadBank())) { log('no sound bank (public/sounds/manifest.json) — generate it first'); return; }
   const peaks = [];
-  for (const sc of SCENARIOS) peaks.push(await render(audio, sc));
+  for (const sc of SCENARIOS) peaks.push(await render(audio, sc, bankName));
   log('done');
   window.__peaks = peaks;
 };
