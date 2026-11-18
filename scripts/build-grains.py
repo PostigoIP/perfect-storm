@@ -69,6 +69,16 @@ def main():
         entries = []
         for k, f in enumerate(sorted(x for x in os.listdir(d) if x.rsplit('.', 1)[-1] in ('wav', 'mp3', 'flac', 'ogg'))):
             x = decode(os.path.join(d, f))
+            win = float(os.environ.get('GRAIN_WINDOW', '0'))
+            if win and len(x) / SR > win * 1.2:
+                # keep the window with the most clear impacts
+                allons = onsets(x / (float(np.abs(x).max()) or 1.0), 100000)
+                ts = np.array([t for t, _ in allons])
+                starts = np.arange(0, len(x) / SR - win, 5.0)
+                counts = [int(((ts >= a0) & (ts < a0 + win)).sum()) for a0 in starts]
+                a0 = float(starts[int(np.argmax(counts))])
+                x = x[int(a0 * SR): int((a0 + win) * SR)]
+                print(f'  {f}: kept {a0:.0f}-{a0 + win:.0f} s ({max(counts)} impacts in window)')
             peak = float(np.abs(x).max()) or 1.0
             x = x * (10 ** (-1 / 20) / peak)          # normalise to -1 dBFS
             ons = onsets(x, max_n)

@@ -30,7 +30,9 @@ let sim = createSim({ seed: 42 });
 const story = createStory(sim, { onChapter: (i) => showChapter(i), setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
-const audio = createAudio();
+// sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
+const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-field').replace(/[^\w-]/g, '');
+const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json` });
 let ledger = createLedger({ binDays: 1 });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FALL_MS = reducedMotion ? 0 : 1100;   // a drop's flight; its sound plays on impact
@@ -310,7 +312,7 @@ fetch('./data/ebola.json').then((r) => (r.ok ? r.json() : null)).then((data) => 
 }).catch(() => { $('mode-obs').disabled = true; });
 
 // Check whether the sound bank exists so the start screen can say so
-fetch('./sounds/manifest.json', { method: 'HEAD' }).then((r) => {
+fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
   if (!r.ok) $('bank-status').textContent = 'Sound bank not generated yet. "Listen" will run silently for now.';
 }).catch(() => {});
 
