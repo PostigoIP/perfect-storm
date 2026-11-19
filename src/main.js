@@ -13,18 +13,21 @@ import { collapseTree } from './model/collapse.js';
 import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, createStory } from './story.js';
 import { createObservedSource } from './model/observed.js';
+import { createCompareSource } from './model/compare.js';
+import { t, tName, num, getLang, setLang, onLangChange, translateDom } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 export const bus = createBus();
 
 // ── state ────────────────────────────────────────────────────────────────
 const state = {
-  mode: 'sim',          // 'sim' | 'obs'
+  mode: 'sim',          // 'sim' | 'obs' | 'cmp'
   running: false,
   speed: 1.5,           // model days per real second
   chapter: -1,
   pending: [],          // visual drops waiting for their audio onset
   gen: 0,
+  deaths: 0,            // deaths among the cases so far (each counted as its case falls)
 };
 
 let sim = createSim({ seed: 42 });
@@ -32,6 +35,9 @@ let sim = createSim({ seed: 42 });
 const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t, CHAPTERS[i].mark ?? CHAPTERS[i].title, { chapter: i, lineage: lineageByName(CHAPTERS[i].lineageName) }); selectedEvent = -1; stage.setSelectedEvent(-1); showChapter(i); }, setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
+let compare = null;                 // two real outbreaks, one after the other
+const replay = () => (state.mode === 'cmp' ? compare : observed);   // the real-data source in use
+let comparePhaseEvents = 0;         // Compare: how many of this outbreak's milestones are marked
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
 const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-textures').replace(/[^\w-]/g, '');
 // Experiment (user, 2026-11-18): no rain bed at all — every sound is one case's drop.
@@ -40,9 +46,23 @@ const audio = createAudio({ manifestUrl: `./${BANK}/manifest.json`, bed: BED_ENA
 let ledger = createLedger({ binDays: 1 });
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FALL_MS = reducedMotion ? 0 : 1100;   // a drop's flight; its sound plays on impact
+// The ground under the bars: the metrics strip, plus the legend where it docks on
+// top of it (narrow screens, see app.css), so the legend never covers the case series.
+const legendBox = document.querySelector('.stage__legend');
+const legendDocked = matchMedia('(max-width: 900px)');
+let groundH = 0;
+function measureGround() {
+  const m = $('metrics').getBoundingClientRect().height;
+  groundH = m + (legendDocked.matches ? legendBox.getBoundingClientRect().height : 0);
+  $('stage-el').style.setProperty('--ps-metrics-h', `${m}px`);
+}
+measureGround();
+const groundObserver = new ResizeObserver(measureGround);
+groundObserver.observe($('metrics')); groundObserver.observe(legendBox);
+legendDocked.addEventListener('change', measureGround);
 const stage = createStage($('stage'), {
   stageEl: $('stage-el'),
-  groundOffset: () => $('metrics').getBoundingClientRect().height,
+  groundOffset: () => groundH,
   domain: () => ({ ...domain(), now: source.t }),
   ledger: () => ledger,
   surfaceOf: (l) => surfaceOf(l),
@@ -50,10 +70,10 @@ const stage = createStage($('stage'), {
   fmt: (t) => fmtDay(t),
 });
 
-const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
+const surfaceOf = (l) => (state.mode !== 'sim' ? replay().surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
 // what each lineage sounds like: colour key (role) → recorded material, shared with the clip renderer
 const materialOf = (l) => MATERIAL[surfaceOf(l)] ?? 'puddle';
-const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
+const lineageLabel = (l) => (state.mode !== 'sim' ? replay().lineageLabel(l) : sim.lineages[l]?.name ?? '?');
 
 // ── clock ────────────────────────────────────────────────────────────────
 let last = performance.now();
@@ -65,8 +85,10 @@ function frame(now) {
   if (state.running) {
     const tStart = source.t;
     const onsets = source.step(dtReal * state.speed);
+    if (state.mode === 'cmp') markCompareEvents();
     if (source.done) play(false);   // the observed data has ended: stop, and let the rain fade
     for (const c of onsets) {
+      if (c.outcome === 'fatal') state.deaths++;
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
       const landAt = now + offset * 1000 + FALL_MS;
@@ -93,11 +115,11 @@ function frame(now) {
 // ── figures ──────────────────────────────────────────────────────────────
 function domain() {
   const t = source.t;
-  if (state.mode === 'obs') return observed.domain(t);
+  if (state.mode !== 'sim') return replay().domain(t);
   const t0 = -8;
   return { t0, t1: Math.max(60, t + 4 + 0.14 * (t - t0)) };   // room past 'now' for clade labels
 }
-const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t)}`);
+const fmtDay = (t) => (state.mode !== 'sim' ? replay().fmt(t) : `D${Math.round(t)}`);
 
 // tips that fit the figure without merging (~2.6 px per tip)
 const TIP_CAP = 2000;   // tips feeding the collapsed tree (counts on wedges); not drawn one by one
@@ -111,7 +133,7 @@ function drawTree() {
   $('tree').style.top = `${box.top}px`;
   $('tree').style.height = `${Math.max(60, box.bottom - box.top)}px`;
   let layout;
-  if (state.mode === 'obs') layout = observed.tree(t, TIP_CAP);
+  if (state.mode !== 'sim') layout = replay().tree(t, TIP_CAP);
   else {
     const tips = [];
     for (const c of sim.cases) if (c.sampled && c.tOnset + 2 <= t) tips.push({ id: c.id, t: c.tOnset + 2 });
@@ -125,7 +147,7 @@ function drawTree() {
 }
 
 function lineageOrder() {
-  const n = state.mode === 'obs' ? observed.nLineages : sim.lineages.length;
+  const n = state.mode !== 'sim' ? replay().nLineages : sim.lineages.length;
   return [...Array(n).keys()];
 }
 
@@ -142,19 +164,19 @@ $('legend').addEventListener('click', (e) => {
 let legendKey = '';
 function drawLegend(order) {
   const items = order.map((l) => `${lineageLabel(l)}|${surfaceOf(l)}|${materialOf(l)}|${soundName(materialOf(l))}`);
-  const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths;
+  const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths + getLang();
   if (key === legendKey) return;
   legendKey = key;
-  const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
+  const ROLE = (l) => (state.mode === 'cmp' ? 'outbreak' : state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
-    const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
+    const name = tName(lineageLabel(l));
     const on = !mutedLineages.has(l);
-    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${on ? 'Mute' : 'Unmute'} this lineage's sound"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · ${on ? `sound: ${soundName(materialOf(l))}` : 'muted'}</span></button></li>`;
+    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${t(on ? "Mute this lineage's sound" : "Unmute this lineage's sound")}"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${t(ROLE(l))} · ${on ? `${t('sound')}: ${t(soundName(materialOf(l)))}` : t('muted')}</span></button></li>`;
   }).join('') +
-  `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${audio.deaths ? 'Mute' : 'Unmute'} the extra low sound played for each death"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">Deaths</span><span class="stage__legend-sub">${audio.deaths ? 'an extra low knock per death' : 'muted'}</span></button></li>` +
-  `<li class="stage__legend-key"><span class="stage__legend-sw"></span>reported<span class="stage__legend-sw stage__legend-sw--faint"></span>never reported</li>` +
-  `<li class="stage__legend-hint">click a line to mute or unmute its sound</li>`;
+  `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${t(audio.deaths ? 'Mute the extra low sound played for each death' : 'Unmute the extra low sound played for each death')}"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">${t('Deaths')}</span><span class="stage__legend-sub">${t(audio.deaths ? 'an extra low knock per death' : 'muted')}</span></button></li>` +
+  `<li class="stage__legend-key"><span class="stage__legend-sw"></span>${t('reported')}<span class="stage__legend-sw stage__legend-sw--faint"></span>${t('never reported')}</li>` +
+  `<li class="stage__legend-hint">${t('click a line to mute or unmute its sound')}</li>`;
 }
 
 // The rain bed follows the epidemic: its level from how many drops are falling per
@@ -174,12 +196,14 @@ function updateBed() {
 
 function drawMetrics() {
   const s = source.snapshot();
-  $('m-day').textContent = state.mode === 'obs' ? observed.fmt(s.t) : Math.floor(s.t);
-  $('m-inc').textContent = s.incidenceToday.toLocaleString('en');
-  $('m-cum').textContent = s.cumulative.toLocaleString('en');
+  $('m-day').textContent = state.mode === 'cmp' ? compare.dateLabel(s.t) : state.mode === 'obs' ? observed.fmt(s.t) : Math.floor(s.t);
+  $('m-inc').textContent = num(s.incidenceToday);
+  $('m-cum').textContent = num(s.cumulative);
+  $('m-deaths').textContent = num(state.deaths);
   const rt = s.rtGenealogy ?? s.reffAnalytic;
-  $('m-rt').textContent = rt == null ? '—' : rt.toFixed(2);
+  $('m-rt').textContent = rt == null ? '—' : num(+rt.toFixed(2));
   syncSliders(s.params ?? {});
+  syncSpeed();
 }
 
 // ── controls ─────────────────────────────────────────────────────────────
@@ -190,9 +214,20 @@ const SLIDERS = [
   { k: 'detection', label: 'Reporting', hint: 'probability a case is reported', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'sampling', label: 'Sequencing', hint: 'share of reported cases sequenced', min: 0.01, max: 0.3, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'importRate', label: 'Imports', hint: 'per day, fall on leaves', min: 0, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
-  { k: 'speed', label: 'Speed', hint: 'model days per second', min: 0.25, max: 4, step: 0.25, fmt: (v) => `${v}×`, app: true },
 ];
 const sliderEls = {};
+// Speed, in Transport so it works in every mode: model days per real second, in stops.
+const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 3, 5, 8, 12, 20, 30, 50];
+const speedIndex = (v) => SPEEDS.reduce((best, s, i) => (Math.abs(s - v) < Math.abs(SPEEDS[best] - v) ? i : best), 0);
+const fmtSpeed = (v) => (getLang() === 'es' ? `${num(v)} ${v === 1 ? 'día' : 'días'} / s` : `${v} ${v === 1 ? 'day' : 'days'} / s`);
+function syncSpeed() {
+  const input = $('speed');
+  if (document.activeElement !== input) input.value = speedIndex(state.speed);
+  $('speed-out').textContent = fmtSpeed(state.speed);
+  setFill(input);
+}
+$('speed').addEventListener('input', (e) => { state.speed = SPEEDS[+e.target.value]; syncSpeed(); });
+
 function buildSliders() {
   const host = $('params');
   for (const d of SLIDERS) {
@@ -200,7 +235,7 @@ function buildSliders() {
     const wrap = document.createElement('label');
     wrap.className = 'ps-field';
     wrap.htmlFor = id;
-    wrap.innerHTML = `<span class="ps-label">${d.label}</span><output class="ps-field__value" for="${id}"></output><input class="ps-slider" type="range" id="${id}" min="${d.min}" max="${d.max}" step="${d.step}"><small class="field__hint">${d.hint}</small>`;
+    wrap.innerHTML = `<span class="ps-label">${t(d.label)}</span><output class="ps-field__value" for="${id}"></output><input class="ps-slider" type="range" id="${id}" min="${d.min}" max="${d.max}" step="${d.step}"><small class="field__hint">${t(d.hint)}</small>`;
     host.appendChild(wrap);
     const input = wrap.querySelector('input'), out = wrap.querySelector('output');
     input.addEventListener('input', () => {
@@ -209,7 +244,7 @@ function buildSliders() {
       setFill(input);
       if (d.app) state.speed = v; else sim.setParam(d.k, v);
     });
-    sliderEls[d.k] = { input, out, d };
+    sliderEls[d.k] = { input, out, d, wrap };
   }
 }
 function syncSliders(params) {
@@ -228,8 +263,11 @@ function setFill(input) {
   input.style.setProperty('--ps-fill', `${(100 * (+input.value - min)) / (max - min || 1)}%`);
 }
 
+function renderChapters() {
+  $('chapters').innerHTML = CHAPTERS.map((c, i) => `<li><button type="button" data-i="${i}"${i === state.chapter ? ' aria-current="step"' : ''}>${t(c.title)}</button></li>`).join('');
+}
 function buildChapters() {
-  $('chapters').innerHTML = CHAPTERS.map((c, i) => `<li><button type="button" data-i="${i}">${c.title}</button></li>`).join('');
+  renderChapters();
   $('chapters').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-i]');
     if (b) { setMode('sim'); goChapter(+b.dataset.i); play(true); }
@@ -247,8 +285,8 @@ function showChapter(i) {
   state.chapter = i;
   if (state.mode !== 'sim') return;
   $('chapter-num').textContent = String(i + 1).padStart(2, '0');
-  $('chapter-title').textContent = ch.title;
-  $('chapter-body').textContent = ch.body;
+  $('chapter-title').textContent = t(ch.title);
+  $('chapter-body').textContent = t(ch.body);
   for (const b of $('chapters').querySelectorAll('button')) b.toggleAttribute('aria-current', false);
   $('chapters').querySelector(`button[data-i="${i}"]`)?.setAttribute('aria-current', 'step');
 }
@@ -269,7 +307,7 @@ function markEvent(t, label, info = {}) {
   stage.setEvents(events.map(eventForStage));
   drawEventButtons(true);
 }
-const eventForStage = (e) => ({ t: e.t, label: e.label, colour: e.lineage >= 0 ? surfaceOf(e.lineage) : null });
+const eventForStage = (e) => ({ t: e.t, label: tName(e.label), colour: e.lineage >= 0 ? surfaceOf(e.lineage) : null });
 
 // Milestones are selectable once they appear: clicking one rewinds the
 // simulation to that moment; everything after it is discarded and lived again.
@@ -281,7 +319,7 @@ function drawEventButtons(rebuild = false) {
     host.innerHTML = layout.map((e) => {
       const ev = events[e.k];
       const colour = ev.lineage >= 0 ? `var(${SURFACE_VAR[surfaceOf(ev.lineage)]})` : '';
-      return `<button type="button" class="stage__event" data-k="${e.k}" aria-pressed="false" style="${colour ? `--ev-colour:${colour}` : ''}" title="Go back to ${e.label}">${e.label}</button>`;
+      return `<button type="button" class="stage__event" data-k="${e.k}" aria-pressed="false" style="${colour ? `--ev-colour:${colour}` : ''}" title="${t('Go back to')} ${e.label}">${e.label}</button>`;
     }).join('');
   }
   layout.forEach((e) => {
@@ -302,7 +340,8 @@ function rewindTo(k) {
   state.gen++; state.pending = [];
   stage.clear();
   ledger = createLedger({ binDays: 1 });
-  for (const c of sim.onsets) ledger.land(c);
+  state.deaths = 0;
+  for (const c of sim.onsets) { ledger.land(c); if (c.outcome === 'fatal') state.deaths++; }
   stage.setEvents(events.map(eventForStage));
   selectedEvent = k; stage.setSelectedEvent(k);
   legendKey = '';
@@ -318,16 +357,21 @@ $('events').addEventListener('click', (ev) => {
 function clearRun() {
   state.gen++;
   state.pending = [];
+  state.deaths = 0;
   events = []; stage.setEvents(events); selectedEvent = -1; stage.setSelectedEvent(-1); $('events').innerHTML = '';
-  stage.setUnitLabel(state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
-  ledger = createLedger({ binDays: state.mode === 'obs' ? 7 : 1 });
+  applyUnitLabel();
+  ledger = createLedger({ binDays: state.mode === 'cmp' ? compare.binDays : state.mode === 'obs' ? 7 : 1 });
+  // Compare: both outbreaks share one vertical scale, set by the larger one from the start
+  stage.setYMax(state.mode === 'cmp' ? compare.yMax : null);
+  stage.setGhost(null);
+  comparePhaseEvents = 0;
   stage.clear();
   legendKey = '';
 }
 
 function play(on = !state.running) {
   state.running = on;
-  $('play').textContent = on ? 'Pause' : 'Play';
+  $('play').textContent = t(on ? 'Pause' : 'Play');
   if (on && state.mode === 'sim' && state.chapter < 0) goChapter(0);
 }
 
@@ -335,38 +379,80 @@ function play(on = !state.running) {
 function syncModeRadios() {
   $('mode-sim').checked = state.mode === 'sim';
   $('mode-obs').checked = state.mode === 'obs';
+  $('mode-cmp').checked = state.mode === 'cmp';
 }
 
 function setMode(mode) {
   if (mode === state.mode) return syncModeRadios();
   if (mode === 'obs' && !observed) return syncModeRadios();
+  if (mode === 'cmp' && !compare) return syncModeRadios();
   state.mode = mode;
   clearRun();
-  source = mode === 'obs' ? observed : story;
-  if (mode === 'obs') {
-    observed.reset();
-    $('chapter-num').textContent = 'OBS';
-    $('chapter-title').textContent = observed.title;
-    $('chapter-body').textContent = observed.lede;
-    state.speed = observed.defaultSpeed;
-  } else if (state.chapter >= 0) showChapter(state.chapter);
+  source = mode === 'sim' ? story : replay();
+  // a new mode starts its story from the beginning and plays, as Reset does: the case
+  // series was just cleared, and the previous mode may have stopped at its end
+  if (mode !== 'sim') {
+    replay().reset();
+    showReplayText();
+    state.speed = replay().defaultSpeed;
+  } else { state.chapter = -1; goChapter(0); }
   syncModeRadios();
   document.body.dataset.mode = mode;
-  $('m-inc-label').textContent = mode === 'obs' ? 'Cases / day' : 'Onsets / day';
+  $('m-inc-label').textContent = t(mode !== 'sim' ? 'Cases / day' : 'Onsets / day');
   drawProvenance();
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
+  play(true);
+}
+
+// What the bars count, in the current language
+function applyUnitLabel() {
+  stage.setUnitLabel(t(state.mode === 'cmp' ? compare.unitLabel : state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset'));
+}
+
+// The chapter text for real data: the observed epidemic, or the outbreak now playing in Compare.
+function showReplayText() {
+  const r = replay();
+  $('chapter-num').textContent = state.mode === 'cmp' ? `${r.phase + 1} / ${r.nPhases}` : 'OBS';
+  $('chapter-title').textContent = t(r.title);
+  $('chapter-body').textContent = t(r.lede);
+}
+
+// Compare: each outbreak's milestones appear on the shared axis as its clock passes them.
+function markCompareEvents() {
+  const evs = compare.events;
+  let changed = false;
+  while (comparePhaseEvents < evs.length && evs[comparePhaseEvents].t <= compare.t) {
+    const e = evs[comparePhaseEvents++];
+    events.push({ t: e.t, label: e.label, lineage: compare.phase === 0 ? 0 : 1 });
+    changed = true;
+  }
+  if (changed) { stage.setEvents(events.map(eventForStage)); drawEventButtons(true); }
+}
+function onComparePhase() {
+  // the first outbreak's last milestone falls on the very day it hands over (declared over)
+  for (const e of compare.phaseEvents(compare.phase - 1).slice(comparePhaseEvents)) events.push({ t: e.t, label: e.label, lineage: 0 });
+  stage.setEvents(events.map(eventForStage)); drawEventButtons(true);
+  comparePhaseEvents = 0;
+  // the first outbreak's bars become outlines; the second one fills an empty case series
+  const ghostBins = ledger.bins().map((b) => ({ t0: b.t0, n: b.byLineage[0] ?? 0 })).filter((b) => b.n);
+  stage.setGhost({ bins: ghostBins, surface: surfaceOf(0) });
+  state.pending = state.pending.filter((p) => p.c.lineage !== 0);
+  ledger = createLedger({ binDays: compare.binDays });
+  state.deaths = 0;   // like Cumulative, Deaths counts the outbreak now playing
+  showReplayText();
+  discontinuity({ kind: 'variant' });
 }
 
 function drawProvenance() {
-  if (state.mode === 'obs') { $('provenance').innerHTML = observed.provenanceHTML(); return; }
-  $('provenance').innerHTML = `<div class="panel__head">Source · simulated</div><p>Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.</p>`;
+  if (state.mode !== 'sim') { $('provenance').innerHTML = replay().provenanceHTML(); return; }
+  $('provenance').innerHTML = `<div class="panel__head">${t('Source · simulated')}</div><p>${t('Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.')}</p>`;
 }
 
 // ── wiring ───────────────────────────────────────────────────────────────
 $('play').addEventListener('click', () => play());
 $('reset').addEventListener('click', () => {
   clearRun();
-  if (state.mode === 'obs') observed.reset();
+  if (state.mode !== 'sim') { replay().reset(); showReplayText(); }
   else { state.chapter = -1; goChapter(0); }
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
 });
@@ -393,6 +479,7 @@ for (const r of document.querySelectorAll('input[data-spread]')) r.addEventListe
   if (r.checked) stage.setSpread(r.dataset.spread);
 });
 $('mode-obs').addEventListener('click', () => setMode('obs'));
+$('mode-cmp').addEventListener('click', () => setMode('cmp'));
 $('sound').addEventListener('change', async (e) => {
   if (e.target.checked) { await audio.unlock(); if (!audio.ready) await audio.loadBank(); }
   audio.setMuted(!e.target.checked);
@@ -414,13 +501,13 @@ for (const r of document.querySelectorAll('input[data-bank]')) {
   if (r.dataset.bank === BANK) r.checked = true;
   r.addEventListener('change', async () => {
     const name = r.dataset.bank;
-    $('bank-note').textContent = 'Loading…';
+    $('bank-note').textContent = t('Loading…');
     const bank = await audio.setBank(`./${name}/manifest.json`);
-    $('bank-note').textContent = bank ? BANK_NOTES[name] : 'This sound bank is not available.';
+    $('bank-note').textContent = bank ? t(BANK_NOTES[name]) : t('This sound bank is not available.');
     const u = new URL(location.href); u.searchParams.set('bank', name); history.replaceState(null, '', u);
   });
 }
-$('bank-note').textContent = BANK_NOTES[BANK] ?? '';
+$('bank-note').textContent = t(BANK_NOTES[BANK] ?? '');
 
 // Variant contrast: listening test, offered locally only (the published site keeps 'subtle').
 {
@@ -456,7 +543,7 @@ async function start(withSound) {
       const bank = await audio.loadBank();
       $('sound').checked = !!bank;
       audio.setMuted(!bank);
-      if (!bank) $('bank-note').textContent = 'Sound bank could not be loaded.';
+      if (!bank) $('bank-note').textContent = t('Sound bank could not be loaded.');
     } catch (err) {
       // show the failure instead of running silently (Safari diagnostics)
       $('bank-note').textContent = `Sound failed: ${err?.name ?? ''} ${err?.message ?? err}`;
@@ -493,20 +580,23 @@ function demo(list, gap, jitter = false) {
     audio.playCase(c, d.material ?? materialOf(d.lineage), i * gap + (jitter ? Math.random() * gap : 0));
   });
 }
+let refreshTutorial = () => {};   // redraws the tutorial step in the current language
 function runTutorial() {
   return new Promise((resolve) => {
     const intro = $('start').querySelector('.start__inner:not(.tutorial)');
     const tut = $('tutorial');
     let k = 0;
-    const show = () => {
+    const show = (sound = true) => {
       const step = TUTORIAL[k];
       $('tut-step').textContent = `${k + 1} / ${TUTORIAL.length}`;
-      $('tut-title').textContent = step.title;
-      $('tut-text').textContent = step.text;
-      $('tut-next').textContent = k === TUTORIAL.length - 1 ? 'Start the story' : 'Next';
-      step.play();
+      $('tut-title').textContent = t(step.title);
+      $('tut-text').textContent = t(step.text);
+      $('tut-next').textContent = t(k === TUTORIAL.length - 1 ? 'Start the story' : 'Next');
+      if (sound) step.play();
     };
+    refreshTutorial = () => show(false);
     const finish = () => {
+      refreshTutorial = () => {};
       $('tut-play').onclick = $('tut-next').onclick = $('tut-skip').onclick = null;
       tut.hidden = true; intro.hidden = false; $('start').hidden = true;
       resolve();
@@ -535,21 +625,66 @@ fetch('./data/ebola.json').then((r) => (r.ok ? r.json() : null)).then((data) => 
   $('mode-obs').disabled = false;
 }).catch(() => { $('mode-obs').disabled = true; });
 
+// Compare dataset: a contained outbreak and one that got away (mode disabled until it loads)
+fetch('./data/compare.json').then((r) => (r.ok ? r.json() : null)).then((data) => {
+  if (!data) { $('mode-cmp').disabled = true; return; }
+  compare = createCompareSource(data, { onPhase: () => { if (state.mode === 'cmp') onComparePhase(); } });
+  $('mode-cmp').disabled = false;
+}).catch(() => { $('mode-cmp').disabled = true; });
+
 // Check whether the sound bank exists so the start screen can say so
 fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
-  if (!r.ok) $('bank-status').textContent = 'Sound bank not generated yet. "Listen" will run silently for now.';
+  if (!r.ok) $('bank-status').textContent = t('Sound bank not generated yet. "Listen" will run silently for now.');
 }).catch(() => {});
+
+// Language: English by default; ?lang=es or the ES/EN button, remembered per viewer.
+function applyLanguage() {
+  const es = getLang() === 'es';
+  document.documentElement.lang = es ? 'es' : 'en';
+  $('lang').textContent = es ? 'EN' : 'ES';
+  $('lang').lang = es ? 'en' : 'es';
+  $('lang').setAttribute('aria-label', es ? 'English' : 'Español');
+  translateDom();
+  // what translateDom reset to its English original, redrawn from the state
+  if (state.mode !== 'sim') showReplayText();
+  else if (state.chapter >= 0) showChapter(state.chapter);
+  $('play').textContent = t(state.running ? 'Pause' : 'Play');
+  $('m-inc-label').textContent = t(state.mode !== 'sim' ? 'Cases / day' : 'Onsets / day');
+  $('bank-note').textContent = t(BANK_NOTES[new URLSearchParams(location.search).get('bank') || BANK] ?? '');
+  for (const { wrap, d } of Object.values(sliderEls)) {
+    wrap.querySelector('.ps-label').innerHTML = t(d.label);
+    wrap.querySelector('.field__hint').textContent = t(d.hint);
+  }
+  renderChapters();
+  applyUnitLabel();
+  drawProvenance();
+  stage.setEvents(events.map(eventForStage)); drawEventButtons(true);
+  legendKey = ''; drawLegend(lineageOrder()); drawMetrics();
+  refreshTutorial();
+}
+onLangChange(applyLanguage);
+$('lang').addEventListener('click', () => {
+  const next = getLang() === 'es' ? 'en' : 'es';
+  try { localStorage.setItem('ps-lang', next); } catch { /* storage blocked: the choice lasts this visit */ }
+  setLang(next);
+});
 
 buildSliders();
 buildChapters();
 drawProvenance();
 stage.start();
-requestAnimationFrame((t) => { last = t; frame(t); });
+requestAnimationFrame((now) => { last = now; frame(now); });
+{
+  let saved = null;
+  try { saved = localStorage.getItem('ps-lang'); } catch { /* no storage */ }
+  const wanted = new URLSearchParams(location.search).get('lang') ?? saved;
+  if (wanted === 'es') setLang('es'); else applyLanguage();
+}
 window.__ps = {
   state, sim: () => sim, audio, stage,
   // debug: advance the active source by `days` and redraw (used for checks when the page is throttled)
   advance(days) {
-    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); }
+    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) { ledger.land(c); if (c.outcome === 'fatal') state.deaths++; } }
     drawTree(); drawLegend(lineageOrder()); drawMetrics();
   },
 };

@@ -37,6 +37,10 @@ npm run build      # static site in dist/
 - Weekly case counts by district from https://github.com/ebov/space-time (WHO patient database, compiled for Dudas et al. 2017),
   licensed **CC BY-SA 4.0**. The derived `public/data/ebola.json` is shared under the same licence.
 
+**Data (Compare mode)** — `public/data/compare.json` is built by `scripts/prep-compare.mjs` from WHO publications:
+the Kasai 2025 epidemic curve (Disease Outbreak News DON589) and the dated Bundibugyo 2026 totals (DON602–DON625).
+Bundibugyo's daily pace between reports is a reconstruction; the transformations are listed on the page.
+
 **Sound**
 - Drops and rain: CC0 1.0 recordings from Freesound — see `public/sounds-field/SOURCES.md` and `public/sounds-drops/SOURCES.md`
   (Vrymaa, bassimat, gyzhor, kyles, Squidems; thunder by billgrip and mrrap4food).
