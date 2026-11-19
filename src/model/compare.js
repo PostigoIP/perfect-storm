@@ -4,8 +4,7 @@
 // Daily counts become that many onsets spread evenly through the day.
 
 import { mulberry32 } from './rng.js';
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { t as tr, month } from '../i18n.js';
 
 export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}) {
   const { meta, lineages, phases } = data;
@@ -80,12 +79,12 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}
     // the calendar date of day d in the current outbreak
     dateLabel(d) {
       const dt = new Date(Date.parse(phases[phase].start + 'T00:00:00Z') + Math.floor(d) * 86400000);
-      return `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]} ${String(dt.getUTCFullYear()).slice(2)}`;
+      return `${dt.getUTCDate()} ${month(dt.getUTCMonth())} ${String(dt.getUTCFullYear()).slice(2)}`;
     },
     provenanceHTML() {
-      const src = meta.sources.map((s) => `<li><a href="${s.url}" rel="noopener" target="_blank">${s.name}</a>. ${s.citation ?? ''}</li>`).join('');
-      const tr = meta.transformations.map((x) => `<li>${x}</li>`).join('');
-      return `<div class="panel__head">Source · observed, compared</div><ul>${src}</ul><div class="panel__head">Transformations</div><ul>${tr}</ul>`;
+      const src = meta.sources.map((s) => `<li><a href="${s.url}" rel="noopener" target="_blank">${tr(s.name)}</a>. ${tr(s.citation ?? '')}</li>`).join('');
+      const trs = meta.transformations.map((x) => `<li>${tr(x)}</li>`).join('');
+      return `<div class="panel__head">${tr('Source · observed, compared')}</div><ul>${src}</ul><div class="panel__head">${tr('Transformations')}</div><ul>${trs}</ul>`;
     },
   };
   reset();

@@ -15,16 +15,19 @@
 </head>
 <body>
   <header class="ps-topbar">
-    <span class="ps-topbar__meta">Auditory epidemiology</span>
+    <span class="ps-topbar__meta" data-i18n>Auditory epidemiology</span>
     <a class="ps-wordmark" href="./">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</a>
     <div class="topbar__controls">
       <fieldset class="ps-seg">
-        <legend>Data source</legend>
-        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span>Simulate</span></label>
-        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span>Observed</span></label>
-        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="A contained outbreak, then one that got away" /><span>Compare</span></label>
+        <legend data-i18n>Data source</legend>
+        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span data-i18n>Simulate</span></label>
+        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span data-i18n>Observed</span></label>
+        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="A contained outbreak, then one that got away" data-i18n-attr="title" /><span data-i18n>Compare</span></label>
       </fieldset>
-      <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Toggle light and dark">◐</button>
+      <div class="topbar__buttons">
+        <button type="button" class="ps-btn theme-btn" id="lang" lang="es" aria-label="Español">ES</button>
+        <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Toggle light and dark" data-i18n-attr="aria-label">◐</button>
+      </div>
     </div>
   </header>
 
@@ -35,97 +38,97 @@
       <div class="stage__events" id="events" aria-label="Milestones: select one to go back to that moment"></div>
       <div class="stage__text">
         <p class="ps-label" id="chapter-num">00</p>
-        <h1 class="ps-display" id="chapter-title">Every case is one drop.</h1>
-        <p class="lede" id="chapter-body">Rain is what an outbreak sounds like.</p>
+        <h1 class="ps-display" id="chapter-title" data-i18n>Every case is one drop.</h1>
+        <p class="lede" id="chapter-body" data-i18n>Rain is what an outbreak sounds like.</p>
       </div>
       <aside class="stage__legend" aria-label="Legend">
-        <p class="stage__legend-title">One drop = one case · colour = lineage</p>
+        <p class="stage__legend-title" data-i18n>One drop = one case · colour = lineage</p>
         <ul class="stage__legend-list" id="legend"></ul>
       </aside>
       <dl class="metrics" id="metrics">
-        <div class="ps-metric"><dt class="ps-metric__label">Day</dt><dd class="ps-metric__value" id="m-day">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label" data-i18n>Day</dt><dd class="ps-metric__value" id="m-day">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label" id="m-inc-label">Onsets / day</dt><dd class="ps-metric__value" id="m-inc">0</dd></div>
-        <div class="ps-metric"><dt class="ps-metric__label">Cumulative</dt><dd class="ps-metric__value" id="m-cum">0</dd></div>
-        <div class="ps-metric"><dt class="ps-metric__label">Deaths</dt><dd class="ps-metric__value" id="m-deaths">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label" data-i18n>Cumulative</dt><dd class="ps-metric__value" id="m-cum">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label" data-i18n>Deaths</dt><dd class="ps-metric__value" id="m-deaths">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label"><var>R<sub>t</sub></var></dt><dd class="ps-metric__value" id="m-rt">—</dd></div>
       </dl>
     </section>
 
     <section class="dock" id="controls" aria-label="Controls and key">
       <div class="dock__bar">
-        <button type="button" class="dock__toggle" id="dock-toggle" aria-expanded="false" aria-controls="dock-body">Controls</button>
+        <button type="button" class="dock__toggle" id="dock-toggle" aria-expanded="false" aria-controls="dock-body" data-i18n>Controls</button>
       </div>
       <div class="dock__body" id="dock-body" hidden>
         <section class="ps-panel dock__panel dock__panel--transport">
-          <div class="ps-panel__head"><h2 class="ps-panel__title">Transport</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Transport</h2></div>
           <div class="row">
             <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
-            <button type="button" class="ps-btn" id="reset">Reset</button>
-            <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span>Sound</span></label>
+            <button type="button" class="ps-btn" id="reset" data-i18n>Reset</button>
+            <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span data-i18n>Sound</span></label>
           </div>
           <div class="bank-ab">
-            <span class="ps-label" aria-hidden="true">Sound source</span>
+            <span class="ps-label" aria-hidden="true" data-i18n>Sound source</span>
             <fieldset class="ps-seg">
-              <legend>Sound source</legend>
-              <label><input type="radio" name="bank" data-bank="sounds-textures" checked /><span>A · AI textures</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-field" /><span>B · Field recordings</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-drops" /><span>C · Drips</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-blend" /><span>D · Blended</span></label>
+              <legend data-i18n>Sound source</legend>
+              <label><input type="radio" name="bank" data-bank="sounds-textures" checked /><span data-i18n>A · AI textures</span></label>
+              <label><input type="radio" name="bank" data-bank="sounds-field" /><span data-i18n>B · Field recordings</span></label>
+              <label><input type="radio" name="bank" data-bank="sounds-drops" /><span data-i18n>C · Drips</span></label>
+              <label><input type="radio" name="bank" data-bank="sounds-blend" /><span data-i18n>D · Blended</span></label>
             </fieldset>
             <p class="ps-caption audio-status" id="audio-status" aria-live="off"></p>
             <p class="ps-caption" id="bank-note">Real CC0 rain on stone, glass, metal and leaves.</p>
           </div>
           <label class="ps-field" for="speed">
-            <span class="ps-label">Speed</span>
+            <span class="ps-label" data-i18n>Speed</span>
             <output class="ps-field__value" for="speed" id="speed-out"></output>
             <input class="ps-slider" type="range" id="speed" min="0" max="11" step="1" />
-            <small class="field__hint">model days per second</small>
+            <small class="field__hint" data-i18n>model days per second</small>
           </label>
           <label class="ps-field" for="volume">
-            <span class="ps-label">Volume</span>
+            <span class="ps-label" data-i18n>Volume</span>
             <output class="ps-field__value" for="volume" id="volume-out">80%</output>
             <input class="ps-slider" type="range" id="volume" min="0" max="1" step="0.01" value="0.8" style="--ps-fill: 80%" />
           </label>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--key key" aria-label="How to read it">
-          <div class="ps-panel__head"><h2 class="ps-panel__title">Key</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Key</h2></div>
           <div class="key__row">
             <div class="key__control">
-              <span class="ps-label" aria-hidden="true">Rain</span>
+              <span class="ps-label" aria-hidden="true" data-i18n>Rain</span>
               <fieldset class="ps-seg">
-                <legend>Rain</legend>
-                <label><input type="radio" name="spread" data-spread="wide" checked /><span>Everywhere</span></label>
-                <label><input type="radio" name="spread" data-spread="column" /><span>Over today</span></label>
+                <legend data-i18n>Rain</legend>
+                <label><input type="radio" name="spread" data-spread="wide" checked /><span data-i18n>Everywhere</span></label>
+                <label><input type="radio" name="spread" data-spread="column" /><span data-i18n>Over today</span></label>
               </fieldset>
             </div>
             <div class="key__control">
-              <span class="ps-label" aria-hidden="true">Scale</span>
+              <span class="ps-label" aria-hidden="true" data-i18n>Scale</span>
               <fieldset class="ps-seg">
-                <legend>Scale</legend>
-                <label><input type="radio" name="scale" data-scale="linear" checked /><span>Linear</span></label>
-                <label><input type="radio" name="scale" data-scale="log" /><span>Log</span></label>
+                <legend data-i18n>Scale</legend>
+                <label><input type="radio" name="scale" data-scale="linear" checked /><span data-i18n>Linear</span></label>
+                <label><input type="radio" name="scale" data-scale="log" /><span data-i18n>Log</span></label>
               </fieldset>
             </div>
           </div>
-          <p class="key__note" id="key-note">Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Colours are lineages; the thin labelled lines mark what happened in the story.<span id="tree-note" hidden></span></p>
+          <p class="key__note" id="key-note"><span data-i18n>Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Colours are lineages; the thin labelled lines mark what happened in the story.</span><span id="tree-note" hidden></span></p>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--chapters sim-only">
-          <div class="ps-panel__head"><h2 class="ps-panel__title">Chapters</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Chapters</h2></div>
           <ol class="ps-chapters" id="chapters"></ol>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--params sim-only">
-          <div class="ps-panel__head"><h2 class="ps-panel__title">Transmission</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Transmission</h2></div>
           <div class="dock__sliders" id="params"></div>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--disc sim-only">
-          <div class="ps-panel__head"><h2 class="ps-panel__title">Discontinuities</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Discontinuities</h2></div>
           <div class="row">
-            <button type="button" class="ps-btn" id="variant">New variant</button>
-            <button type="button" class="ps-btn" id="import">Import pulse</button>
+            <button type="button" class="ps-btn" id="variant" data-i18n>New variant</button>
+            <button type="button" class="ps-btn" id="import" data-i18n>Import pulse</button>
           </div>
         </section>
 
@@ -139,22 +142,22 @@
   <div class="start" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">
     <div class="start__inner">
       <p class="ps-wordmark ps-wordmark--large">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</p>
-      <h2 class="ps-display" id="start-title">Every case is one drop.</h2>
-      <p class="lede">Headphones recommended. Each infection in the model sounds once, on the surface of its lineage.</p>
+      <h2 class="ps-display" id="start-title" data-i18n>Every case is one drop.</h2>
+      <p class="lede" data-i18n>Headphones recommended. Each infection in the model sounds once, on the surface of its lineage.</p>
       <div class="row">
-        <button type="button" class="ps-btn ps-btn--primary" id="start-listen">Listen</button>
-        <button type="button" class="ps-btn" id="start-silent">Watch in silence</button>
+        <button type="button" class="ps-btn ps-btn--primary" id="start-listen" data-i18n>Listen</button>
+        <button type="button" class="ps-btn" id="start-silent" data-i18n>Watch in silence</button>
       </div>
       <p class="caption" id="bank-status"></p>
     </div>
     <div class="start__inner tutorial" id="tutorial" hidden>
-      <p class="ps-label"><span id="tut-step">1 / 8</span> · before the story: what you will hear</p>
+      <p class="ps-label"><span id="tut-step">1 / 8</span> · <span data-i18n>before the story: what you will hear</span></p>
       <h2 class="ps-display tutorial__title" id="tut-title"></h2>
       <p class="lede" id="tut-text"></p>
       <div class="row">
-        <button type="button" class="ps-btn" id="tut-play">▶ Play again</button>
+        <button type="button" class="ps-btn" id="tut-play" data-i18n>▶ Play again</button>
         <button type="button" class="ps-btn ps-btn--primary" id="tut-next">Next</button>
-        <button type="button" class="ps-btn tutorial__skip" id="tut-skip">Skip, start the story</button>
+        <button type="button" class="ps-btn tutorial__skip" id="tut-skip" data-i18n>Skip, start the story</button>
       </div>
     </div>
   </div>

@@ -19,6 +19,7 @@ sub { font-size: .6em; }
 
 /* top bar: meta · wordmark · controls */
 .topbar__controls { display: flex; align-items: center; gap: var(--ps-space-3); }
+.topbar__buttons { display: flex; align-self: stretch; gap: var(--ps-space-2); }
 .theme-btn { min-height: 0; align-self: stretch; padding: 0 var(--ps-space-3); font-family: var(--ps-font-mono); letter-spacing: 0; }
 
 /* segmented control: the system has no disabled state; dim the segment */

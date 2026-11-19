@@ -6,8 +6,7 @@
 import { mulberry32 } from './rng.js';
 import { buildTree, thinTips } from './tree.js';
 import { binCases } from './epicurve.js';
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { t as tr, month } from '../i18n.js';
 
 export function createObservedSource(data, { seed = 7 } = {}) {
   const { meta, lineages, nodes, tips, weeks } = data;
@@ -83,12 +82,12 @@ export function createObservedSource(data, { seed = 7 } = {}) {
     domain() { const t0 = Math.min(rootDate, t0Start) - 7; return { t0, t1: tEnd + 0.12 * (tEnd - t0), t0Start }; },
     fmt(d) {
       const dt = new Date(startMs + d * 86400000);
-      return `${MONTHS[dt.getUTCMonth()]} ${String(dt.getUTCFullYear()).slice(2)}`;
+      return `${month(dt.getUTCMonth())} ${String(dt.getUTCFullYear()).slice(2)}`;
     },
     provenanceHTML() {
-      const src = meta.sources.map((s) => `<li><a href="${s.url}" rel="noopener" target="_blank">${s.name}</a>. ${s.citation ?? ''} <em>${s.license ?? ''}</em></li>`).join('');
-      const tr = meta.transformations.map((x) => `<li>${x}</li>`).join('');
-      return `<div class="panel__head">Source · observed</div><ul>${src}</ul><div class="panel__head">Transformations</div><ul>${tr}</ul><p><strong>Inferred:</strong> severity and outcome of individual cases are sampled (${Math.round(sev.fatal * 100)}% fatal), not observed. Drops within a week are spread evenly; their timing inside the week is not data.</p>`;
+      const src = meta.sources.map((s) => `<li><a href="${s.url}" rel="noopener" target="_blank">${tr(s.name)}</a>. ${tr(s.citation ?? '')} <em>${tr(s.license ?? '')}</em></li>`).join('');
+      const trs = meta.transformations.map((x) => `<li>${tr(x)}</li>`).join('');
+      return `<div class="panel__head">${tr('Source · observed')}</div><ul>${src}</ul><div class="panel__head">${tr('Transformations')}</div><ul>${trs}</ul><p><strong>${tr('Inferred:')}</strong> ${tr('severity and outcome of individual cases are sampled')} (${Math.round(sev.fatal * 100)}% ${tr('fatal')}), ${tr('not observed. Drops within a week are spread evenly; their timing inside the week is not data.')}</p>`;
     },
   };
   reset();
