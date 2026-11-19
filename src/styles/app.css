@@ -142,7 +142,7 @@ sub { font-size: .6em; }
 .start .row { margin-top: var(--ps-space-6); }
 .start .caption { margin-top: var(--ps-space-4); }
 
-body[data-mode="obs"] .sim-only { display: none; }
+body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none; }
 
 /* single composition: tree behind the rain, bars in the stage */
 .stage canvas { z-index: 2; }

@@ -22,6 +22,8 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
   let selectedEvent = -1;
   let unitLabel = 'cases per day';
   let yMaxShown = 10, lastTs = 0;
+  let yMaxFixed = null;      // a shared scale (Compare), or null to follow the data
+  let ghost = null;          // { bins: [{ t0, n }], surface }: an earlier outbreak, outlined over the bars
   const flights = [], splashes = [];
 
   function resize() {
@@ -116,6 +118,19 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
     }
   }
 
+  // Compare: the earlier outbreak stays on the axis as outlines drawn in front,
+  // so it is never stacked onto (added to) the one now falling.
+  function drawGhost(tk) {
+    if (!ghost) return;
+    const bw = binW(), zh = zoneH(), base = baseline(), sc = ys();
+    ctx.strokeStyle = tk[ghost.surface] ?? tk.ink;
+    ctx.lineWidth = 1.5 * dpr;
+    for (const b of ghost.bins) {
+      const h = Math.max(dpr, sc.f(b.n) * zh);
+      ctx.strokeRect(x(b.t0) + dpr, base - h, Math.max(dpr, bw - 2 * dpr), h);
+    }
+  }
+
   const monoFont = (px) => `${px * dpr}px ${getComputedStyle(document.documentElement).getPropertyValue('--ps-font-mono')}`;
 
   function drawAxis(tk, now) {
@@ -167,10 +182,11 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
     ctx.clearRect(0, 0, W, H);
     const dt = Math.min(1000, lastTs ? ts - lastTs : 16);
     lastTs = ts;
-    const target = niceMax(ledger().max());
+    const target = niceMax(Math.max(ledger().max(), yMaxFixed ?? 0));
     yMaxShown += (target - yMaxShown) * (reduced ? 1 : Math.min(1, dt / 300));   // time-based ease
     yMaxShown = Math.max(yMaxShown, ledger().max());                              // bars never overshoot
     drawBars(tk);
+    drawGhost(tk);
 
     // splashes on bar tops
     for (let i = splashes.length - 1; i >= 0; i--) {
@@ -230,8 +246,10 @@ export function createStage(canvas, { stageEl, groundOffset, domain, ledger, sur
       });
     },
     setUnitLabel(l) { unitLabel = l; },
+    setGhost(g) { ghost = g; },
+    setYMax(v) { yMaxFixed = v; if (v) yMaxShown = niceMax(v); },
     setReducedMotion(b) { reduced = b; },
-    clear() { flights.length = 0; splashes.length = 0; yMaxShown = 10; },
+    clear() { flights.length = 0; splashes.length = 0; yMaxShown = yMaxFixed ? niceMax(yMaxFixed) : 10; },
     // where the tree should sit (css px, relative to the stage)
     treeBox() { return { top: Math.round(H / dpr * 0.07), bottom: Math.round((baseline() - zoneH()) / dpr) - 8 }; },
     start() { if (running) return; running = true; raf = requestAnimationFrame(frame); },

@@ -13,13 +13,14 @@ import { collapseTree } from './model/collapse.js';
 import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, createStory } from './story.js';
 import { createObservedSource } from './model/observed.js';
+import { createCompareSource } from './model/compare.js';
 
 const $ = (id) => document.getElementById(id);
 export const bus = createBus();
 
 // ── state ────────────────────────────────────────────────────────────────
 const state = {
-  mode: 'sim',          // 'sim' | 'obs'
+  mode: 'sim',          // 'sim' | 'obs' | 'cmp'
   running: false,
   speed: 1.5,           // model days per real second
   chapter: -1,
@@ -32,6 +33,9 @@ let sim = createSim({ seed: 42 });
 const story = createStory(sim, { onChapter: (i) => { if (i > 0) markEvent(sim.t, CHAPTERS[i].mark ?? CHAPTERS[i].title, { chapter: i, lineage: lineageByName(CHAPTERS[i].lineageName) }); selectedEvent = -1; stage.setSelectedEvent(-1); showChapter(i); }, setSpeed: (v) => (state.speed = v), thunder: (e) => discontinuity(e) });
 let source = story;                 // the active event source (story-driven sim, or observed)
 let observed = null;
+let compare = null;                 // two real outbreaks, one after the other
+const replay = () => (state.mode === 'cmp' ? compare : observed);   // the real-data source in use
+let comparePhaseEvents = 0;         // Compare: how many of this outbreak's milestones are marked
 // sound bank: ?bank=sounds-field (CC0 field recordings, default) | sounds-textures (ElevenLabs textures) | sounds (ElevenLabs one-shots)
 const BANK = (new URLSearchParams(location.search).get('bank') || 'sounds-textures').replace(/[^\w-]/g, '');
 // Experiment (user, 2026-11-18): no rain bed at all — every sound is one case's drop.
@@ -64,10 +68,10 @@ const stage = createStage($('stage'), {
   fmt: (t) => fmtDay(t),
 });
 
-const surfaceOf = (l) => (state.mode === 'obs' ? observed.surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
+const surfaceOf = (l) => (state.mode !== 'sim' ? replay().surfaceOf(l) : surfaceFor(l, sim.lineages));   // colour key
 // what each lineage sounds like: colour key (role) → recorded material, shared with the clip renderer
 const materialOf = (l) => MATERIAL[surfaceOf(l)] ?? 'puddle';
-const lineageLabel = (l) => (state.mode === 'obs' ? observed.lineageLabel(l) : sim.lineages[l]?.name ?? '?');
+const lineageLabel = (l) => (state.mode !== 'sim' ? replay().lineageLabel(l) : sim.lineages[l]?.name ?? '?');
 
 // ── clock ────────────────────────────────────────────────────────────────
 let last = performance.now();
@@ -79,6 +83,7 @@ function frame(now) {
   if (state.running) {
     const tStart = source.t;
     const onsets = source.step(dtReal * state.speed);
+    if (state.mode === 'cmp') markCompareEvents();
     if (source.done) play(false);   // the observed data has ended: stop, and let the rain fade
     for (const c of onsets) {
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
@@ -107,11 +112,11 @@ function frame(now) {
 // ── figures ──────────────────────────────────────────────────────────────
 function domain() {
   const t = source.t;
-  if (state.mode === 'obs') return observed.domain(t);
+  if (state.mode !== 'sim') return replay().domain(t);
   const t0 = -8;
   return { t0, t1: Math.max(60, t + 4 + 0.14 * (t - t0)) };   // room past 'now' for clade labels
 }
-const fmtDay = (t) => (state.mode === 'obs' ? observed.fmt(t) : `D${Math.round(t)}`);
+const fmtDay = (t) => (state.mode !== 'sim' ? replay().fmt(t) : `D${Math.round(t)}`);
 
 // tips that fit the figure without merging (~2.6 px per tip)
 const TIP_CAP = 2000;   // tips feeding the collapsed tree (counts on wedges); not drawn one by one
@@ -125,7 +130,7 @@ function drawTree() {
   $('tree').style.top = `${box.top}px`;
   $('tree').style.height = `${Math.max(60, box.bottom - box.top)}px`;
   let layout;
-  if (state.mode === 'obs') layout = observed.tree(t, TIP_CAP);
+  if (state.mode !== 'sim') layout = replay().tree(t, TIP_CAP);
   else {
     const tips = [];
     for (const c of sim.cases) if (c.sampled && c.tOnset + 2 <= t) tips.push({ id: c.id, t: c.tOnset + 2 });
@@ -139,7 +144,7 @@ function drawTree() {
 }
 
 function lineageOrder() {
-  const n = state.mode === 'obs' ? observed.nLineages : sim.lineages.length;
+  const n = state.mode !== 'sim' ? replay().nLineages : sim.lineages.length;
   return [...Array(n).keys()];
 }
 
@@ -159,11 +164,11 @@ function drawLegend(order) {
   const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths;
   if (key === legendKey) return;
   legendKey = key;
-  const ROLE = (l) => (state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
+  const ROLE = (l) => (state.mode === 'cmp' ? 'outbreak' : state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
   const MAT = { puddle: 'base tone', 'puddle:bright': 'brighter', 'puddle:dark': 'darker', 'puddle:light': 'lighter' };
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
-    const name = state.mode === 'obs' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
+    const name = state.mode !== 'sim' ? lineageLabel(l) : lineageLabel(l) === 'Founder' ? 'Founder' : lineageLabel(l);
     const on = !mutedLineages.has(l);
     return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${on ? 'Mute' : 'Unmute'} this lineage's sound"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${ROLE(l)} · ${on ? `sound: ${MAT[materialOf(l)] ?? materialOf(l)}` : 'muted'}</span></button></li>`;
   }).join('') +
@@ -189,7 +194,7 @@ function updateBed() {
 
 function drawMetrics() {
   const s = source.snapshot();
-  $('m-day').textContent = state.mode === 'obs' ? observed.fmt(s.t) : Math.floor(s.t);
+  $('m-day').textContent = state.mode === 'cmp' ? compare.dateLabel(s.t) : state.mode === 'obs' ? observed.fmt(s.t) : Math.floor(s.t);
   $('m-inc').textContent = s.incidenceToday.toLocaleString('en');
   $('m-cum').textContent = s.cumulative.toLocaleString('en');
   const rt = s.rtGenealogy ?? s.reffAnalytic;
@@ -334,8 +339,12 @@ function clearRun() {
   state.gen++;
   state.pending = [];
   events = []; stage.setEvents(events); selectedEvent = -1; stage.setSelectedEvent(-1); $('events').innerHTML = '';
-  stage.setUnitLabel(state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
-  ledger = createLedger({ binDays: state.mode === 'obs' ? 7 : 1 });
+  stage.setUnitLabel(state.mode === 'cmp' ? compare.unitLabel : state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
+  ledger = createLedger({ binDays: state.mode === 'cmp' ? compare.binDays : state.mode === 'obs' ? 7 : 1 });
+  // Compare: both outbreaks share one vertical scale, set by the larger one from the start
+  stage.setYMax(state.mode === 'cmp' ? compare.yMax : null);
+  stage.setGhost(null);
+  comparePhaseEvents = 0;
   stage.clear();
   legendKey = '';
 }
@@ -350,30 +359,63 @@ function play(on = !state.running) {
 function syncModeRadios() {
   $('mode-sim').checked = state.mode === 'sim';
   $('mode-obs').checked = state.mode === 'obs';
+  $('mode-cmp').checked = state.mode === 'cmp';
 }
 
 function setMode(mode) {
   if (mode === state.mode) return syncModeRadios();
   if (mode === 'obs' && !observed) return syncModeRadios();
+  if (mode === 'cmp' && !compare) return syncModeRadios();
   state.mode = mode;
   clearRun();
-  source = mode === 'obs' ? observed : story;
-  if (mode === 'obs') {
-    observed.reset();
-    $('chapter-num').textContent = 'OBS';
-    $('chapter-title').textContent = observed.title;
-    $('chapter-body').textContent = observed.lede;
-    state.speed = observed.defaultSpeed;
+  source = mode === 'sim' ? story : replay();
+  if (mode !== 'sim') {
+    replay().reset();
+    showReplayText();
+    state.speed = replay().defaultSpeed;
   } else if (state.chapter >= 0) showChapter(state.chapter);
   syncModeRadios();
   document.body.dataset.mode = mode;
-  $('m-inc-label').textContent = mode === 'obs' ? 'Cases / day' : 'Onsets / day';
+  $('m-inc-label').textContent = mode !== 'sim' ? 'Cases / day' : 'Onsets / day';
   drawProvenance();
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
 }
 
+// The chapter text for real data: the observed epidemic, or the outbreak now playing in Compare.
+function showReplayText() {
+  const r = replay();
+  $('chapter-num').textContent = state.mode === 'cmp' ? `${r.phase + 1} / ${r.nPhases}` : 'OBS';
+  $('chapter-title').textContent = r.title;
+  $('chapter-body').textContent = r.lede;
+}
+
+// Compare: each outbreak's milestones appear on the shared axis as its clock passes them.
+function markCompareEvents() {
+  const evs = compare.events;
+  let changed = false;
+  while (comparePhaseEvents < evs.length && evs[comparePhaseEvents].t <= compare.t) {
+    const e = evs[comparePhaseEvents++];
+    events.push({ t: e.t, label: e.label, lineage: compare.phase === 0 ? 0 : 1 });
+    changed = true;
+  }
+  if (changed) { stage.setEvents(events.map(eventForStage)); drawEventButtons(true); }
+}
+function onComparePhase() {
+  // the first outbreak's last milestone falls on the very day it hands over (declared over)
+  for (const e of compare.phaseEvents(compare.phase - 1).slice(comparePhaseEvents)) events.push({ t: e.t, label: e.label, lineage: 0 });
+  stage.setEvents(events.map(eventForStage)); drawEventButtons(true);
+  comparePhaseEvents = 0;
+  // the first outbreak's bars become outlines; the second one fills an empty case series
+  const ghostBins = ledger.bins().map((b) => ({ t0: b.t0, n: b.byLineage[0] ?? 0 })).filter((b) => b.n);
+  stage.setGhost({ bins: ghostBins, surface: surfaceOf(0) });
+  state.pending = state.pending.filter((p) => p.c.lineage !== 0);
+  ledger = createLedger({ binDays: compare.binDays });
+  showReplayText();
+  discontinuity({ kind: 'variant' });
+}
+
 function drawProvenance() {
-  if (state.mode === 'obs') { $('provenance').innerHTML = observed.provenanceHTML(); return; }
+  if (state.mode !== 'sim') { $('provenance').innerHTML = replay().provenanceHTML(); return; }
   $('provenance').innerHTML = `<div class="panel__head">Source · simulated</div><p>Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.</p>`;
 }
 
@@ -381,7 +423,7 @@ function drawProvenance() {
 $('play').addEventListener('click', () => play());
 $('reset').addEventListener('click', () => {
   clearRun();
-  if (state.mode === 'obs') observed.reset();
+  if (state.mode !== 'sim') { replay().reset(); showReplayText(); }
   else { state.chapter = -1; goChapter(0); }
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
 });
@@ -408,6 +450,7 @@ for (const r of document.querySelectorAll('input[data-spread]')) r.addEventListe
   if (r.checked) stage.setSpread(r.dataset.spread);
 });
 $('mode-obs').addEventListener('click', () => setMode('obs'));
+$('mode-cmp').addEventListener('click', () => setMode('cmp'));
 $('sound').addEventListener('change', async (e) => {
   if (e.target.checked) { await audio.unlock(); if (!audio.ready) await audio.loadBank(); }
   audio.setMuted(!e.target.checked);
@@ -529,6 +572,13 @@ fetch('./data/ebola.json').then((r) => (r.ok ? r.json() : null)).then((data) => 
   observed = createObservedSource(data);
   $('mode-obs').disabled = false;
 }).catch(() => { $('mode-obs').disabled = true; });
+
+// Compare dataset: a contained outbreak and one that got away (mode disabled until it loads)
+fetch('./data/compare.json').then((r) => (r.ok ? r.json() : null)).then((data) => {
+  if (!data) { $('mode-cmp').disabled = true; return; }
+  compare = createCompareSource(data, { onPhase: () => { if (state.mode === 'cmp') onComparePhase(); } });
+  $('mode-cmp').disabled = false;
+}).catch(() => { $('mode-cmp').disabled = true; });
 
 // Check whether the sound bank exists so the start screen can say so
 fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
