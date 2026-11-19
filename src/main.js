@@ -390,16 +390,19 @@ function setMode(mode) {
   state.mode = mode;
   clearRun();
   source = mode === 'sim' ? story : replay();
+  // a new mode starts its story from the beginning and plays, as Reset does: the case
+  // series was just cleared, and the previous mode may have stopped at its end
   if (mode !== 'sim') {
     replay().reset();
     showReplayText();
     state.speed = replay().defaultSpeed;
-  } else if (state.chapter >= 0) showChapter(state.chapter);
+  } else { state.chapter = -1; goChapter(0); }
   syncModeRadios();
   document.body.dataset.mode = mode;
   $('m-inc-label').textContent = t(mode !== 'sim' ? 'Cases / day' : 'Onsets / day');
   drawProvenance();
   drawTree(); drawLegend(lineageOrder()); drawMetrics();
+  play(true);
 }
 
 // What the bars count, in the current language

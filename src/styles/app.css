@@ -44,7 +44,7 @@ sub { font-size: .6em; }
   display: grid; grid-template-columns: auto minmax(0, 36ch); column-gap: var(--ps-space-6); align-items: start;
 }
 .stage__text .ps-label { margin: 0 0 var(--ps-space-2); grid-column: 1 / -1; }
-.stage__text .ps-display { max-width: 12ch; font-size: var(--ps-fs-chapter); }
+.stage__text .ps-display { max-width: 12ch; min-width: min-content; font-size: var(--ps-fs-chapter); }   /* a word longer than 12ch ("Confinamiento") widens the column instead of spilling over the text */
 .stage__text .lede { font-size: var(--ps-fs-chapter-body); margin: 0; padding-top: 0.35em; }
 @media (max-width: 1100px) {
   .stage__text { grid-template-columns: minmax(0, 1fr); right: var(--ps-gutter); }
