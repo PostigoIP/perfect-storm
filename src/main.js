@@ -14,7 +14,7 @@ import { SURFACE_VAR } from './view/tokens.js';
 import { CHAPTERS, createStory } from './story.js';
 import { createObservedSource } from './model/observed.js';
 import { createCompareSource } from './model/compare.js';
-import { t, tName, num, getLang, setLang, onLangChange, translateDom } from './i18n.js';
+import { t, tName, num, getLang, setLang, onLangChange, translateDom, pickLang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 export const bus = createBus();
@@ -637,7 +637,7 @@ fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
   if (!r.ok) $('bank-status').textContent = t('Sound bank not generated yet. "Listen" will run silently for now.');
 }).catch(() => {});
 
-// Language: English by default; ?lang=es or the ES/EN button, remembered per viewer.
+// Language: Spanish if the browser prefers it, else English; ?lang= or the ES/EN button override it, remembered per viewer.
 function applyLanguage() {
   const es = getLang() === 'es';
   document.documentElement.lang = es ? 'es' : 'en';
@@ -677,7 +677,11 @@ requestAnimationFrame((now) => { last = now; frame(now); });
 {
   let saved = null;
   try { saved = localStorage.getItem('ps-lang'); } catch { /* no storage */ }
-  const wanted = new URLSearchParams(location.search).get('lang') ?? saved;
+  const wanted = pickLang({
+    param: new URLSearchParams(location.search).get('lang'),
+    saved,
+    browser: navigator.languages?.[0] ?? navigator.language,
+  });
   if (wanted === 'es') setLang('es'); else applyLanguage();
 }
 window.__ps = {
