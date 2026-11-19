@@ -210,6 +210,12 @@ let lang = 'en';
 const listeners = new Set();
 
 export const getLang = () => lang;
+// Which language to open in: ?lang= wins, then the viewer's saved choice, then the
+// browser's preferred language (Spanish if it is any kind of Spanish), else English.
+export function pickLang({ param, saved, browser } = {}) {
+  for (const v of [param, saved]) if (v === 'es' || v === 'en') return v;
+  return /^es\b/i.test(browser ?? '') ? 'es' : 'en';
+}
 export function setLang(l) {
   lang = l === 'es' ? 'es' : 'en';
   for (const f of listeners) f(lang);

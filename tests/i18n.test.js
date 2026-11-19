@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ES_STRINGS, t, tName, num, month, setLang } from '../src/i18n.js';
+import { ES_STRINGS, t, tName, num, month, setLang, pickLang } from '../src/i18n.js';
 import { CHAPTERS } from '../src/story.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -38,5 +38,23 @@ describe('Spanish', () => {
     expect(tName('Variant β')).toBe('Variante β');
     expect(num(10699)).toBe('10.699');
     expect(month(8)).toBe('sept');
+  });
+});
+
+describe('pickLang', () => {
+  it('follows the browser: any Spanish opens in Spanish, anything else in English', () => {
+    expect(pickLang({ browser: 'es-ES' })).toBe('es');
+    expect(pickLang({ browser: 'es-419' })).toBe('es');
+    expect(pickLang({ browser: 'es' })).toBe('es');
+    expect(pickLang({ browser: 'en-GB' })).toBe('en');
+    expect(pickLang({ browser: 'fr-FR' })).toBe('en');
+    expect(pickLang({ browser: 'eu-ES' })).toBe('en');
+    expect(pickLang({})).toBe('en');
+  });
+  it('a saved choice beats the browser, and ?lang= beats both', () => {
+    expect(pickLang({ browser: 'es-ES', saved: 'en' })).toBe('en');
+    expect(pickLang({ browser: 'en-US', saved: 'es' })).toBe('es');
+    expect(pickLang({ browser: 'es-ES', saved: 'es', param: 'en' })).toBe('en');
+    expect(pickLang({ browser: 'en-US', param: 'xx' })).toBe('en');
   });
 });
