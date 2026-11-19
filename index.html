@@ -46,6 +46,7 @@
         <div class="ps-metric"><dt class="ps-metric__label">Day</dt><dd class="ps-metric__value" id="m-day">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label" id="m-inc-label">Onsets / day</dt><dd class="ps-metric__value" id="m-inc">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label">Cumulative</dt><dd class="ps-metric__value" id="m-cum">0</dd></div>
+        <div class="ps-metric"><dt class="ps-metric__label">Deaths</dt><dd class="ps-metric__value" id="m-deaths">0</dd></div>
         <div class="ps-metric"><dt class="ps-metric__label"><var>R<sub>t</sub></var></dt><dd class="ps-metric__value" id="m-rt">—</dd></div>
       </dl>
     </section>
@@ -74,6 +75,12 @@
             <p class="ps-caption audio-status" id="audio-status" aria-live="off"></p>
             <p class="ps-caption" id="bank-note">Real CC0 rain on stone, glass, metal and leaves.</p>
           </div>
+          <label class="ps-field" for="speed">
+            <span class="ps-label">Speed</span>
+            <output class="ps-field__value" for="speed" id="speed-out"></output>
+            <input class="ps-slider" type="range" id="speed" min="0" max="11" step="1" />
+            <small class="field__hint">model days per second</small>
+          </label>
           <label class="ps-field" for="volume">
             <span class="ps-label">Volume</span>
             <output class="ps-field__value" for="volume" id="volume-out">80%</output>

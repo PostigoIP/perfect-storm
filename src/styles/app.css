@@ -53,7 +53,7 @@ sub { font-size: .6em; }
 /* metrics strip: the ground the bars stand on */
 .metrics {
   position: absolute; left: 0; right: 0; bottom: 0; margin: 0;
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0 var(--ps-space-5);
   padding: 0 var(--ps-gutter) var(--ps-space-3);
   background: var(--ps-paper);
@@ -159,7 +159,7 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
 
 @media (max-width: 900px) {
   .stage { height: calc(100svh - 3.5rem - var(--ps-dock-bar)); min-height: 520px; }
-  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ps-space-2) var(--ps-space-4); }
+  .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ps-space-2) var(--ps-space-4); }
 }
 @media (max-width: 40rem) {
   /* phone: wordmark + theme on one line, the data-source switch full width below */

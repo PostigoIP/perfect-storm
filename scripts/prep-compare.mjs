@@ -91,7 +91,7 @@ const out = {
       'Bundibugyo 2026: before 10 June WHO counted only suspected cases; the 676 confirmed by then are spread on a rising ramp from the first known onset (24 April).',
       'Bundibugyo 2026: the jump in the second half of July includes WHO\'s data reconciliation of 22 July, not only new illness.',
       'Both outbreaks start at day 0 = the first known case, and share the same speed, axis and vertical scale. Kasai stays on the axis as outlines while Bundibugyo falls.',
-      'Severity and outcome of each case are sampled from the reported fatality ratio, not observed.',
+      'Deaths match the reported totals (45; 5,202), but which cases died, and on which day, is drawn at random: the data does not say.',
     ],
   },
   lineages: [
@@ -102,7 +102,7 @@ const out = {
   ],
   phases: [
     {
-      key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), fatal: 45 / 64,
+      key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), deaths: 45,
       title: 'Kasai, 2025',
       lede: 'Zaire ebolavirus in Bulape, DR Congo. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.',
       days: kasaiDays,
@@ -113,7 +113,7 @@ const out = {
       ],
     },
     {
-      key: 'bundibugyo', start: BDB_START, end: bdbDays, fatal: 5198 / 10668,
+      key: 'bundibugyo', start: BDB_START, end: bdbDays, deaths: 5198 + 2 + 2,   // DRC, Uganda, Kenya
       title: 'Bundibugyo, 2026',
       lede: `Bundibugyo virus, from Ituri to Uganda, Kenya and beyond. No vaccine and no treatment. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,200 deaths by 3 November, and it has not stopped.`,
       days: bdbSeries,

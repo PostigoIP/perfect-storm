@@ -9,7 +9,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}) {
   const { meta, lineages, phases } = data;
-  let phase, t, cursor, cases, rand, idBase;
+  let phase, t, cursor, cases, rand, idBase, deaths;
 
   function synthesize() {
     const p = phases[phase];
@@ -19,21 +19,24 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}
       d.counts.forEach((n, l) => { for (let k = 0; k < n; k++) pool.push(l); });
       for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
       pool.forEach((l, k) => {
-        const fatal = rand() < p.fatal;
         cases.push({
           id: 0, parent: -1, lineage: l, muts: 0, tInf: NaN,
           tOnset: d.t + (k + rand()) / pool.length,
           detected: true, symptomatic: true,
-          severity: fatal ? 3 : 2, outcome: fatal ? 'fatal' : 'recovered',
+          severity: 2, outcome: 'recovered',
           sampled: false, inferred: true,
         });
       });
     }
+    // exactly the reported number of deaths, on cases drawn at random
+    const idx = cases.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    for (const i of idx.slice(0, p.deaths ?? 0)) { cases[i].outcome = 'fatal'; cases[i].severity = 3; }
     cases.sort((a, b) => a.tOnset - b.tOnset);
     cases.forEach((c, i) => (c.id = idBase + i));
   }
 
-  function enter(i) { phase = i; t = 0; cursor = 0; synthesize(); }
+  function enter(i) { phase = i; t = 0; cursor = 0; deaths = 0; synthesize(); }
   function reset() { rand = mulberry32(seed); idBase = 0; enter(0); }
 
   const api = {
@@ -55,7 +58,7 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}
     step(dtDays) {
       const end = phases[phase].end;
       const t1 = t + dtDays, out = [];
-      while (cursor < cases.length && cases[cursor].tOnset <= t1) out.push(cases[cursor++]);
+      while (cursor < cases.length && cases[cursor].tOnset <= t1) { const c = cases[cursor++]; if (c.outcome === 'fatal') deaths++; out.push(c); }
       t = Math.min(t1, end);
       // the first outbreak is over: the second one starts again from day 0
       if (t >= end && phase < phases.length - 1) {
@@ -69,7 +72,7 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}
     snapshot() {
       let day = 0;
       for (let i = cursor - 1; i >= 0 && cases[i].tOnset > t - 1; i--) day++;
-      return { t, incidenceToday: day, cumulative: cursor, rtGenealogy: null, reffAnalytic: null };
+      return { t, incidenceToday: day, cumulative: cursor, deaths, rtGenealogy: null, reffAnalytic: null };
     },
     tree() { return { root: null, tips: [] }; },
     domain() { return { ...meta.domain }; },

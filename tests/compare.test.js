@@ -73,3 +73,19 @@ describe('compare milestones', () => {
     expect(src.phaseEvents(1).length).toBeGreaterThan(0);
   });
 });
+
+describe('compare deaths', () => {
+  it('marks exactly the reported number of deaths in each outbreak', () => {
+    const src = createCompareSource(data);
+    const byPhase = [[], []];
+    while (!src.done) { const p = src.phase; byPhase[p].push(...src.step(1)); }
+    expect(byPhase[0].filter((c) => c.outcome === 'fatal').length).toBe(45);
+    expect(byPhase[1].filter((c) => c.outcome === 'fatal').length).toBe(5202);
+  });
+  it('reports deaths so far in the snapshot', () => {
+    const src = createCompareSource(data);
+    expect(src.snapshot().deaths).toBe(0);
+    src.step(60);
+    expect(src.snapshot().deaths).toBe(45);
+  });
+});

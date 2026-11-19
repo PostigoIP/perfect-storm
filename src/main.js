@@ -26,6 +26,7 @@ const state = {
   chapter: -1,
   pending: [],          // visual drops waiting for their audio onset
   gen: 0,
+  deaths: 0,            // deaths among the cases so far (each counted as its case falls)
 };
 
 let sim = createSim({ seed: 42 });
@@ -86,6 +87,7 @@ function frame(now) {
     if (state.mode === 'cmp') markCompareEvents();
     if (source.done) play(false);   // the observed data has ended: stop, and let the rain fade
     for (const c of onsets) {
+      if (c.outcome === 'fatal') state.deaths++;
       const offset = Math.max(0, (c.tOnset - tStart) / state.speed);
       const surface = surfaceOf(c.lineage);
       const landAt = now + offset * 1000 + FALL_MS;
@@ -197,9 +199,11 @@ function drawMetrics() {
   $('m-day').textContent = state.mode === 'cmp' ? compare.dateLabel(s.t) : state.mode === 'obs' ? observed.fmt(s.t) : Math.floor(s.t);
   $('m-inc').textContent = s.incidenceToday.toLocaleString('en');
   $('m-cum').textContent = s.cumulative.toLocaleString('en');
+  $('m-deaths').textContent = state.deaths.toLocaleString('en');
   const rt = s.rtGenealogy ?? s.reffAnalytic;
   $('m-rt').textContent = rt == null ? '—' : rt.toFixed(2);
   syncSliders(s.params ?? {});
+  syncSpeed();
 }
 
 // ── controls ─────────────────────────────────────────────────────────────
@@ -210,9 +214,20 @@ const SLIDERS = [
   { k: 'detection', label: 'Reporting', hint: 'probability a case is reported', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'sampling', label: 'Sequencing', hint: 'share of reported cases sequenced', min: 0.01, max: 0.3, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'importRate', label: 'Imports', hint: 'per day, fall on leaves', min: 0, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
-  { k: 'speed', label: 'Speed', hint: 'model days per second', min: 0.25, max: 4, step: 0.25, fmt: (v) => `${v}×`, app: true },
 ];
 const sliderEls = {};
+// Speed, in Transport so it works in every mode: model days per real second, in stops.
+const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 3, 5, 8, 12, 20, 30, 50];
+const speedIndex = (v) => SPEEDS.reduce((best, s, i) => (Math.abs(s - v) < Math.abs(SPEEDS[best] - v) ? i : best), 0);
+const fmtSpeed = (v) => `${v} ${v === 1 ? 'day' : 'days'} / s`;
+function syncSpeed() {
+  const input = $('speed');
+  if (document.activeElement !== input) input.value = speedIndex(state.speed);
+  $('speed-out').textContent = fmtSpeed(state.speed);
+  setFill(input);
+}
+$('speed').addEventListener('input', (e) => { state.speed = SPEEDS[+e.target.value]; syncSpeed(); });
+
 function buildSliders() {
   const host = $('params');
   for (const d of SLIDERS) {
@@ -322,7 +337,8 @@ function rewindTo(k) {
   state.gen++; state.pending = [];
   stage.clear();
   ledger = createLedger({ binDays: 1 });
-  for (const c of sim.onsets) ledger.land(c);
+  state.deaths = 0;
+  for (const c of sim.onsets) { ledger.land(c); if (c.outcome === 'fatal') state.deaths++; }
   stage.setEvents(events.map(eventForStage));
   selectedEvent = k; stage.setSelectedEvent(k);
   legendKey = '';
@@ -338,6 +354,7 @@ $('events').addEventListener('click', (ev) => {
 function clearRun() {
   state.gen++;
   state.pending = [];
+  state.deaths = 0;
   events = []; stage.setEvents(events); selectedEvent = -1; stage.setSelectedEvent(-1); $('events').innerHTML = '';
   stage.setUnitLabel(state.mode === 'cmp' ? compare.unitLabel : state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset');
   ledger = createLedger({ binDays: state.mode === 'cmp' ? compare.binDays : state.mode === 'obs' ? 7 : 1 });
@@ -410,6 +427,7 @@ function onComparePhase() {
   stage.setGhost({ bins: ghostBins, surface: surfaceOf(0) });
   state.pending = state.pending.filter((p) => p.c.lineage !== 0);
   ledger = createLedger({ binDays: compare.binDays });
+  state.deaths = 0;   // like Cumulative, Deaths counts the outbreak now playing
   showReplayText();
   discontinuity({ kind: 'variant' });
 }
@@ -594,7 +612,7 @@ window.__ps = {
   state, sim: () => sim, audio, stage,
   // debug: advance the active source by `days` and redraw (used for checks when the page is throttled)
   advance(days) {
-    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) ledger.land(c); }
+    for (let d = 0; d < days; d += 0.4) { const ev = source.step(0.4); for (const c of ev) { ledger.land(c); if (c.outcome === 'fatal') state.deaths++; } }
     drawTree(); drawLegend(lineageOrder()); drawMetrics();
   },
 };
