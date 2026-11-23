@@ -19,12 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-This licence covers the code only. Other parts of this repository are licensed
-separately; see "Credits and licences" in README.md:
-  - original content (texts, design, generated sounds): CC BY-NC 4.0
-  - public/data/ebola.json: CC BY-SA 4.0 (derived from ebov/space-time)
-  - public/data/compare.json: CC BY-NC-SA 3.0 IGO (derived from WHO publications)
-  - Freesound recordings: CC0 1.0; fonts: their own open licences
