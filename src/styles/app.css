@@ -124,6 +124,7 @@ sub { font-size: .6em; }
 .provenance li { display: block; padding-left: 2.25em; text-indent: -2.25em; }
 .provenance li::before { display: inline-block; width: 2.25em; text-indent: 0; }
 .provenance ul { margin-bottom: var(--ps-space-3); }
+.provenance__licence { margin: var(--ps-space-4) 0 0; padding-top: var(--ps-space-3); border-top: var(--ps-rule-w) solid var(--ps-rule); font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); }
 .provenance p { margin: 0; }
 
 /* figure marks */

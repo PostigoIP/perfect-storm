@@ -31,6 +31,17 @@ npm run build      # static site in dist/
 
 ## Credits and licences
 
+Perfect Storm is by **Ignacio Postigo**, © 2026.
+
+| Part | Licence |
+|---|---|
+| Code (`src/`, `scripts/`, `tools/`, `design-system/`, `index.html`) | [MIT](LICENSE) |
+| Original content: texts, design, and the ElevenLabs-generated sounds in `public/sounds/` and `public/sounds-textures/` | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): reuse with credit ("Ignacio Postigo, Perfect Storm"), not for commercial purposes; for commercial use, ask the author |
+| `public/data/ebola.json` | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), as its source |
+| `public/data/compare.json` | [CC BY-NC-SA 3.0 IGO](https://creativecommons.org/licenses/by-nc-sa/3.0/igo/), as WHO's publications it is derived from |
+| Freesound recordings | CC0 1.0 (credited below) |
+| Fonts | their own open licences, loaded from Google Fonts |
+
 **Data (observed mode)** — `public/data/ebola.json` is derived from:
 - Nextstrain `ebola` build (time-resolved phylogeny of Makona genomes), https://nextstrain.org/ebola;
   Dudas G. et al., *Virus genomes reveal factors that spread and sustained the Ebola epidemic*, Nature 544, 309–315 (2017).
@@ -40,6 +51,7 @@ npm run build      # static site in dist/
 **Data (Compare mode)** — `public/data/compare.json` is built by `scripts/prep-compare.mjs` from WHO publications:
 the Kasai 2025 epidemic curve (Disease Outbreak News DON589) and the dated Bundibugyo 2026 totals (DON602–DON625).
 Bundibugyo's daily pace between reports is a reconstruction; the transformations are listed on the page.
+WHO content is licensed CC BY-NC-SA 3.0 IGO; the derived `compare.json` is shared under the same licence. WHO does not endorse this work.
 
 **Sound**
 - Drops and rain: CC0 1.0 recordings from Freesound — see `public/sounds-field/SOURCES.md` and `public/sounds-drops/SOURCES.md`
@@ -48,4 +60,4 @@ Bundibugyo's daily pace between reports is a reconstruction; the transformations
 
 **Fonts** — loaded from Google Fonts under their respective open licences (see `design-system/README.md`).
 
-**Code** — © the author. No open-source licence has been chosen yet.
+**Code** — © 2026 Ignacio Postigo, MIT licence (see `LICENSE`).

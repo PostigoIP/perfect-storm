@@ -445,9 +445,24 @@ function onComparePhase() {
   discontinuity({ kind: 'variant' });
 }
 
+// Who made it and how it may be reused; the data licence follows the case on screen.
+const LICENCE = {
+  mit: 'https://github.com/PostigoIP/perfect-storm/blob/main/LICENSE',
+  byNc: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  bysa: 'https://creativecommons.org/licenses/by-sa/4.0/',
+  whoNcSa: 'https://creativecommons.org/licenses/by-nc-sa/3.0/igo/',
+  repo: 'https://github.com/PostigoIP/perfect-storm',
+};
+function licenceHTML() {
+  const a = (href, text) => `<a href="${href}" rel="noopener license" target="_blank">${text}</a>`;
+  const data = state.mode === 'obs' ? ` · ${t('Data')} ${a(LICENCE.bysa, 'CC BY-SA 4.0')}`
+    : state.mode === 'cmp' ? ` · ${t('Data')} © ${t('WHO')}, ${a(LICENCE.whoNcSa, 'CC BY-NC-SA 3.0 IGO')}` : '';
+  return `<p class="provenance__licence">© 2026 Ignacio Postigo · ${t('Code')} ${a(LICENCE.mit, 'MIT')} · ${t('Content')} ${a(LICENCE.byNc, 'CC BY-NC 4.0')}${data} · ${a(LICENCE.repo, t('Source code'))}</p>`;
+}
 function drawProvenance() {
-  if (state.mode !== 'sim') { $('provenance').innerHTML = replay().provenanceHTML(); return; }
-  $('provenance').innerHTML = `<div class="panel__head">${t('Source · simulated')}</div><p>${t('Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.')}</p>`;
+  const body = state.mode !== 'sim' ? replay().provenanceHTML()
+    : `<div class="panel__head">${t('Source · simulated')}</div><p>${t('Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.')}</p>`;
+  $('provenance').innerHTML = body + licenceHTML();
 }
 
 // ── wiring ───────────────────────────────────────────────────────────────
