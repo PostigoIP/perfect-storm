@@ -105,7 +105,7 @@ const out = {
       key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), deaths: 45,
       // headline: the three things that differed, then the outcome (WHO DON589)
       place: 'Kasai, DRC, 2025',
-      title: 'With a vaccine, a treatment and a remote rural area, Ebola stopped at 64 cases.',
+      title: 'With a vaccine, a treatment and a remote rural area, the outbreak stopped at 64 cases.',
       lede: 'Ebola virus (Zaire species) in a hard-to-reach rural area of Kasai, DRC. 47,577 people vaccinated; patients treated with antibodies. 64 cases and 45 deaths, all in one health zone; declared over on 1 December 2025.',
       days: kasaiDays,
       events: [
@@ -118,7 +118,7 @@ const out = {
       key: 'bundibugyo', start: BDB_START, end: bdbDays, deaths: 5198 + 2 + 2,   // DRC, Uganda, Kenya
       // the same three, the other way round (WHO DON602: no licensed vaccine or therapeutics; conflict and mobility in Ituri)
       place: 'Ituri, DRC, 2026',
-      title: `With no vaccine, no treatment and a conflict zone, it reached ${bdbTotal.toLocaleString('en')} cases and has not stopped.`,
+      title: `With no vaccine, no treatment and a conflict zone, the outbreak reached ${bdbTotal.toLocaleString('en')} cases and has not stopped.`,
       lede: `Bundibugyo virus, another ebolavirus species: no licensed vaccine or specific treatment. In Ituri, conflict and highly mobile populations hamper contact tracing. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, and still ongoing.`,
       days: bdbSeries,
       events: [
