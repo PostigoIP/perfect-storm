@@ -87,7 +87,7 @@ export function createObservedSource(data, { seed = 7 } = {}) {
     provenanceHTML() {
       const src = meta.sources.map((s) => `<li><a href="${s.url}" rel="noopener" target="_blank">${tr(s.name)}</a>. ${tr(s.citation ?? '')} <em>${tr(s.license ?? '')}</em></li>`).join('');
       const trs = meta.transformations.map((x) => `<li>${tr(x)}</li>`).join('');
-      return `<div class="panel__head">${tr('Source · observed')}</div><ul>${src}</ul><div class="panel__head">${tr('Transformations')}</div><ul>${trs}</ul><p><strong>${tr('Inferred:')}</strong> ${tr('severity and outcome of individual cases are sampled')} (${Math.round(sev.fatal * 100)}% ${tr('fatal')}), ${tr('not observed. Drops within a week are spread evenly; their timing inside the week is not data.')}</p>`;
+      return `<div class="panel__head">${tr('Source · observed')}</div><ul>${src}</ul><div class="panel__head">${tr('Transformations')}</div><ul>${trs}</ul><p><strong>${tr('Inferred:')}</strong> ${tr('the severity and outcome of individual cases are sampled')} (${Math.round(sev.fatal * 100)}% ${tr('fatal')}), ${tr('rather than observed. Drops within a week are spaced evenly, so their exact timing inside the week is not observed data.')}</p>`;
     },
   };
   reset();

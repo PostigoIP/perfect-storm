@@ -59,19 +59,16 @@ for (const w of weeks) if (!usedOther) w.counts.length = 3;
 const out = {
   meta: {
     title: 'West Africa, 2013–2016',
-    lede: `Ebola virus, Zaire species (the Makona variant). ${total.toLocaleString('en')} reported cases in Guinea, Sierra Leone and Liberia, one drop each, week by week. ${tips.length.toLocaleString('en')} genomes grow the tree as their sampling dates arrive.`,
+    lede: `Ebola virus, Zaire species (Makona variant). Starting in Guinea in late 2013, the outbreak crossed into Sierra Leone and Liberia and became the largest Ebola epidemic on record. Here you hear ${total.toLocaleString('en')} reported cases across the three countries, falling one drop at a time, week by week.`,
     start: START,
     defaultSpeed: 5,
     inferred: { severe: 0.6, fatal: 0.4 },
     sources: [
-      { name: 'Nextstrain · ebola', url: 'https://nextstrain.org/ebola', citation: `Time-resolved phylogeny of Makona genomes; Dudas et al., Nature 544:309 (2017). Build updated ${tree.meta.updated}.`, license: 'see nextstrain.org' },
-      { name: 'ebov/space-time · weekly cases by district', url: 'https://github.com/ebov/space-time', citation: 'WHO patient database counts (max of confirmed and probable), compiled for Dudas et al. 2017.', license: 'CC BY-SA 4.0' },
+      { name: 'ebov/space-time · weekly cases by district', url: 'https://github.com/ebov/space-time', citation: 'Counts from the WHO patient database (taking the higher of confirmed and probable cases), compiled for Dudas et al. (2017).', license: 'CC BY-SA 4.0' },
     ],
     transformations: [
-      'Tree dates (decimal years) converted to days since 30 Dec 2013; tips coloured by sampling country; internal nodes inherit their parent\'s country when unannotated.',
-      'District weekly counts summed to country; trailing empty weeks removed.',
-      'Each week\'s count is replayed as that many onsets spread evenly across the week.',
-      'At most 400 tips are drawn at once, thinned evenly over time.',
+      'Weekly district counts are summed by country, and trailing empty weeks are removed.',
+      'Each week\'s total is played back as an equal number of cases spaced evenly across the seven days.',
     ],
   },
   lineages: LIN_OUT.map(({ name, surface }) => ({ name, surface })),

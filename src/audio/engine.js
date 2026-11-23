@@ -178,7 +178,7 @@ export function createAudio({ manifestUrl = './sounds/manifest.json', fetchFn = 
       if (!ctx) {
         // iPhone: Web Audio starts in the 'ambient' session, which the silent switch
         // mutes. Ask for 'playback' (iOS 17+) only once the visitor chose Listen, so
-        // "Watch in silence" never interrupts their own music.
+        // "Watch without sound" never interrupts their own music.
         try { if (globalThis.navigator?.audioSession) globalThis.navigator.audioSession.type = 'playback'; } catch { /* not allowed here */ }
         ctx = new AC({ latencyHint: 'interactive' });
       }

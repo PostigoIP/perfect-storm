@@ -167,15 +167,15 @@ function drawLegend(order) {
   const key = items.join(',') + state.mode + [...mutedLineages].join('.') + audio.deaths + getLang();
   if (key === legendKey) return;
   legendKey = key;
-  const ROLE = (l) => (state.mode === 'cmp' ? 'outbreak' : state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'brought in from outside' : 'new variant');
+  const ROLE = (l) => (state.mode === 'cmp' ? 'outbreak' : state.mode === 'obs' ? 'cases in' : l === 0 ? 'founder virus' : lineageLabel(l) === 'Imported' ? 'imported from outside' : 'new variant');
   $('legend').innerHTML = order.map((l) => {
     const s = surfaceOf(l);
     const name = tName(lineageLabel(l));
     const on = !mutedLineages.has(l);
-    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${t(on ? "Mute this lineage's sound" : "Unmute this lineage's sound")}"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${t(ROLE(l))} · ${on ? `${t('sound')}: ${t(soundName(materialOf(l)))}` : t('muted')}</span></button></li>`;
+    return `<li><button type="button" class="stage__legend-item" data-lineage="${l}" aria-pressed="${on}" title="${t(on ? "Mute this lineage" : "Unmute this lineage")}"><span class="stage__legend-sw" style="background:var(${SURFACE_VAR[s]})"></span><span class="stage__legend-name">${name}</span><span class="stage__legend-sub">${t(ROLE(l))} · ${on ? `${t('sound')}: ${t(soundName(materialOf(l)))}` : t('muted')}</span></button></li>`;
   }).join('') +
-  `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${t(audio.deaths ? 'Mute the extra low sound played for each death' : 'Unmute the extra low sound played for each death')}"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">${t('Deaths')}</span><span class="stage__legend-sub">${t(audio.deaths ? 'an extra low knock per death' : 'muted')}</span></button></li>` +
-  `<li class="stage__legend-key"><span class="stage__legend-sw"></span>${t('reported')}<span class="stage__legend-sw stage__legend-sw--faint"></span>${t('never reported')}</li>` +
+  `<li><button type="button" class="stage__legend-item" data-layer="deaths" aria-pressed="${audio.deaths}" title="${t(audio.deaths ? 'Mute the low knock for deaths' : 'Unmute the low knock for deaths')}"><span class="stage__legend-sw stage__legend-sw--death"></span><span class="stage__legend-name">${t('Deaths')}</span><span class="stage__legend-sub">${t(audio.deaths ? 'an extra low knock for each death' : 'muted')}</span></button></li>` +
+  `<li class="stage__legend-key"><span class="stage__legend-sw"></span>${t('reported')}<span class="stage__legend-sw stage__legend-sw--faint"></span>${t('unreported')}</li>` +
   `<li class="stage__legend-hint">${t('click a line to mute or unmute its sound')}</li>`;
 }
 
@@ -213,7 +213,7 @@ const SLIDERS = [
   { k: 'immunity', label: 'Vaccination target', hint: 'share of population', min: 0, max: 0.9, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'detection', label: 'Reporting', hint: 'probability a case is reported', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
   { k: 'sampling', label: 'Sequencing', hint: 'share of reported cases sequenced', min: 0.01, max: 0.3, step: 0.01, fmt: (v) => `${Math.round(v * 100)}%` },
-  { k: 'importRate', label: 'Imports', hint: 'per day, fall on leaves', min: 0, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
+  { k: 'importRate', label: 'Imports', hint: 'per day, falling on leaves', min: 0, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
 ];
 const sliderEls = {};
 // Speed, in Transport so it works in every mode: model days per real second, in stops.
@@ -406,14 +406,14 @@ function setMode(mode) {
 
 // What the bars count, in the current language
 function applyUnitLabel() {
-  stage.setUnitLabel(t(state.mode === 'cmp' ? compare.unitLabel : state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by onset'));
+  stage.setUnitLabel(t(state.mode === 'cmp' ? compare.unitLabel : state.mode === 'obs' ? 'reported cases per week' : 'cases per day, by symptom onset'));
 }
 
 // The chapter text for real data: the observed epidemic, or the outbreak now playing in Compare.
 function showReplayText() {
   const r = replay();
   $('chapter-num').textContent = state.mode === 'cmp'
-    ? `${t('Comparison')} · ${r.phase + 1} / ${r.nPhases}${r.phase > 0 ? ` · ${t('Kasai in outline')}` : ''}`
+    ? `${t('Comparison')} · ${r.phase + 1} / ${r.nPhases}${r.phase > 0 ? ` · ${t('Kasai outline')}` : ''}`
     : t('Real data');
   $('chapter-title').textContent = t(r.title);
   $('chapter-body').textContent = t(r.lede);
@@ -457,11 +457,11 @@ function licenceHTML() {
   const a = (href, text) => `<a href="${href}" rel="noopener license" target="_blank">${text}</a>`;
   const data = state.mode === 'obs' ? ` · ${t('Data')} ${a(LICENCE.bysa, 'CC BY-SA 4.0')}`
     : state.mode === 'cmp' ? ` · ${t('Data')} © ${t('WHO')}, ${a(LICENCE.whoNcSa, 'CC BY-NC-SA 3.0 IGO')}` : '';
-  return `<p class="provenance__licence">© 2026 Ignacio Postigo · ${t('Code')} ${a(LICENCE.mit, 'MIT')} · ${t('Content')} ${a(LICENCE.byNc, 'CC BY-NC 4.0')}${data} · ${a(LICENCE.repo, t('Source code'))}</p>`;
+  return `<p class="provenance__licence">© 2026 Ignacio Postigo-Hidalgo · ${t('Code')} ${a(LICENCE.mit, 'MIT')} · ${t('Content')} ${a(LICENCE.byNc, 'CC BY-NC 4.0')}${data} · ${a(LICENCE.repo, t('Source code'))}</p>`;
 }
 function drawProvenance() {
   const body = state.mode !== 'sim' ? replay().provenanceHTML()
-    : `<div class="panel__head">${t('Source · simulated')}</div><p>${t('Simulated. Stochastic SEIR (chain-binomial, 100,000 people) in which every infection records its infector. The tree is the time-resolved ancestry of sequenced cases; variants arise as mutations on one branch. Clinical attributes are drawn from fixed distributions.')}</p>`;
+    : `<div class="panel__head">${t('Source · simulated')}</div><p>${t('This scenario is simulated using a stochastic SEIR model (chain-binomial, 100,000 people) in which every infection records who transmitted it. The tree shows the time-resolved ancestry of sequenced cases, and variants arise as mutations along a branch. Clinical attributes are sampled from fixed distributions.')}</p>`;
   $('provenance').innerHTML = body + licenceHTML();
 }
 
@@ -506,7 +506,7 @@ $('sound').addEventListener('change', async (e) => {
 function syncMute() {
   const on = $('sound').checked, b = $('mute');
   b.setAttribute('aria-pressed', String(!on));
-  b.dataset.enAriaLabel = b.dataset.enTitle = on ? 'Sound off' : 'Sound on';
+  b.dataset.enAriaLabel = b.dataset.enTitle = on ? 'Mute' : 'Unmute';
   b.setAttribute('aria-label', t(b.dataset.enAriaLabel)); b.title = t(b.dataset.enTitle);
   b.classList.toggle('is-off', !on);
 }
@@ -566,7 +566,7 @@ fetch('./data/compare.json').then((r) => (r.ok ? r.json() : null)).then((data) =
 
 // Check whether the sound bank exists so the start screen can say so
 fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
-  if (!r.ok) $('bank-status').textContent = t('Sound bank not generated yet. "Listen" will run silently for now.');
+  if (!r.ok) $('bank-status').textContent = t('The sound bank has not been generated yet. "Listen" will play silently for now.');
 }).catch(() => {});
 
 // Language: English first; ?lang= or the ES/EN button switch it, remembered per viewer.

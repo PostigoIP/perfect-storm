@@ -31,12 +31,12 @@ npm run build      # static site in dist/
 
 ## Credits and licences
 
-Perfect Storm is by **Ignacio Postigo**, © 2026.
+Perfect Storm is by **Ignacio Postigo-Hidalgo**, © 2026.
 
 | Part | Licence |
 |---|---|
 | Code (`src/`, `scripts/`, `tools/`, `design-system/`, `index.html`) | [MIT](LICENSE) |
-| Original content: texts, design, and the ElevenLabs-generated sounds in `public/sounds/` and `public/sounds-textures/` | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): reuse with credit ("Ignacio Postigo, Perfect Storm"), not for commercial purposes; for commercial use, ask the author |
+| Original content: texts, design, and the ElevenLabs-generated sounds in `public/sounds/` and `public/sounds-textures/` | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): reuse with credit ("Ignacio Postigo-Hidalgo, Perfect Storm"), not for commercial purposes; for commercial use, ask the author |
 | `public/data/ebola.json` | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), as its source |
 | `public/data/compare.json` | [CC BY-NC-SA 3.0 IGO](https://creativecommons.org/licenses/by-nc-sa/3.0/igo/), as WHO's publications it is derived from |
 | Freesound recordings | CC0 1.0 (credited below) |
@@ -60,4 +60,4 @@ WHO content is licensed CC BY-NC-SA 3.0 IGO; the derived `compare.json` is share
 
 **Fonts** — loaded from Google Fonts under their respective open licences (see `design-system/README.md`).
 
-**Code** — © 2026 Ignacio Postigo, MIT licence (see `LICENSE`).
+**Code** — © 2026 Ignacio Postigo-Hidalgo, MIT licence (see `LICENSE`).

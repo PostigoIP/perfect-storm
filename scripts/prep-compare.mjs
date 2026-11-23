@@ -79,19 +79,19 @@ const out = {
     binDays: 1,
     yMax: peak,
     domain: { t0: -4, t1: 205 },
-    unitLabel: 'cases per day, days since the first case',
+    unitLabel: 'cases per day, since the first case',
     sources: [
-      { name: 'WHO · Disease Outbreak News, Ebola, DRC (DON580, DON589)', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2025-DON589', citation: 'Kasai 2025: 53 confirmed and 11 probable cases, 45 deaths; daily epidemic curve by symptom onset (Figure 2), as of 30 Nov 2025.' },
-      { name: 'WHO AFRO · end of the 16th Ebola outbreak', url: 'https://www.afro.who.int/countries/democratic-republic-of-congo/news/democratic-republic-congo-declares-end-of16thebola-outbreak', citation: '47,577 people vaccinated; outbreak declared over on 1 Dec 2025.' },
-      { name: 'WHO · Disease Outbreak News, Bundibugyo virus (DON602–DON625)', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON625', citation: 'Bundibugyo 2026: confirmed cases by country, as of 3 Nov 2026 (DRC 10,668 confirmed, 5,198 deaths).' },
+      { name: 'WHO · Disease Outbreak News, Ebola, DRC (DON580, DON589)', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2025-DON589', citation: 'Kasai 2025: 53 confirmed and 11 probable cases, with 45 deaths. Daily epidemic curve by symptom onset (Figure 2), as of 30 Nov 2025.' },
+      { name: 'WHO AFRO · End of the 16th Ebola outbreak', url: 'https://www.afro.who.int/countries/democratic-republic-of-congo/news/democratic-republic-congo-declares-end-of16thebola-outbreak', citation: '47,577 people were vaccinated, and the outbreak was declared over on 1 Dec 2025.' },
+      { name: 'WHO · Disease Outbreak News, Bundibugyo virus (DON602–DON625)', url: 'https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON625', citation: 'Bundibugyo 2026: confirmed cases by country as of 3 Nov 2026 (DRC: 10,668 confirmed cases and 5,198 deaths).' },
     ],
     transformations: [
-      'Kasai 2025: each day\'s cases (confirmed and probable) read off WHO\'s epidemic curve by date of symptom onset; the read totals match WHO\'s 53 + 11.',
-      'Bundibugyo 2026: confirmed cases by date of report, not of onset. Between two WHO reports the new cases are spread at a steady pace; each report\'s total is met exactly.',
-      'Bundibugyo 2026: before 10 June WHO counted only suspected cases; the 676 confirmed by then are spread on a rising ramp from the first known onset (24 April).',
-      'Bundibugyo 2026: the jump in the second half of July includes WHO\'s data reconciliation of 22 July, not only new illness.',
-      'Both outbreaks start at day 0 = the first known case, and share the same speed, axis and vertical scale. Kasai stays on the axis as outlines while Bundibugyo falls.',
-      'Deaths match the reported totals (45; 5,202), but which cases died, and on which day, is drawn at random: the data does not say.',
+      'For Kasai 2025, daily cases (confirmed and probable) were read from the WHO epidemic curve by date of symptom onset; the extracted totals match WHO\'s 53 + 11.',
+      'For Bundibugyo 2026, confirmed cases are plotted by date of report rather than onset. Between two WHO reports, new cases are distributed at a steady pace so that each report\'s cumulative total is matched exactly.',
+      'Before 10 June, WHO counted only suspected cases in Bundibugyo 2026; the 676 cases confirmed by that date are distributed along a rising ramp starting from the first known onset on 24 April.',
+      'The jump in the second half of July reflects WHO\'s data reconciliation on 22 July, not only newly diagnosed cases.',
+      'Both outbreaks start on day 0 (the first known case) and share the same speed, time axis and vertical scale. Kasai remains on the axis as an outline while Bundibugyo plays.',
+      'Deaths match the reported totals (45 and 5,202), but which specific cases died—and on which day—is assigned at random, since the data does not specify it.',
     ],
   },
   lineages: [
@@ -104,18 +104,18 @@ const out = {
     {
       key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), deaths: 45,
       title: 'Kasai, DRC 2025: contained',
-      lede: 'Ebola virus, Zaire species, in Bulape, Kasai province, DRC. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.',
+      lede: 'Ebola virus, Zaire species, in Bulape (Kasai province, DRC). There were 64 cases and 45 deaths. Because a vaccine was available, 47,577 people were vaccinated; the last patient fell ill on 23 September, and the outbreak was declared over on 1 December.',
       days: kasaiDays,
       events: [
         { t: dayOf(KASAI_START, '2025-09-04'), label: 'Declared' },
-        { t: dayOf(KASAI_START, '2025-10-19'), label: 'Last patient out' },
+        { t: dayOf(KASAI_START, '2025-10-19'), label: 'Last patient discharged' },
         { t: dayOf(KASAI_START, '2025-12-01'), label: 'Over' },
       ],
     },
     {
       key: 'bundibugyo', start: BDB_START, end: bdbDays, deaths: 5198 + 2 + 2,   // DRC, Uganda, Kenya
       title: 'Bundibugyo 2026: not contained',
-      lede: `Bundibugyo virus, a different ebolavirus species, from Ituri to Uganda, Kenya and beyond. No approved vaccine or treatment. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, when it had not stopped.`,
+      lede: `Bundibugyo virus, a different ebolavirus species, spreading from Ituri into Uganda, Kenya and beyond. With no approved vaccine or treatment, there were ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, and the outbreak was still ongoing.`,
       days: bdbSeries,
       events: [
         { t: dayOf(BDB_START, '2026-05-15'), label: 'Declared' },

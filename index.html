@@ -4,20 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Perfect Storm</title>
-  <meta name="description" content="Auditory epidemiology. Every case is one drop; rain is what an outbreak sounds like." />
+  <meta name="description" content="Auditory epidemiology. Every case is a drop of rain, and together they form an outbreak, a storm." />
   <!-- link preview (LinkedIn, X, WhatsApp…): absolute URLs to the published site -->
-  <meta name="author" content="Ignacio Postigo" />
+  <meta name="author" content="Ignacio Postigo-Hidalgo" />
   <meta property="og:type" content="article" />
-  <meta property="article:author" content="Ignacio Postigo" />
+  <meta property="article:author" content="Ignacio Postigo-Hidalgo" />
   <meta property="article:published_time" content="2026-11-23T00:00:00Z" />
   <meta property="og:site_name" content="Perfect Storm" />
   <meta property="og:url" content="https://postigoip.github.io/perfect-storm/" />
   <meta property="og:title" content="Perfect Storm · What if you could hear an epidemic?" />
-  <meta property="og:description" content="Every case is one drop of rain. A simulated respiratory virus, two Ebola outbreaks compared, and Ebola in West Africa, 2014. Headphones recommended." />
+  <meta property="og:description" content="Every case falls as a single drop of rain. Explore a simulated respiratory virus, a comparison of two Ebola outbreaks, and the 2014 West Africa epidemic. Headphones recommended." />
   <meta property="og:image" content="https://postigoip.github.io/perfect-storm/og.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Bundibugyo 2026: bars of daily cases rise to a hundred a day while rain falls over the chart." />
+  <meta property="og:image:alt" content="Bundibugyo 2026: daily case bars rise to a hundred a day as rain falls across the chart." />
   <meta property="og:locale" content="en_US" />
   <meta property="og:locale:alternate" content="es_ES" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -36,32 +36,32 @@
     <div class="topbar__controls">
       <fieldset class="ps-seg">
         <legend data-i18n>Case</legend>
-        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span data-i18n>Respiratory virus: Simulation</span></label>
-        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="A contained outbreak, then one that got away" data-i18n-attr="title" /><span data-i18n>Two EBOV Outbreaks</span></label>
-        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span data-i18n>EBOV Western Africa 2014</span></label>
+        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span data-i18n>Respiratory virus (simulation)</span></label>
+        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="One contained outbreak, and another out of control" data-i18n-attr="title" /><span data-i18n>Two Ebola outbreaks</span></label>
+        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span data-i18n>Ebola in West Africa, 2014</span></label>
       </fieldset>
       <div class="topbar__buttons">
-        <button type="button" class="ps-btn theme-btn sound-btn" id="mute" aria-pressed="false" aria-label="Sound off" title="Sound off" data-i18n-attr="aria-label,title">
+        <button type="button" class="ps-btn theme-btn sound-btn" id="mute" aria-pressed="false" aria-label="Mute" title="Mute" data-i18n-attr="aria-label,title">
           <svg class="sound-btn__on" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           <svg class="sound-btn__off" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
         <button type="button" class="ps-btn theme-btn" id="lang" lang="es" aria-label="Español">ES</button>
-        <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Toggle light and dark" data-i18n-attr="aria-label">◐</button>
+        <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Switch light and dark mode" data-i18n-attr="aria-label">◐</button>
       </div>
     </div>
   </header>
 
   <main class="layout">
-    <section class="stage" id="stage-el" data-tree="off" aria-label="Storm: cases fall as rain into the case series">
-      <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, on the same time axis as the case series"></svg>
+    <section class="stage" id="stage-el" data-tree="off" aria-label="Storm view: cases fall as rain onto the epidemic curve" data-i18n-attr="aria-label">
+      <svg id="tree" class="stage__tree" role="img" aria-label="Phylogenetic tree of sequenced cases, aligned on the same time axis as the case series" data-i18n-attr="aria-label"></svg>
       <canvas id="stage"></canvas>
-      <div class="stage__events" id="events" aria-label="Milestones: select one to go back to that moment"></div>
+      <div class="stage__events" id="events" aria-label="Milestones: select one to jump back to that moment" data-i18n-attr="aria-label"></div>
       <div class="stage__text">
         <p class="ps-label" id="chapter-num">00</p>
-        <h1 class="ps-display" id="chapter-title" data-i18n>Every case is one drop.</h1>
-        <p class="lede" id="chapter-body" data-i18n>Rain is what an outbreak sounds like.</p>
+        <h1 class="ps-display" id="chapter-title" data-i18n>Every case is a drop of rain.</h1>
+        <p class="lede" id="chapter-body" data-i18n>Together, they sound like an outbreak.</p>
       </div>
-      <aside class="stage__legend" aria-label="Legend">
+      <aside class="stage__legend" aria-label="Legend" data-i18n-attr="aria-label">
         <p class="stage__legend-title" data-i18n>One drop = one case · colour = lineage</p>
         <ul class="stage__legend-list" id="legend"></ul>
       </aside>
@@ -74,13 +74,13 @@
       </dl>
     </section>
 
-    <section class="dock" id="controls" aria-label="Controls and key">
+    <section class="dock" id="controls" aria-label="Controls and guide" data-i18n-attr="aria-label">
       <div class="dock__bar">
         <button type="button" class="dock__toggle" id="dock-toggle" aria-expanded="false" aria-controls="dock-body" data-i18n>Controls</button>
       </div>
       <div class="dock__body" id="dock-body" hidden>
         <section class="ps-panel dock__panel dock__panel--transport">
-          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Transport</h2></div>
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Playback</h2></div>
           <div class="row">
             <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
             <button type="button" class="ps-btn" id="reset" data-i18n>Reset</button>
@@ -99,14 +99,14 @@
           </label>
         </section>
 
-        <section class="ps-panel dock__panel dock__panel--key key" aria-label="How to read it">
-          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>Key</h2></div>
+        <section class="ps-panel dock__panel dock__panel--key key" aria-label="How to read it" data-i18n-attr="aria-label">
+          <div class="ps-panel__head"><h2 class="ps-panel__title" data-i18n>How to read it</h2></div>
           <div class="key__row">
             <div class="key__control">
               <span class="ps-label" aria-hidden="true" data-i18n>Rain</span>
               <fieldset class="ps-seg">
                 <legend data-i18n>Rain</legend>
-                <label><input type="radio" name="spread" data-spread="wide" checked /><span data-i18n>Everywhere</span></label>
+                <label><input type="radio" name="spread" data-spread="wide" checked /><span data-i18n>Across the chart</span></label>
                 <label><input type="radio" name="spread" data-spread="column" /><span data-i18n>Over today</span></label>
               </fieldset>
             </div>
@@ -119,7 +119,7 @@
               </fieldset>
             </div>
           </div>
-          <p class="key__note" id="key-note"><span data-i18n>Each drop is one case. As it hits the ground, today's bar grows by one: the bars are the rain that has already fallen. Solid = reported, faint = never reported. Colours are lineages; the thin labelled lines mark what happened in the story.</span><span id="tree-note" hidden></span></p>
+          <p class="key__note" id="key-note"><span data-i18n>Each drop represents one case. When it hits the ground, today's bar grows by one, so the bars show all the rain that has already fallen. Solid fill means reported; faint fill means unreported. Colours distinguish lineages, and the thin labelled lines mark key moments in the outbreak.</span><span id="tree-note" hidden></span></p>
         </section>
 
         <section class="ps-panel dock__panel dock__panel--chapters sim-only">
@@ -140,7 +140,7 @@
           </div>
         </section>
 
-        <section class="ps-panel dock__panel dock__panel--source" aria-label="Source">
+        <section class="ps-panel dock__panel dock__panel--source" aria-label="Source" data-i18n-attr="aria-label">
           <div class="ps-source provenance" id="provenance"></div>
         </section>
       </div>
@@ -150,11 +150,11 @@
   <div class="start" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">
     <div class="start__inner">
       <p class="ps-wordmark ps-wordmark--large">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</p>
-      <h2 class="ps-display" id="start-title" data-i18n>Every case is one drop.</h2>
-      <p class="lede" data-i18n>Headphones recommended. Each infection in the model sounds once, on the surface of its lineage.</p>
+      <h2 class="ps-display" id="start-title" data-i18n>Every case is a drop of rain.</h2>
+      <p class="lede" data-i18n>Headphones recommended. Each infection in the model plays once, landing on the surface assigned to its lineage.</p>
       <div class="row">
         <button type="button" class="ps-btn ps-btn--primary" id="start-listen" data-i18n>Listen</button>
-        <button type="button" class="ps-btn" id="start-silent" data-i18n>Watch in silence</button>
+        <button type="button" class="ps-btn" id="start-silent" data-i18n>Watch without sound</button>
       </div>
       <p class="caption" id="bank-status"></p>
     </div>
