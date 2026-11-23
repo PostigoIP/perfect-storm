@@ -529,73 +529,7 @@ async function start(withSound) {
       console.error('[audio]', err);
     }
   } else audio.setMuted(true);
-  if (withSound && audio.ready) await runTutorial();
   play(true);
-}
-
-// A short tour of every sound before the story, played by itself one step after
-// another: one drop, an unreported case, each lineage's tone, deaths, thunder, and
-// dense rain. `dur` is how long each step stays on screen, in seconds (its sound plus
-// time to read it).
-const TUTORIAL = [
-  { title: 'One case, one drop', text: 'Each new case falls as a single drop. Early in an outbreak you can count them.', dur: 3.4,
-    play: () => demo([{ lineage: 0, detected: true }, { lineage: 0, detected: true }], 1.2) },
-  { title: 'Unreported cases', text: 'Cases nobody reports still fall, but farther away: fainter, darker, wetter.', dur: 3.6,
-    play: () => demo([{ lineage: 0, detected: false }, { lineage: 0, detected: false }, { lineage: 0, detected: false }], 0.5) },
-  { title: 'A new variant', text: 'When a new lineage takes hold, its drops fall a little brighter.', dur: 3.2,
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.glass })), 0.45) },
-  { title: 'A second variant', text: 'A later lineage falls darker.', dur: 2.8,
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.metal })), 0.45) },
-  { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.', dur: 2.8,
-    play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.leaf })), 0.45) },
-  { title: 'Deaths', text: 'Each death adds a low knock. You can mute it from "Deaths" in the legend.', dur: 3.4,
-    play: () => { const was = audio.deaths; audio.setDeaths(true); demo([{ lineage: 0, detected: true, severity: 3, outcome: 'fatal' }], 0); setTimeout(() => audio.setDeaths(was), 600); } },
-  { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.', dur: 4.2,
-    play: () => audio.thunder(1) },
-  { title: 'Rain', text: 'And when cases multiply, the drops become rain. Every drop is still one case.', dur: 4.4,
-    play: () => demo(Array.from({ length: 140 }, () => ({ lineage: 0, detected: Math.random() < 0.4 })), 3.5 / 140, true) },
-];
-function demo(list, gap, jitter = false) {
-  list.forEach((d, i) => {
-    const c = { id: Math.floor(Math.random() * 1e6), severity: d.severity ?? 1, detected: d.detected, muts: 0, lineage: d.lineage, outcome: d.outcome ?? 'recovered' };
-    audio.playCase(c, d.material ?? materialOf(d.lineage), i * gap + (jitter ? Math.random() * gap : 0));
-  });
-}
-let refreshTutorial = () => {};   // redraws the tutorial step in the current language
-function runTutorial() {
-  return new Promise((resolve) => {
-    const intro = $('start').querySelector('.start__inner:not(.tutorial)');
-    const tut = $('tutorial');
-    const total = TUTORIAL.reduce((s, x) => s + x.dur, 0);
-    const bar = $('tut-bar');
-    let k = 0, timer = 0, elapsed = 0;
-    const show = (sound = true) => {
-      const step = TUTORIAL[k];
-      $('tut-step').textContent = `${k + 1} / ${TUTORIAL.length}`;
-      $('tut-title').textContent = t(step.title);
-      $('tut-text').textContent = t(step.text);
-      if (!sound) return;
-      step.play();
-      // the progress line runs across the whole tour, step by step
-      bar.style.transition = 'none'; bar.style.width = `${(elapsed / total) * 100}%`;
-      void bar.offsetWidth;
-      elapsed += step.dur;
-      bar.style.transition = `width ${step.dur}s linear`; bar.style.width = `${(elapsed / total) * 100}%`;
-      timer = setTimeout(() => { if (k < TUTORIAL.length - 1) { k++; show(); } else finish(); }, step.dur * 1000);
-    };
-    refreshTutorial = () => show(false);
-    const finish = () => {
-      clearTimeout(timer);
-      refreshTutorial = () => {};
-      $('tut-skip').onclick = null;
-      tut.hidden = true; intro.hidden = false; $('start').hidden = true;
-      resolve();
-    };
-    $('tut-skip').onclick = finish;
-    intro.hidden = true; tut.hidden = false; $('start').hidden = false;
-    show();
-    $('tut-skip').focus();
-  });
 }
 
 $('start-listen').addEventListener('click', () => start(true));
@@ -642,7 +576,6 @@ function applyLanguage() {
   drawProvenance();
   stage.setEvents(events.map(eventForStage)); drawEventButtons(true);
   legendKey = ''; drawLegend(lineageOrder()); drawMetrics();
-  refreshTutorial();
 }
 onLangChange(applyLanguage);
 $('lang').addEventListener('click', () => {

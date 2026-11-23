@@ -230,12 +230,6 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
   font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-accent); text-decoration: underline;
 }
 
-/* intro tutorial: same frame as the start screen */
-.tutorial[hidden] { display: none; }
-.tutorial__title { font-size: var(--ps-fs-chapter); }
-.tutorial__skip { margin-left: auto; }
-.tutorial__progress { height: 2px; background: var(--ps-rule, rgba(127,127,127,.25)); margin: var(--ps-space-4, 24px) 0; overflow: hidden; }
-.tutorial__progress span { display: block; height: 100%; width: 0; background: var(--ps-accent, currentColor); }
 
 .ps-seg--wrap { flex-wrap: wrap; }
 
