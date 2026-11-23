@@ -164,9 +164,9 @@ const ES = {
   "Each week's total is played back as an equal number of cases spaced evenly across the seven days.": 'El total de cada semana se reproduce como ese mismo número de casos repartidos de manera uniforme a lo largo de los siete días.',
 
   // compare
-  'Vaccine + treatment + a remote area → 64 cases': 'Vacuna + tratamiento + una zona aislada → 64 casos',
+  'With a vaccine, a treatment and a remote rural area, Ebola stopped at 64 cases.': 'Con vacuna, tratamiento y una zona rural aislada, el ébola se frenó en 64 casos.',
   'Ebola virus (Zaire species) in a hard-to-reach rural area of Kasai, DRC. 47,577 people vaccinated; patients treated with antibodies. 64 cases and 45 deaths, all in one health zone; declared over on 1 December 2025.': 'Virus del ébola (especie Zaire) en una zona rural de difícil acceso de Kasai (RDC). 47.577 personas vacunadas; pacientes tratados con anticuerpos. 64 casos y 45 muertes, todos en una sola zona de salud; brote terminado el 1 de diciembre de 2025.',
-  'No vaccine + no treatment + conflict → 10,699 cases and counting': 'Sin vacuna + sin tratamiento + conflicto → 10.699 casos y sumando',
+  'With no vaccine, no treatment and a conflict zone, it reached 10,699 cases and has not stopped.': 'Sin vacuna, sin tratamiento y en zona de conflicto, llegó a 10.699 casos y no se ha detenido.',
   'Bundibugyo virus, another ebolavirus species: no licensed vaccine or specific treatment. In Ituri, conflict and highly mobile populations hamper contact tracing. 10,699 confirmed cases and 5,202 deaths by 3 November, and still ongoing.': 'Virus Bundibugyo, otra especie de ébola: sin vacuna autorizada ni tratamiento específico. En Ituri, el conflicto y una población muy móvil dificultan el rastreo de contactos. 10.699 casos confirmados y 5.202 muertes hasta el 3 de noviembre, y sigue activo.',
   'Declared': 'Declarado',
   'Last patient discharged': 'Alta del último paciente',
