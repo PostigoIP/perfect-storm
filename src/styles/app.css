@@ -20,6 +20,9 @@ sub { font-size: .6em; }
 /* top bar: meta · wordmark · controls */
 .topbar__controls { display: flex; align-items: center; gap: var(--ps-space-3); }
 .topbar__buttons { display: flex; align-self: stretch; gap: var(--ps-space-2); }
+.sound-btn { display: inline-flex; align-items: center; justify-content: center; }
+.sound-btn .sound-btn__off, .sound-btn.is-off .sound-btn__on { display: none; }
+.sound-btn.is-off .sound-btn__off { display: block; }
 .theme-btn { min-height: 0; align-self: stretch; padding: 0 var(--ps-space-3); font-family: var(--ps-font-mono); letter-spacing: 0; }
 
 /* segmented control: the system has no disabled state; dim the segment */
@@ -102,8 +105,6 @@ sub { font-size: .6em; }
 .dock__panel--params { flex: 3 1 min(36rem, 100%); }
 .dock__panel--disc { flex: 0 1 auto; }
 .dock__panel--source { flex: 2 1 min(26rem, 100%); }
-.bank-ab { display: grid; justify-items: start; gap: var(--ps-space-2); min-width: 0; }
-.bank-ab .ps-caption { margin: 0; color: var(--ps-ink-2); font-size: var(--ps-fs-caption); }
 .dock__sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); gap: var(--ps-space-4) var(--ps-space-5); }
 .field__hint { grid-column: 1 / -1; color: var(--ps-ink-2); font-size: var(--ps-fs-caption); margin-top: calc(-1 * var(--ps-space-1)); }
 /* chapters as a compact wrapping row of stations */
@@ -158,8 +159,21 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
 @keyframes storm-flash { 0%, 14% { filter: invert(1); } 22% { filter: invert(.35); } 30% { filter: invert(.9); } 100% { filter: invert(0); } }
 @media (prefers-reduced-motion: reduce) { .stage.is-flash { animation: none; outline: var(--ps-rule-w-strong) solid var(--ps-accent); outline-offset: -3px; } }
 
+/* below ~1250px the three case names no longer fit beside the wordmark: they take
+   their own full-width row under it, and each name wraps inside its third if needed */
+@media (max-width: 78rem) {
+  .ps-topbar { grid-template-columns: auto 1fr; row-gap: var(--ps-space-2); padding-block: var(--ps-space-2); }
+  .ps-topbar > .ps-wordmark { order: -1; justify-self: start; }
+  .ps-topbar > .ps-topbar__meta { display: none; }
+  .topbar__controls { display: contents; }
+  .topbar__controls .topbar__buttons { justify-self: end; }
+  .topbar__controls .ps-seg { order: 1; grid-column: 1 / -1; display: flex; }
+  .topbar__controls .ps-seg label { flex: 1 1 0; min-width: 0; }
+  .topbar__controls .ps-seg span { white-space: normal; line-height: 1.25; display: flex; align-items: center; justify-content: center; }
+  .stage { height: calc(100vh - 6.5rem - var(--ps-dock-bar)); }
+}
 @media (max-width: 900px) {
-  .stage { height: calc(100svh - 3.5rem - var(--ps-dock-bar)); min-height: 520px; }
+  .stage { height: calc(100svh - 6.5rem - var(--ps-dock-bar)); min-height: 520px; }
   .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ps-space-2) var(--ps-space-4); }
 }
 @media (max-width: 40rem) {
@@ -190,7 +204,6 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
 .stage__legend-sub { grid-column: 2; color: var(--ps-ink-2); }
 .stage__legend-key { grid-template-columns: 12px auto 12px auto !important; justify-content: start; column-gap: var(--ps-space-2); margin-top: var(--ps-space-1); padding-top: var(--ps-space-2); border-top: var(--ps-rule-w) solid var(--ps-rule); color: var(--ps-ink-2); }
 /* narrow screens: see the end of this file (the legend docks on the metrics) */
-.audio-status { font-family: var(--ps-font-mono); font-size: var(--ps-fs-caption); color: var(--ps-ink-2); margin: 0; }
 
 .stage__legend-item { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 12px 1fr; column-gap: var(--ps-space-2); align-items: baseline; width: 100%; cursor: pointer; padding: 2px 0; }
 .stage__legend-item:focus-visible { outline: var(--ps-rule-w-strong) solid var(--ps-accent); outline-offset: 2px; }
@@ -221,6 +234,8 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
 .tutorial[hidden] { display: none; }
 .tutorial__title { font-size: var(--ps-fs-chapter); }
 .tutorial__skip { margin-left: auto; }
+.tutorial__progress { height: 2px; background: var(--ps-rule, rgba(127,127,127,.25)); margin: var(--ps-space-4, 24px) 0; overflow: hidden; }
+.tutorial__progress span { display: block; height: 100%; width: 0; background: var(--ps-accent, currentColor); }
 
 .ps-seg--wrap { flex-wrap: wrap; }
 

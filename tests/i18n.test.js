@@ -12,7 +12,7 @@ describe('Spanish', () => {
   it('covers every marked text in the page', () => {
     const html = read('index.html');
     const marked = [...html.matchAll(/data-i18n(?=[\s>])[^>]*>([^<]+)</g)].map((m) => m[1].trim());
-    expect(marked.length).toBeGreaterThan(40);
+    expect(marked.length).toBeGreaterThan(30);
     expect(missing(marked)).toEqual([]);
   });
 
@@ -42,10 +42,10 @@ describe('Spanish', () => {
 });
 
 describe('pickLang', () => {
-  it('follows the browser: any Spanish opens in Spanish, anything else in English', () => {
-    expect(pickLang({ browser: 'es-ES' })).toBe('es');
-    expect(pickLang({ browser: 'es-419' })).toBe('es');
-    expect(pickLang({ browser: 'es' })).toBe('es');
+  it('opens in English whatever the browser prefers', () => {
+    expect(pickLang({ browser: 'es-ES' })).toBe('en');
+    expect(pickLang({ browser: 'es-419' })).toBe('en');
+    expect(pickLang({ browser: 'es' })).toBe('en');
     expect(pickLang({ browser: 'en-GB' })).toBe('en');
     expect(pickLang({ browser: 'fr-FR' })).toBe('en');
     expect(pickLang({ browser: 'eu-ES' })).toBe('en');

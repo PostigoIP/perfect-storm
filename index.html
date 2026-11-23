@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Perfect Storm</title>
   <meta name="description" content="Auditory epidemiology. Every case is one drop; rain is what an outbreak sounds like." />
+  <!-- link preview (LinkedIn, X, WhatsApp…): absolute URLs to the published site -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Perfect Storm" />
+  <meta property="og:url" content="https://postigoip.github.io/perfect-storm/" />
+  <meta property="og:title" content="Perfect Storm · What if you could hear an epidemic?" />
+  <meta property="og:description" content="Every case is one drop of rain. A simulated respiratory virus, two Ebola outbreaks compared, and Ebola in West Africa, 2014. Headphones recommended." />
+  <meta property="og:image" content="https://postigoip.github.io/perfect-storm/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Bundibugyo 2026: bars of daily cases rise to a hundred a day while rain falls over the chart." />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="es_ES" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
@@ -19,12 +32,16 @@
     <a class="ps-wordmark" href="./">Perfect<span class="ps-wordmark__slit" aria-hidden="true"></span>Storm</a>
     <div class="topbar__controls">
       <fieldset class="ps-seg">
-        <legend data-i18n>Data source</legend>
-        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span data-i18n>Simulate</span></label>
-        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span data-i18n>Observed</span></label>
-        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="A contained outbreak, then one that got away" data-i18n-attr="title" /><span data-i18n>Compare</span></label>
+        <legend data-i18n>Case</legend>
+        <label><input type="radio" name="mode" id="mode-sim" value="sim" checked /><span data-i18n>Respiratory virus: Simulation</span></label>
+        <label><input type="radio" name="mode" id="mode-cmp" value="cmp" disabled title="A contained outbreak, then one that got away" data-i18n-attr="title" /><span data-i18n>Two EBOV Outbreaks</span></label>
+        <label><input type="radio" name="mode" id="mode-obs" value="obs" disabled /><span data-i18n>EBOV Western Africa 2014</span></label>
       </fieldset>
       <div class="topbar__buttons">
+        <button type="button" class="ps-btn theme-btn sound-btn" id="mute" aria-pressed="false" aria-label="Sound off" title="Sound off" data-i18n-attr="aria-label,title">
+          <svg class="sound-btn__on" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg class="sound-btn__off" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
         <button type="button" class="ps-btn theme-btn" id="lang" lang="es" aria-label="Español">ES</button>
         <button type="button" class="ps-btn theme-btn" id="theme" aria-label="Toggle light and dark" data-i18n-attr="aria-label">◐</button>
       </div>
@@ -65,22 +82,6 @@
             <button type="button" class="ps-btn ps-btn--primary" id="play">Play</button>
             <button type="button" class="ps-btn" id="reset" data-i18n>Reset</button>
             <label class="ps-switch"><input type="checkbox" role="switch" id="sound" /><span data-i18n>Sound</span></label>
-          </div>
-          <div class="bank-ab">
-            <span class="ps-label" aria-hidden="true" data-i18n>Sound source</span>
-            <fieldset class="ps-seg">
-              <legend data-i18n>Sound source</legend>
-              <label><input type="radio" name="bank" data-bank="sounds-textures" checked /><span data-i18n>A · AI textures</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-field" /><span data-i18n>B · Field recordings</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-drops" /><span data-i18n>C · Drips</span></label>
-              <label><input type="radio" name="bank" data-bank="sounds-blend" /><span data-i18n>D · Blended</span></label>
-            </fieldset>
-            <div class="bank-ab" id="variant-ab" hidden>
-              <span class="ps-label" aria-hidden="true">Variant contrast · local test</span>
-              <fieldset class="ps-seg ps-seg--wrap"><legend>Variant contrast</legend></fieldset>
-            </div>
-            <p class="ps-caption audio-status" id="audio-status" aria-live="off"></p>
-            <p class="ps-caption" id="bank-note">Real CC0 rain on stone, glass, metal and leaves.</p>
           </div>
           <label class="ps-field" for="speed">
             <span class="ps-label" data-i18n>Speed</span>
@@ -156,11 +157,10 @@
     </div>
     <div class="start__inner tutorial" id="tutorial" hidden>
       <p class="ps-label"><span id="tut-step">1 / 8</span> · <span data-i18n>before the story: what you will hear</span></p>
-      <h2 class="ps-display tutorial__title" id="tut-title"></h2>
+      <h2 class="ps-display tutorial__title" id="tut-title" aria-live="polite"></h2>
       <p class="lede" id="tut-text"></p>
+      <div class="tutorial__progress" aria-hidden="true"><span id="tut-bar"></span></div>
       <div class="row">
-        <button type="button" class="ps-btn" id="tut-play" data-i18n>▶ Play again</button>
-        <button type="button" class="ps-btn ps-btn--primary" id="tut-next">Next</button>
         <button type="button" class="ps-btn tutorial__skip" id="tut-skip" data-i18n>Skip, start the story</button>
       </div>
     </div>

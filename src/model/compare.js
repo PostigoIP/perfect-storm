@@ -6,7 +6,9 @@
 import { mulberry32 } from './rng.js';
 import { t as tr, month } from '../i18n.js';
 
-export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}) {
+// Once an outbreak that hands over has no cases left to fall, its clock runs
+// `quietSpeedup` times faster to the day it was declared over.
+export function createCompareSource(data, { seed = 11, onPhase = () => {}, quietSpeedup = 3 } = {}) {
   const { meta, lineages, phases } = data;
   let phase, t, cursor, cases, rand, idBase, deaths;
 
@@ -56,7 +58,8 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {} } = {}
     lineageLabel: (l) => lineages[l]?.name ?? '?',
     step(dtDays) {
       const end = phases[phase].end;
-      const t1 = t + dtDays, out = [];
+      const quiet = phase < phases.length - 1 && cursor >= cases.length;
+      const t1 = t + dtDays * (quiet ? quietSpeedup : 1), out = [];
       while (cursor < cases.length && cases[cursor].tOnset <= t1) { const c = cases[cursor++]; if (c.outcome === 'fatal') deaths++; out.push(c); }
       t = Math.min(t1, end);
       // the first outbreak is over: the second one starts again from day 0

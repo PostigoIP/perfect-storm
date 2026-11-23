@@ -88,4 +88,17 @@ describe('compare deaths', () => {
     src.step(60);
     expect(src.snapshot().deaths).toBe(45);
   });
+
+  it('runs the quiet days after the first outbreak\'s last case faster, to the day it was declared over', () => {
+    const steps = (speedup) => {
+      const src = createCompareSource(data, { quietSpeedup: speedup });
+      let n = 0;
+      while (src.phase === 0) { src.step(0.5); n++; }
+      return n;
+    };
+    const last = Math.max(...data.phases[0].days.map((d) => d.t)) + 1;
+    const end = data.phases[0].end;
+    expect(steps(1)).toBe(Math.ceil(end / 0.5));
+    expect(steps(3)).toBeLessThan(Math.ceil(last / 0.5) + Math.ceil((end - last) / 1.5) + 2);
+  });
 });

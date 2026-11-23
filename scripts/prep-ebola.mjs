@@ -59,7 +59,7 @@ for (const w of weeks) if (!usedOther) w.counts.length = 3;
 const out = {
   meta: {
     title: 'West Africa, 2013–2016',
-    lede: `Ebola virus (Makona). ${total.toLocaleString('en')} reported cases in Guinea, Sierra Leone and Liberia, one drop each, week by week. ${tips.length.toLocaleString('en')} genomes grow the tree as their sampling dates arrive.`,
+    lede: `Ebola virus, Zaire species (the Makona variant). ${total.toLocaleString('en')} reported cases in Guinea, Sierra Leone and Liberia, one drop each, week by week. ${tips.length.toLocaleString('en')} genomes grow the tree as their sampling dates arrive.`,
     start: START,
     defaultSpeed: 5,
     inferred: { severe: 0.6, fatal: 0.4 },

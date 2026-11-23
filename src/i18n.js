@@ -5,10 +5,15 @@
 const ES = {
   // top bar, start screen, tutorial
   'Auditory epidemiology': 'Epidemiología auditiva',
-  'Data source': 'Fuente de datos',
-  'Simulate': 'Simular',
-  'Observed': 'Observado',
-  'Compare': 'Comparar',
+  'Case': 'Caso',
+  'Respiratory virus: Simulation': 'Virus respiratorio: simulación',
+  'Two EBOV Outbreaks': 'Dos brotes de EBOV',
+  'EBOV Western Africa 2014': 'EBOV África Occidental 2014',
+  'Comparison': 'Comparativa',
+  'Kasai in outline': 'Kasai en contorno',
+  'Sound off': 'Quitar el sonido',
+  'Sound on': 'Poner el sonido',
+  'Real data': 'Datos reales',
   'A contained outbreak, then one that got away': 'Un brote contenido y, después, otro que se escapó',
   'Toggle light and dark': 'Cambiar entre claro y oscuro',
   'Every case is one drop.': 'Cada caso es una gota.',
@@ -17,9 +22,6 @@ const ES = {
   'Listen': 'Escuchar',
   'Watch in silence': 'Ver en silencio',
   'before the story: what you will hear': 'antes de la historia: lo que vas a oír',
-  '▶ Play again': '▶ Volver a oír',
-  'Next': 'Siguiente',
-  'Start the story': 'Empezar la historia',
   'Skip, start the story': 'Saltar y empezar la historia',
   'One case, one drop': 'Un caso, una gota',
   'Each new case falls as a single drop. Early in an outbreak you can count them.': 'Cada caso nuevo cae como una sola gota. Al principio de un brote se pueden contar.',
@@ -77,8 +79,8 @@ const ES = {
   'Nextstrain · ebola': 'Nextstrain · ebola',
   'CC BY-SA 4.0': 'CC BY-SA 4.0',
   'Elsewhere': 'Otros lugares',
-  'Kasai 2025 · Zaire': 'Kasai 2025 · Zaire',
-  'Bundibugyo · DR Congo': 'Bundibugyo · R. D. del Congo',
+  'Kasai, DRC 2025': 'Kasai, RDC 2025',
+  'Bundibugyo · DRC': 'Bundibugyo · RDC',
   'Bundibugyo · Uganda': 'Bundibugyo · Uganda',
   'Bundibugyo · elsewhere': 'Bundibugyo · otros países',
 
@@ -89,11 +91,6 @@ const ES = {
   'Pause': 'Pausa',
   'Reset': 'Reiniciar',
   'Sound': 'Sonido',
-  'Sound source': 'Fuente de sonido',
-  'A · AI textures': 'A · Texturas generadas',
-  'B · Field recordings': 'B · Grabaciones de campo',
-  'C · Drips': 'C · Goteos',
-  'D · Blended': 'D · Mezcla',
   'Speed': 'Velocidad',
   'model days per second': 'días del modelo por segundo',
   'Volume': 'Volumen',
@@ -121,19 +118,11 @@ const ES = {
   'share of reported cases sequenced': 'parte de los casos notificados que se secuencian',
   'Imports': 'Importaciones',
   'per day, fall on leaves': 'por día, caen sobre hojas',
-  'Loading…': 'Cargando…',
-  'This sound bank is not available.': 'Este banco de sonidos no está disponible.',
-  'Sound bank could not be loaded.': 'No se ha podido cargar el banco de sonidos.',
   'Sound bank not generated yet. "Listen" will run silently for now.': 'El banco de sonidos aún no está generado. «Escuchar» funcionará en silencio por ahora.',
-  'Clean recorded drips for each case, over a bed of real rain that grows with the epidemic.': 'Goteos limpios grabados para cada caso, sobre un fondo de lluvia real que crece con la epidemia.',
-  'Softer drips that melt into the rain bed; the bed starts earlier and lingers.': 'Goteos más suaves que se funden con el fondo de lluvia; el fondo empieza antes y se queda más tiempo.',
-  'Real CC0 rain on stone, glass, metal and leaves.': 'Lluvia real, de licencia libre CC0, sobre piedra, cristal, metal y hojas.',
-  'ElevenLabs-generated rain textures, cut at each drop.': 'Texturas de lluvia generadas con ElevenLabs, cortadas en cada gota.',
-  'ElevenLabs single-drop takes (the first attempt).': 'Gotas sueltas generadas con ElevenLabs (el primer intento).',
 
   // simulation story
   'Patient zero': 'Paciente cero',
-  'A new respiratory virus reaches a population with no immunity. The first cases fall as single drops, and almost none are noticed.': 'Un virus respiratorio nuevo llega a una población sin inmunidad. Los primeros casos caen como gotas sueltas y casi nadie los nota.',
+  'A made-up respiratory virus reaches a population with no immunity. The first cases fall as single drops, and almost none are noticed.': 'Un virus respiratorio inventado llega a una población sin inmunidad. Los primeros casos caen como gotas sueltas y casi nadie los nota.',
   'Silent spread': 'Propagación silenciosa',
   'Each infection seeds two or three more. Without testing, the reported curve trails the real one. What sounds like drizzle is already an outbreak.': 'Cada infección siembra dos o tres más. Sin pruebas, la curva notificada va por detrás de la real. Lo que suena a llovizna ya es un brote.',
   'Exponential': 'Exponencial',
@@ -169,7 +158,7 @@ const ES = {
 
   // observed: West Africa
   'West Africa, 2013–2016': 'África Occidental, 2013–2016',
-  'Ebola virus (Makona). 21,803 reported cases in Guinea, Sierra Leone and Liberia, one drop each, week by week. 1,493 genomes grow the tree as their sampling dates arrive.': 'Virus del Ébola (Makona). 21.803 casos notificados en Guinea, Sierra Leona y Liberia, una gota cada uno, semana a semana. 1.493 genomas hacen crecer el árbol según llegan sus fechas de muestreo.',
+  'Ebola virus, Zaire species (the Makona variant). 21,803 reported cases in Guinea, Sierra Leone and Liberia, one drop each, week by week. 1,493 genomes grow the tree as their sampling dates arrive.': 'Virus del Ébola, especie Zaire (variante Makona). 21.803 casos notificados en Guinea, Sierra Leona y Liberia, una gota cada uno, semana a semana. 1.493 genomas hacen crecer el árbol según llegan sus fechas de muestreo.',
   'Time-resolved phylogeny of Makona genomes; Dudas et al., Nature 544:309 (2017). Build updated 2019-12-14.': 'Filogenia en el tiempo de los genomas Makona; Dudas y cols., Nature 544:309 (2017). Versión actualizada el 14-12-2019.',
   'ebov/space-time · weekly cases by district': 'ebov/space-time · casos semanales por distrito',
   'WHO patient database counts (max of confirmed and probable), compiled for Dudas et al. 2017.': 'Recuentos de la base de pacientes de la OMS (el mayor entre confirmados y probables), recopilados para Dudas y cols., 2017.',
@@ -180,10 +169,10 @@ const ES = {
   'At most 400 tips are drawn at once, thinned evenly over time.': 'Se dibujan como mucho 400 puntas a la vez, aclaradas por igual en el tiempo.',
 
   // compare
-  'Kasai, 2025': 'Kasai, 2025',
-  'Zaire ebolavirus in Bulape, DR Congo. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.': 'Ébola Zaire en Bulape, República Democrática del Congo. 64 casos y 45 muertes. Había vacuna: la recibieron 47.577 personas. El último caso enfermó el 23 de septiembre; el 1 de diciembre se dio el brote por terminado.',
-  'Bundibugyo, 2026': 'Bundibugyo, 2026',
-  'Bundibugyo virus, from Ituri to Uganda, Kenya and beyond. No vaccine and no treatment. 10,699 confirmed cases and 5,200 deaths by 3 November, and it has not stopped.': 'Virus Bundibugyo, de Ituri a Uganda, Kenia y más allá. Sin vacuna y sin tratamiento. 10.699 casos confirmados y 5.200 muertes hasta el 3 de noviembre, y no se ha detenido.',
+  'Kasai, DRC 2025: contained': 'Kasai, RDC 2025: contenido',
+  'Ebola virus, Zaire species, in Bulape, Kasai province, DRC. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.': 'Virus del Ébola, especie Zaire, en Bulape, provincia de Kasai, República Democrática del Congo. 64 casos y 45 muertes. Había vacuna: la recibieron 47.577 personas. El último caso enfermó el 23 de septiembre; el 1 de diciembre se dio el brote por terminado.',
+  'Bundibugyo 2026: not contained': 'Bundibugyo 2026: sin contener',
+  'Bundibugyo virus, a different ebolavirus species, from Ituri to Uganda, Kenya and beyond. No approved vaccine or treatment. 10,699 confirmed cases and 5,202 deaths by 3 November, when it had not stopped.': 'Virus Bundibugyo, otra especie de ébola, de Ituri a Uganda, Kenia y más allá. Sin vacuna ni tratamiento aprobados. 10.699 casos confirmados y 5.202 muertes hasta el 3 de noviembre, y entonces no se había detenido.',
   'Declared': 'Declarado',
   'Last patient out': 'Alta del último paciente',
   'Over': 'Fin',
@@ -210,11 +199,11 @@ let lang = 'en';
 const listeners = new Set();
 
 export const getLang = () => lang;
-// Which language to open in: ?lang= wins, then the viewer's saved choice, then the
-// browser's preferred language (Spanish if it is any kind of Spanish), else English.
-export function pickLang({ param, saved, browser } = {}) {
+// Which language to open in: ?lang= wins, then the viewer's saved choice, else
+// English. The browser's language is not used: the page opens in English first.
+export function pickLang({ param, saved } = {}) {
   for (const v of [param, saved]) if (v === 'es' || v === 'en') return v;
-  return /^es\b/i.test(browser ?? '') ? 'es' : 'en';
+  return 'en';
 }
 export function setLang(l) {
   lang = l === 'es' ? 'es' : 'en';

@@ -95,16 +95,16 @@ const out = {
     ],
   },
   lineages: [
-    { name: 'Kasai 2025 · Zaire', surface: 'glass' },
-    { name: 'Bundibugyo · DR Congo', surface: 'stone' },
+    { name: 'Kasai, DRC 2025', surface: 'glass' },
+    { name: 'Bundibugyo · DRC', surface: 'stone' },
     { name: 'Bundibugyo · Uganda', surface: 'metal' },
     { name: 'Bundibugyo · elsewhere', surface: 'leaf' },
   ],
   phases: [
     {
       key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), deaths: 45,
-      title: 'Kasai, 2025',
-      lede: 'Zaire ebolavirus in Bulape, DR Congo. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.',
+      title: 'Kasai, DRC 2025: contained',
+      lede: 'Ebola virus, Zaire species, in Bulape, Kasai province, DRC. 64 cases and 45 deaths. A vaccine existed: 47,577 people received it. The last case fell ill on 23 September; on 1 December the outbreak was declared over.',
       days: kasaiDays,
       events: [
         { t: dayOf(KASAI_START, '2025-09-04'), label: 'Declared' },
@@ -114,8 +114,8 @@ const out = {
     },
     {
       key: 'bundibugyo', start: BDB_START, end: bdbDays, deaths: 5198 + 2 + 2,   // DRC, Uganda, Kenya
-      title: 'Bundibugyo, 2026',
-      lede: `Bundibugyo virus, from Ituri to Uganda, Kenya and beyond. No vaccine and no treatment. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,200 deaths by 3 November, and it has not stopped.`,
+      title: 'Bundibugyo 2026: not contained',
+      lede: `Bundibugyo virus, a different ebolavirus species, from Ituri to Uganda, Kenya and beyond. No approved vaccine or treatment. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, when it had not stopped.`,
       days: bdbSeries,
       events: [
         { t: dayOf(BDB_START, '2026-05-15'), label: 'Declared' },

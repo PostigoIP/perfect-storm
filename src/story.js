@@ -9,7 +9,7 @@ const share = (s, name) => s.lineageShares.find((x) => x.name === name)?.share ?
 export const CHAPTERS = [
   {
     id: 'zero', title: 'Patient zero',
-    body: 'A new respiratory virus reaches a population with no immunity. The first cases fall as single drops, and almost none are noticed.',
+    body: 'A made-up respiratory virus reaches a population with no immunity. The first cases fall as single drops, and almost none are noticed.',
     enter: ({ sim, setR, setSpeed }) => {
       sim.reset();
       sim.setParam('immunity', 0); sim.setParam('detection', 0.08); sim.setParam('importRate', 0);

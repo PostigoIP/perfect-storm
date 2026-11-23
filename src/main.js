@@ -3,7 +3,7 @@ import { createBus } from './bus.js';
 import { createSim } from './model/sim.js';
 import { buildTree, thinTips } from './model/tree.js';
 import { createAudio, LOOKAHEAD } from './audio/engine.js';
-import { surfaceFor, MATERIAL, VARIANT_PROFILES, setVariantProfile, soundName } from './audio/voice.js';
+import { surfaceFor, MATERIAL, setVariantProfile, soundName } from './audio/voice.js';
 import { bedLevel } from './audio/grains.js';
 import { createStage } from './view/stage.js';
 import { createLedger } from './view/ledger.js';
@@ -412,7 +412,9 @@ function applyUnitLabel() {
 // The chapter text for real data: the observed epidemic, or the outbreak now playing in Compare.
 function showReplayText() {
   const r = replay();
-  $('chapter-num').textContent = state.mode === 'cmp' ? `${r.phase + 1} / ${r.nPhases}` : 'OBS';
+  $('chapter-num').textContent = state.mode === 'cmp'
+    ? `${t('Comparison')} · ${r.phase + 1} / ${r.nPhases}${r.phase > 0 ? ` · ${t('Kasai in outline')}` : ''}`
+    : t('Real data');
   $('chapter-title').textContent = t(r.title);
   $('chapter-body').textContent = t(r.lede);
 }
@@ -481,53 +483,30 @@ for (const r of document.querySelectorAll('input[data-spread]')) r.addEventListe
 $('mode-obs').addEventListener('click', () => setMode('obs'));
 $('mode-cmp').addEventListener('click', () => setMode('cmp'));
 $('sound').addEventListener('change', async (e) => {
+  syncMute();
   if (e.target.checked) { await audio.unlock(); if (!audio.ready) await audio.loadBank(); }
   audio.setMuted(!e.target.checked);
 });
+// The speaker in the top bar mirrors the Sound switch in Controls.
+function syncMute() {
+  const on = $('sound').checked, b = $('mute');
+  b.setAttribute('aria-pressed', String(!on));
+  b.dataset.enAriaLabel = b.dataset.enTitle = on ? 'Sound off' : 'Sound on';
+  b.setAttribute('aria-label', t(b.dataset.enAriaLabel)); b.title = t(b.dataset.enTitle);
+  b.classList.toggle('is-off', !on);
+}
+$('mute').addEventListener('click', () => {
+  $('sound').checked = !$('sound').checked;
+  $('sound').dispatchEvent(new Event('change'));
+});
+syncMute();
 $('volume').addEventListener('input', (e) => {
   audio.setVolume(+e.target.value);
   setFill(e.target);
   $('volume-out').textContent = `${Math.round(+e.target.value * 100)}%`;
 });
-// A/B: switch the sound source live, while the storm keeps playing
-const BANK_NOTES = {
-  'sounds-drops': 'Clean recorded drips for each case, over a bed of real rain that grows with the epidemic.',
-  'sounds-blend': 'Softer drips that melt into the rain bed; the bed starts earlier and lingers.',
-  'sounds-field': 'Real CC0 rain on stone, glass, metal and leaves.',
-  'sounds-textures': 'ElevenLabs-generated rain textures, cut at each drop.',
-  sounds: 'ElevenLabs single-drop takes (the first attempt).',
-};
-for (const r of document.querySelectorAll('input[data-bank]')) {
-  if (r.dataset.bank === BANK) r.checked = true;
-  r.addEventListener('change', async () => {
-    const name = r.dataset.bank;
-    $('bank-note').textContent = t('Loading…');
-    const bank = await audio.setBank(`./${name}/manifest.json`);
-    $('bank-note').textContent = bank ? t(BANK_NOTES[name]) : t('This sound bank is not available.');
-    const u = new URL(location.href); u.searchParams.set('bank', name); history.replaceState(null, '', u);
-  });
-}
-$('bank-note').textContent = t(BANK_NOTES[BANK] ?? '');
-
-// Variant contrast: listening test, offered locally only (the published site keeps 'subtle').
-{
-  const host = $('variant-ab');
-  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  const initial = new URLSearchParams(location.search).get('variants') || 'subtle';
-  setVariantProfile(initial);
-  if (local && host) {
-    host.hidden = false;
-    host.querySelector('fieldset').insertAdjacentHTML('beforeend', Object.entries(VARIANT_PROFILES).map(([k, p]) =>
-      `<label><input type="radio" name="variants" data-variants="${k}" ${k === initial ? 'checked' : ''} /><span>${p.label}</span></label>`).join(''));
-    host.addEventListener('change', (e) => {
-      const k = e.target.dataset.variants;
-      if (!k) return;
-      setVariantProfile(k);
-      legendKey = ''; drawLegend(lineageOrder());
-      const u = new URL(location.href); u.searchParams.set('variants', k); history.replaceState(null, '', u);
-    });
-  }
-}
+// Variant contrast: 'subtle' on the site; ?variants= still picks another profile for listening tests.
+setVariantProfile(new URLSearchParams(location.search).get('variants') || 'subtle');
 $('theme').addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -542,11 +521,11 @@ async function start(withSound) {
       await audio.unlock();
       const bank = await audio.loadBank();
       $('sound').checked = !!bank;
+      syncMute();
       audio.setMuted(!bank);
-      if (!bank) $('bank-note').textContent = t('Sound bank could not be loaded.');
+      if (!bank) console.warn('[audio] sound bank could not be loaded');
     } catch (err) {
-      // show the failure instead of running silently (Safari diagnostics)
-      $('bank-note').textContent = `Sound failed: ${err?.name ?? ''} ${err?.message ?? err}`;
+      // the Sound switch stays off; the reason goes to the console (Safari diagnostics)
       console.error('[audio]', err);
     }
   } else audio.setMuted(true);
@@ -554,24 +533,26 @@ async function start(withSound) {
   play(true);
 }
 
-// A short tour of every sound before the story: one drop, an unreported case,
-// each lineage's tone, deaths, thunder, and dense rain.
+// A short tour of every sound before the story, played by itself one step after
+// another: one drop, an unreported case, each lineage's tone, deaths, thunder, and
+// dense rain. `dur` is how long each step stays on screen, in seconds (its sound plus
+// time to read it).
 const TUTORIAL = [
-  { title: 'One case, one drop', text: 'Each new case falls as a single drop. Early in an outbreak you can count them.',
-    play: () => demo([{ lineage: 0, detected: true }], 0.6) },
-  { title: 'Unreported cases', text: 'Cases nobody reports still fall, but farther away: fainter, darker, wetter.',
+  { title: 'One case, one drop', text: 'Each new case falls as a single drop. Early in an outbreak you can count them.', dur: 3.4,
+    play: () => demo([{ lineage: 0, detected: true }, { lineage: 0, detected: true }], 1.2) },
+  { title: 'Unreported cases', text: 'Cases nobody reports still fall, but farther away: fainter, darker, wetter.', dur: 3.6,
     play: () => demo([{ lineage: 0, detected: false }, { lineage: 0, detected: false }, { lineage: 0, detected: false }], 0.5) },
-  { title: 'A new variant', text: 'When a new lineage takes hold, its drops fall a little brighter.',
+  { title: 'A new variant', text: 'When a new lineage takes hold, its drops fall a little brighter.', dur: 3.2,
     play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.glass })), 0.45) },
-  { title: 'A second variant', text: 'A later lineage falls darker.',
+  { title: 'A second variant', text: 'A later lineage falls darker.', dur: 2.8,
     play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.metal })), 0.45) },
-  { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.',
+  { title: 'Imported cases', text: 'Cases brought in from outside fall a little lighter.', dur: 2.8,
     play: () => demo(Array.from({ length: 4 }, () => ({ lineage: 0, detected: true, material: MATERIAL.leaf })), 0.45) },
-  { title: 'Deaths', text: 'Each death adds a low knock. You can mute it from "Deaths" in the legend.',
+  { title: 'Deaths', text: 'Each death adds a low knock. You can mute it from "Deaths" in the legend.', dur: 3.4,
     play: () => { const was = audio.deaths; audio.setDeaths(true); demo([{ lineage: 0, detected: true, severity: 3, outcome: 'fatal' }], 0); setTimeout(() => audio.setDeaths(was), 600); } },
-  { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.',
+  { title: 'Thunder', text: 'A discontinuity, such as a new variant appearing or a pulse of imports, arrives with thunder.', dur: 4.2,
     play: () => audio.thunder(1) },
-  { title: 'Rain', text: 'And when cases multiply, the drops become rain. Every drop is still one case.',
+  { title: 'Rain', text: 'And when cases multiply, the drops become rain. Every drop is still one case.', dur: 4.4,
     play: () => demo(Array.from({ length: 140 }, () => ({ lineage: 0, detected: Math.random() < 0.4 })), 3.5 / 140, true) },
 ];
 function demo(list, gap, jitter = false) {
@@ -585,36 +566,38 @@ function runTutorial() {
   return new Promise((resolve) => {
     const intro = $('start').querySelector('.start__inner:not(.tutorial)');
     const tut = $('tutorial');
-    let k = 0;
+    const total = TUTORIAL.reduce((s, x) => s + x.dur, 0);
+    const bar = $('tut-bar');
+    let k = 0, timer = 0, elapsed = 0;
     const show = (sound = true) => {
       const step = TUTORIAL[k];
       $('tut-step').textContent = `${k + 1} / ${TUTORIAL.length}`;
       $('tut-title').textContent = t(step.title);
       $('tut-text').textContent = t(step.text);
-      $('tut-next').textContent = t(k === TUTORIAL.length - 1 ? 'Start the story' : 'Next');
-      if (sound) step.play();
+      if (!sound) return;
+      step.play();
+      // the progress line runs across the whole tour, step by step
+      bar.style.transition = 'none'; bar.style.width = `${(elapsed / total) * 100}%`;
+      void bar.offsetWidth;
+      elapsed += step.dur;
+      bar.style.transition = `width ${step.dur}s linear`; bar.style.width = `${(elapsed / total) * 100}%`;
+      timer = setTimeout(() => { if (k < TUTORIAL.length - 1) { k++; show(); } else finish(); }, step.dur * 1000);
     };
     refreshTutorial = () => show(false);
     const finish = () => {
+      clearTimeout(timer);
       refreshTutorial = () => {};
-      $('tut-play').onclick = $('tut-next').onclick = $('tut-skip').onclick = null;
+      $('tut-skip').onclick = null;
       tut.hidden = true; intro.hidden = false; $('start').hidden = true;
       resolve();
     };
-    $('tut-play').onclick = () => TUTORIAL[k].play();
-    $('tut-next').onclick = () => { if (k < TUTORIAL.length - 1) { k++; show(); } else finish(); };
     $('tut-skip').onclick = finish;
     intro.hidden = true; tut.hidden = false; $('start').hidden = false;
     show();
-    $('tut-next').focus();
+    $('tut-skip').focus();
   });
 }
 
-// A one-line audio status in the controls, to diagnose silent browsers.
-setInterval(() => {
-  const s = audio.status(), el = $('audio-status');
-  if (el) el.textContent = `audio: ${s.state} · ${s.rate ? `${(s.rate / 1000).toFixed(1)} kHz` : '—'} · bank ${s.bank ? 'loaded' : 'not loaded'}${s.muted ? ' · muted' : ''} · ${s.played} drops played`;
-}, 1000);
 $('start-listen').addEventListener('click', () => start(true));
 $('start-silent').addEventListener('click', () => start(false));
 
@@ -637,7 +620,7 @@ fetch(`./${BANK}/manifest.json`, { method: 'HEAD' }).then((r) => {
   if (!r.ok) $('bank-status').textContent = t('Sound bank not generated yet. "Listen" will run silently for now.');
 }).catch(() => {});
 
-// Language: Spanish if the browser prefers it, else English; ?lang= or the ES/EN button override it, remembered per viewer.
+// Language: English first; ?lang= or the ES/EN button switch it, remembered per viewer.
 function applyLanguage() {
   const es = getLang() === 'es';
   document.documentElement.lang = es ? 'es' : 'en';
@@ -650,7 +633,6 @@ function applyLanguage() {
   else if (state.chapter >= 0) showChapter(state.chapter);
   $('play').textContent = t(state.running ? 'Pause' : 'Play');
   $('m-inc-label').textContent = t(state.mode !== 'sim' ? 'Cases / day' : 'Onsets / day');
-  $('bank-note').textContent = t(BANK_NOTES[new URLSearchParams(location.search).get('bank') || BANK] ?? '');
   for (const { wrap, d } of Object.values(sliderEls)) {
     wrap.querySelector('.ps-label').innerHTML = t(d.label);
     wrap.querySelector('.field__hint').textContent = t(d.hint);
