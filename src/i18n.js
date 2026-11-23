@@ -9,6 +9,7 @@ const ES = {
   'Respiratory virus (simulation)': 'Virus respiratorio (simulación)',
   'Two Ebola outbreaks': 'Dos brotes de ébola',
   'Ebola in West Africa, 2014': 'Ébola en África Occidental, 2014',
+  'Ebola 2014': 'Ébola 2014',   // the same tab, on phones
   'Comparison': 'Comparativa',
   'Kasai outline': 'Contorno de Kasai',
   'Mute': 'Silenciar',

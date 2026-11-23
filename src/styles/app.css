@@ -23,6 +23,9 @@ sub { font-size: .6em; }
 .sound-btn { display: inline-flex; align-items: center; justify-content: center; }
 .sound-btn .sound-btn__off, .sound-btn.is-off .sound-btn__on { display: none; }
 .sound-btn.is-off .sound-btn__off { display: block; }
+/* a case name can carry a shorter form for phones: plain text inside the tab's own span */
+.ps-topbar .ps-seg span .seg-full, .ps-topbar .ps-seg span .seg-short { display: inline; width: auto; padding: 0; background: none; color: inherit; letter-spacing: inherit; transition: none; }
+.ps-topbar .ps-seg span .seg-short { display: none; }
 .theme-btn { min-height: 0; align-self: stretch; padding: 0 var(--ps-space-3); font-family: var(--ps-font-mono); letter-spacing: 0; }
 
 /* segmented control: the system has no disabled state; dim the segment */
@@ -183,6 +186,8 @@ body[data-mode="obs"] .sim-only, body[data-mode="cmp"] .sim-only { display: none
   .topbar__controls { display: contents; }
   .topbar__controls .ps-seg { order: 1; grid-column: 1 / -1; display: flex; }
   .theme-btn { min-height: 2.25rem; }
+  .ps-topbar .ps-seg span .seg-full { display: none; }
+  .ps-topbar .ps-seg span .seg-short { display: inline; }
   .stage { height: calc(100svh - 6.5rem - var(--ps-dock-bar)); }
   .metrics .ps-metric__value { font-size: var(--ps-fs-h2); }
   .key__control { flex-wrap: wrap; }
