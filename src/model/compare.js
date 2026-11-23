@@ -45,6 +45,7 @@ export function createCompareSource(data, { seed = 11, onPhase = () => {}, quiet
     get phase() { return phase; },
     get done() { return phase === phases.length - 1 && t >= phases[phase].end; },
     get title() { return phases[phase].title; },
+    get place() { return phases[phase].place ?? ''; },
     get lede() { return phases[phase].lede; },
     get events() { return phases[phase].events ?? []; },
     phaseEvents: (i) => phases[i]?.events ?? [],

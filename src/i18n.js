@@ -11,7 +11,9 @@ const ES = {
   'Ebola in West Africa, 2014': 'Ébola en África Occidental, 2014',
   'Ebola 2014': 'Ébola 2014',   // the same tab, on phones
   'Comparison': 'Comparativa',
-  'Kasai outline': 'Contorno de Kasai',
+  'the outline is Kasai': 'el contorno es Kasai',
+  'Kasai, DRC, 2025': 'Kasai, RDC, 2025',
+  'Ituri, DRC, 2026': 'Ituri, RDC, 2026',
   'Mute': 'Silenciar',
   'Unmute': 'Activar sonido',
   'Real data': 'Datos reales',
@@ -162,10 +164,10 @@ const ES = {
   "Each week's total is played back as an equal number of cases spaced evenly across the seven days.": 'El total de cada semana se reproduce como ese mismo número de casos repartidos de manera uniforme a lo largo de los siete días.',
 
   // compare
-  'Kasai, DRC 2025: contained': 'Kasai, RDC 2025: contenido',
-  'Ebola virus, Zaire species, in Bulape (Kasai province, DRC). There were 64 cases and 45 deaths. Because a vaccine was available, 47,577 people were vaccinated; the last patient fell ill on 23 September, and the outbreak was declared over on 1 December.': 'Virus del ébola, especie Zaire, en Bulape (provincia de Kasai, República Democrática del Congo). Hubo 64 casos y 45 muertes. Como existía vacuna, se vacunó a 47.577 personas; el último paciente enfermó el 23 de septiembre y el 1 de diciembre se dio el brote por terminado.',
-  'Bundibugyo 2026: not contained': 'Bundibugyo 2026: sin contener',
-  'Bundibugyo virus, a different ebolavirus species, spreading from Ituri into Uganda, Kenya and beyond. With no approved vaccine or treatment, there were 10,699 confirmed cases and 5,202 deaths by 3 November, and the outbreak was still ongoing.': 'Virus Bundibugyo, otra especie de ébola, extendida desde Ituri hacia Uganda, Kenia y otros países. Sin vacuna ni tratamiento aprobados, acumulaba 10.699 casos confirmados y 5.202 muertes hasta el 3 de noviembre, fecha en la que el brote seguía activo.',
+  'Vaccine + treatment + a remote area → 64 cases': 'Vacuna + tratamiento + una zona aislada → 64 casos',
+  'Ebola virus (Zaire species) in a hard-to-reach rural area of Kasai, DRC. 47,577 people vaccinated; patients treated with antibodies. 64 cases and 45 deaths, all in one health zone; declared over on 1 December 2025.': 'Virus del ébola (especie Zaire) en una zona rural de difícil acceso de Kasai (RDC). 47.577 personas vacunadas; pacientes tratados con anticuerpos. 64 casos y 45 muertes, todos en una sola zona de salud; brote terminado el 1 de diciembre de 2025.',
+  'No vaccine + no treatment + conflict → 10,699 cases and counting': 'Sin vacuna + sin tratamiento + conflicto → 10.699 casos y sumando',
+  'Bundibugyo virus, another ebolavirus species: no licensed vaccine or specific treatment. In Ituri, conflict and highly mobile populations hamper contact tracing. 10,699 confirmed cases and 5,202 deaths by 3 November, and still ongoing.': 'Virus Bundibugyo, otra especie de ébola: sin vacuna autorizada ni tratamiento específico. En Ituri, el conflicto y una población muy móvil dificultan el rastreo de contactos. 10.699 casos confirmados y 5.202 muertes hasta el 3 de noviembre, y sigue activo.',
   'Declared': 'Declarado',
   'Last patient discharged': 'Alta del último paciente',
   'Over': 'Fin del brote',

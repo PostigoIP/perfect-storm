@@ -103,8 +103,10 @@ const out = {
   phases: [
     {
       key: 'kasai', start: KASAI_START, end: dayOf(KASAI_START, '2025-12-01'), deaths: 45,
-      title: 'Kasai, DRC 2025: contained',
-      lede: 'Ebola virus, Zaire species, in Bulape (Kasai province, DRC). There were 64 cases and 45 deaths. Because a vaccine was available, 47,577 people were vaccinated; the last patient fell ill on 23 September, and the outbreak was declared over on 1 December.',
+      // headline: the three things that differed, then the outcome (WHO DON589)
+      place: 'Kasai, DRC, 2025',
+      title: 'Vaccine + treatment + a remote area → 64 cases',
+      lede: 'Ebola virus (Zaire species) in a hard-to-reach rural area of Kasai, DRC. 47,577 people vaccinated; patients treated with antibodies. 64 cases and 45 deaths, all in one health zone; declared over on 1 December 2025.',
       days: kasaiDays,
       events: [
         { t: dayOf(KASAI_START, '2025-09-04'), label: 'Declared' },
@@ -114,8 +116,10 @@ const out = {
     },
     {
       key: 'bundibugyo', start: BDB_START, end: bdbDays, deaths: 5198 + 2 + 2,   // DRC, Uganda, Kenya
-      title: 'Bundibugyo 2026: not contained',
-      lede: `Bundibugyo virus, a different ebolavirus species, spreading from Ituri into Uganda, Kenya and beyond. With no approved vaccine or treatment, there were ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, and the outbreak was still ongoing.`,
+      // the same three, the other way round (WHO DON602: no licensed vaccine or therapeutics; conflict and mobility in Ituri)
+      place: 'Ituri, DRC, 2026',
+      title: `No vaccine + no treatment + conflict → ${bdbTotal.toLocaleString('en')} cases and counting`,
+      lede: `Bundibugyo virus, another ebolavirus species: no licensed vaccine or specific treatment. In Ituri, conflict and highly mobile populations hamper contact tracing. ${bdbTotal.toLocaleString('en')} confirmed cases and 5,202 deaths by 3 November, and still ongoing.`,
       days: bdbSeries,
       events: [
         { t: dayOf(BDB_START, '2026-05-15'), label: 'Declared' },

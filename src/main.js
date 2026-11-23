@@ -413,9 +413,10 @@ function applyUnitLabel() {
 function showReplayText() {
   const r = replay();
   $('chapter-num').textContent = state.mode === 'cmp'
-    ? `${t('Comparison')} · ${r.phase + 1} / ${r.nPhases}${r.phase > 0 ? ` · ${t('Kasai outline')}` : ''}`
+    ? `${t('Comparison')} ${r.phase + 1} / ${r.nPhases} · ${t(r.place)}${r.phase > 0 ? ` · ${t('the outline is Kasai')}` : ''}`
     : t('Real data');
   $('chapter-title').textContent = t(r.title);
+  $('chapter-title').classList.toggle('is-long', r.title.length > 28);   // the Compare headlines say why, so they run longer
   $('chapter-body').textContent = t(r.lede);
 }
 
