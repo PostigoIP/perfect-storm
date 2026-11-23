@@ -18,7 +18,7 @@ function createPlayer(ctx, bank, opts = {}, seed = 9) {
   const useBed = opts.bed ?? true;
   const MAX_VOICES = useBed ? MAX_VOICES_WITH_BED : MAX_VOICES_NO_BED;
   const mix = bank.mix ?? {};   // optional per-bank mix profile (from the manifest)
-  const space = createSpace(ctx);
+  const space = createSpace(ctx, mix);
   const rand = mulberry32(seed);
   let recent = [];                   // onset times (ctx time)
 
@@ -43,7 +43,7 @@ function createPlayer(ctx, bank, opts = {}, seed = 9) {
       if (!set?.length) return;
       src.buffer = set[v.index % set.length];
     }
-    src.playbackRate.value = v.rate;
+    src.playbackRate.value = v.rate * (grain ? (mix.pitch ?? 1) : 1);
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass'; lp.frequency.value = Math.min(18000, v.lowpassHz); lp.Q.value = 0.5;
     const hp = ctx.createBiquadFilter();   // drops keep no surface thump; the bed keeps the low end
@@ -52,12 +52,17 @@ function createPlayer(ctx, bank, opts = {}, seed = 9) {
     if (grain) {
       // one drop: near-instant attack, then a natural exponential decay (no hold)
       const peak = v.gain * Math.pow(10, (mix.dropDb ?? 0) / 20);
+      // punch > 1: the impact overshoots, then settles. Only close drops snap; far ones stay soft and fuse
+      // into a wash (Argon, round 6: a hard hit on every drop turns dense rain into popcorn)
+      const d = v.distance ?? 0;
+      const atk = (mix.attack ?? 0.003) + (mix.attackFar ?? 0) * d, punch = 1 + ((mix.punch ?? 1) - 1) * (1 - d);
       g.gain.setValueAtTime(0, at);
-      g.gain.linearRampToValueAtTime(peak, at + (mix.attack ?? 0.003));
+      g.gain.linearRampToValueAtTime(peak * punch, at + atk);
+      if (punch !== 1) g.gain.exponentialRampToValueAtTime(peak, at + atk + 0.012);
       g.gain.exponentialRampToValueAtTime(Math.min(0.0005, peak * 0.01), at + grain.len);
     } else g.gain.value = v.gain;
     const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, v.pan));
-    const send = ctx.createGain(); send.gain.value = grain ? v.send * 0.5 * (mix.reverb ?? 1) : v.send;   // far drops wetter, near drops dry
+    const send = ctx.createGain(); send.gain.value = grain ? (v.send * 0.5 + (mix.sendFloor ?? 0)) * (mix.reverb ?? 1) : v.send;   // far drops wetter, near drops dry
     src.connect(hp).connect(lp).connect(g).connect(pan);
     pan.connect(space.layers[v.layer] ?? space.layers.near);
     pan.connect(send).connect(space.reverb);
