@@ -60,7 +60,7 @@ async function render(audio, sc, bankName) {
   for (let c = 0; c < buf.numberOfChannels; c++) for (const x of buf.getChannelData(c)) peak = Math.max(peak, Math.abs(x));
   const db = 20 * Math.log10(peak || 1e-9);
   log(`${sc.name}: ${events.filter((e) => e.at < SECONDS).length} cases in ${SECONDS}s (${(events.length / SECONDS).toFixed(0)}/s), peak ${db.toFixed(2)} dBFS ${db <= -1 ? 'OK' : 'TOO HOT'}`);
-  await fetch(`/__save-clip?name=${bankName}${new URLSearchParams(location.search).get('deaths') === '0' ? '-nodeaths' : ''}-${sc.name}.wav`, { method: 'POST', body: wav(buf) });
+  await fetch(`/__save-clip?name=${bankName}${new URLSearchParams(location.search).get('tag') ? '-' + new URLSearchParams(location.search).get('tag').replace(/[^\w-]/g, '') : ''}${new URLSearchParams(location.search).get('deaths') === '0' ? '-nodeaths' : ''}-${sc.name}.wav`, { method: 'POST', body: wav(buf) });
   return db;
 }
 
@@ -69,7 +69,11 @@ document.getElementById('go').onclick = async () => {
   const audio = createAudio({ manifestUrl: `/${bankName}/manifest.json`, bed: BED });
   const DEATHS = new URLSearchParams(location.search).get('deaths') !== '0';
   audio.setDeaths(DEATHS);
-  if (!(await audio.loadBank())) { log('no sound bank (public/sounds/manifest.json) — generate it first'); return; }
+  const bank = await audio.loadBank();
+  if (!bank) { log('no sound bank (public/sounds/manifest.json) — generate it first'); return; }
+  // ?mix={"pitch":1.2,...} overrides the bank's mix profile for A/B listening; ?tag= names the files
+  const over = new URLSearchParams(location.search).get('mix');
+  if (over) { bank.mix = { ...(bank.mix ?? {}), ...JSON.parse(over) }; log('mix ' + JSON.stringify(bank.mix)); }
   const peaks = [];
   for (const sc of SCENARIOS) peaks.push(await render(audio, sc, bankName));
   log('done');

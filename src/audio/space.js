@@ -2,7 +2,7 @@
 // thunder ducking, glue compression and a brick-wall-ish limiter.
 // Works on any BaseAudioContext (live or offline).
 
-export function createSpace(ctx) {
+export function createSpace(ctx, mix = {}) {
   const master = ctx.createGain();
   const glue = ctx.createDynamicsCompressor();
   glue.threshold.value = -10; glue.ratio.value = 1.5; glue.knee.value = 6;    // gentle: no pumping
@@ -13,7 +13,7 @@ export function createSpace(ctx) {
   const trim = ctx.createGain(); trim.gain.value = 1.27;   // +3 dB over the old 0.9: sparse chapters were too quiet
   const volume = ctx.createGain(); volume.gain.value = 0.8;
   // a gentle tilt: -3 dB above 5 kHz so dense rain is a wash, not a sizzle
-  const tilt = ctx.createBiquadFilter(); tilt.type = 'highshelf'; tilt.frequency.value = 5000; tilt.gain.value = -3;
+  const tilt = ctx.createBiquadFilter(); tilt.type = 'highshelf'; tilt.frequency.value = 5000; tilt.gain.value = mix.tiltDb ?? -3;
   master.connect(tilt).connect(glue).connect(trim).connect(limiter).connect(volume).connect(ctx.destination);   // gain before the limiter, so nothing escapes it
 
   // rain sits on a duckable bus so thunder can breathe
@@ -21,10 +21,13 @@ export function createSpace(ctx) {
   duck.connect(master);
 
   const reverb = ctx.createConvolver();
-  reverb.buffer = courtyardIR(ctx);
+  reverb.buffer = courtyardIR(ctx, mix.irSeconds ?? 0.4);
   const reverbReturn = ctx.createGain(); reverbReturn.gain.value = 0.8;
   const reverbTone = ctx.createBiquadFilter(); reverbTone.type = 'highpass'; reverbTone.frequency.value = 180;
-  reverb.connect(reverbTone).connect(reverbReturn).connect(duck);
+  if (mix.reverbLp) {   // a darker tail: bright drops into a short room ring metallic (Argon, round 6)
+    const damp = ctx.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = mix.reverbLp; damp.Q.value = 0.5;
+    reverb.connect(reverbTone).connect(damp).connect(reverbReturn).connect(duck);
+  } else reverb.connect(reverbTone).connect(reverbReturn).connect(duck);
 
   // the rain bed enters on the duckable bus, unfiltered by the distance buses
   const bedIn = ctx.createGain();
@@ -33,11 +36,11 @@ export function createSpace(ctx) {
   const near = ctx.createGain();
   near.connect(duck);
   const mid = ctx.createGain(); mid.gain.value = 0.75;
-  const midLp = ctx.createBiquadFilter(); midLp.type = 'lowpass'; midLp.frequency.value = 6500;
+  const midLp = ctx.createBiquadFilter(); midLp.type = 'lowpass'; midLp.frequency.value = mix.midLp ?? 6500;
   mid.connect(midLp).connect(duck);
   const far = ctx.createGain(); far.gain.value = 0.5;
   const farHp = ctx.createBiquadFilter(); farHp.type = 'highpass'; farHp.frequency.value = 500;
-  const farLp = ctx.createBiquadFilter(); farLp.type = 'lowpass'; farLp.frequency.value = 3200;
+  const farLp = ctx.createBiquadFilter(); farLp.type = 'lowpass'; farLp.frequency.value = mix.farLp ?? 3200;
   far.connect(farHp).connect(farLp).connect(duck);
 
   // Thunder recordings are mostly < 250 Hz, which laptop speakers can't reproduce.
@@ -77,8 +80,8 @@ export function createSpace(ctx) {
 
 // Stereo impulse response: 18 ms pre-delay, sparse early reflections,
 // then a decorrelated tail that darkens as it decays (≈2.4 s).
-function courtyardIR(ctx) {
-  const sr = ctx.sampleRate, len = Math.floor(sr * 0.4);   // short outdoor diffuser, not a hall: no metallic phasing
+function courtyardIR(ctx, seconds = 0.4) {
+  const sr = ctx.sampleRate, len = Math.floor(sr * seconds);   // short outdoor diffuser, not a hall: no metallic phasing
   const buf = ctx.createBuffer(2, len, sr);
   const pre = Math.floor(0.018 * sr);
   const taps = [[0.011, 0.5], [0.019, 0.38], [0.027, 0.3], [0.041, 0.24], [0.058, 0.18], [0.073, 0.14]];
